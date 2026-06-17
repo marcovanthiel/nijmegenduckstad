@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 60" role="img" aria-label="Nijmegen Duckstad">
+  <g>
+    <!-- duck -->
+    <circle cx="30" cy="30" r="22" fill="#ffd60a"/>
+    <circle cx="30" cy="30" r="22" fill="none" stroke="#f7a81b" stroke-width="2"/>
+    <ellipse cx="30" cy="36" rx="15" ry="11" fill="#ffe45c"/>
+    <circle cx="36" cy="24" r="8.5" fill="#ffd60a"/>
+    <circle cx="38.5" cy="22.5" r="2.3" fill="#17458f"/>
+    <circle cx="39.3" cy="21.8" r="0.8" fill="#fff"/>
+    <path d="M44 24 l9 2 l-9 3 z" fill="#f7811b"/>
+    <path d="M16 33 q-7 1 -9 6 q6 1 11 -2 z" fill="#ffe45c"/>
+  </g>
+  <text x="62" y="28" font-family="'Fredoka','Trebuchet MS',sans-serif" font-weight="700" font-size="22" fill="#17458f">Nijmegen</text>
+  <text x="62" y="50" font-family="'Fredoka','Trebuchet MS',sans-serif" font-weight="700" font-size="22" fill="#f7a81b">Duckstad</text>
+</svg>
