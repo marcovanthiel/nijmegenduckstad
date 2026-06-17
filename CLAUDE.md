@@ -14,8 +14,8 @@ Rotary-Nijmegen-Stad-en-Land-fundraising tonen).
 
 | Veld | Waarde |
 |---|---|
-| Datum evenement | **zaterdag 19 september 2026** |
-| Start bedrijvenrace | 13:30 |
+| Datum evenement | **zaterdag 17 april 2027** |
+| Start bedrijvenrace | 15:00 |
 | Locatie | Spiegelwaal, Nijmegen |
 | Eendje | €5 |
 | Bedrijfseendje | €150 |
@@ -174,6 +174,9 @@ Voordat je begint met code-wijzigingen:
 
 ## Recente architectuur-besluiten (changelog)
 
+- **2026-06-17** (Cowork, via web-upload): evenementdatum gezet op **zaterdag 17 april 2027 / 15:00** in `config.js` + HTML’s, op verzoek van
+  Marco. NB: verkoopweekend-datums (aug/sep 2026) moeten nog
+  geactualiseerd worden naar 2027.
 - **2026-06-17** (commit `f9a2d73`+`7a95b2d`): GitHub Actions auto-
   deploy ingesteld; `_redirects` vervangen door wrangler
   `html_handling`; datum-fix naar 19 september 2026 / 13:30 in
