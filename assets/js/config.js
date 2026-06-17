@@ -11,8 +11,8 @@ window.DUCKSTAD = {
   businessDucksTotal: 50,  // doel bedrijfseendjes
 
   // --- Evenement ---
-  eventDateISO: "2026-09-19T13:30:00+02:00", // datum/tijd start (voor de countdown)
-  eventDateLabel: "Zaterdag 19 september 2026",
+  eventDateISO: "2027-04-17T15:00:00+02:00", // datum/tijd start (voor de countdown)
+  eventDateLabel: "Zaterdag 17 april 2027",
   eventLocation: "Spiegelwaal, Nijmegen",
 
   // --- Links ---
