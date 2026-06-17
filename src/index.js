@@ -216,15 +216,18 @@ async function sendConfirmation(env, orderId) {
     <p>Bewaar deze mail — met deze nummers doe je mee in de race en de loterij.</p>
     <p>Tot 17 april 2027 in de Spiegelwaal! 🦆</p>`;
   try {
-    await fetch("https://api.resend.com/emails", {
+    const r = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { authorization: "Bearer " + env.RESEND_API_KEY, "content-type": "application/json" },
       body: JSON.stringify({
         from: env.MAIL_FROM || "Nijmegen Duckstad <info@nijmegenduckstad.nl>",
+        reply_to: env.MAIL_REPLY_TO || "marco@marcovanthiel.nl",
         to: [o.email], subject: "Je badeendje(s) — Nijmegen Duckstad", html,
       }),
     });
-  } catch { /* stil falen; nummers staan ook op de bedankpagina + admin */ }
+    // Log Resend-fouten (anders falen mails ongemerkt; nummers staan ook op de bedankpagina + admin).
+    if (!r.ok) console.error("resend_fout", r.status, (await r.text().catch(() => "")).slice(0, 300));
+  } catch (e) { console.error("resend_exception", String((e && e.message) || e)); }
 }
 
 /* ---------------- admin ---------------- */
