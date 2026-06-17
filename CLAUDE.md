@@ -189,6 +189,13 @@ De site wordt uitgebreid van static-only naar een Worker-met-code + D1:
 
 ## Recente architectuur-besluiten (changelog)
 
+- **2026-06-17** (Code): **bevestigingsmail werkend**. `marcovanthiel.nl` draait op M365 en
+  is NIET in Resend geverifieerd; enige verified domein = `kunstcollectie.marcovanthiel.nl`.
+  Daarom `MAIL_FROM` = `Nijmegen Duckstad <noreply@kunstcollectie.marcovanthiel.nl>` + in
+  `sendConfirmation()` een `reply_to` (`MAIL_REPLY_TO` env, default `marco@marcovanthiel.nl`)
+  en logging van Resend-fouten (was eerst stil falen). Voor branding op `@nijmegenduckstad.nl`:
+  dat domein in Resend verifiëren + DNS in Cloudflare.
+
 - **2026-06-17** (Code): 3 concrete **topprijzen** op `prijzen.html` (ballonvaart, weekend
   Maastricht, weekend Saalbach Hinterglemm) met foto's, via nieuwe `.prize-card`-component
   in `style.css`. Foto's: Pexels (commercieel/zonder watermerk) in `assets/img/prijzen/`.
