@@ -140,6 +140,20 @@ p{margin:0 0 1rem}
 .prize__rank--1{background:#fff0b8}
 .prize b{font-family:var(--display)}
 
+/* ===== Topprijzen met foto ===== */
+.prize-cards{display:grid;gap:24px;grid-template-columns:repeat(3,1fr);margin-top:10px}
+.prize-card{display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);transition:transform .15s,box-shadow .15s}
+.prize-card:hover{transform:translateY(-5px);box-shadow:var(--shadow-lg)}
+.prize-card__media{position:relative;aspect-ratio:3/2;overflow:hidden;background:#eef3fb}
+.prize-card__media img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .45s ease}
+.prize-card:hover .prize-card__media img{transform:scale(1.06)}
+.prize-card__badge{position:absolute;top:12px;left:12px;background:var(--gold);color:#3a2600;font-family:var(--display);font-weight:600;font-size:.8rem;padding:5px 13px;border-radius:999px;box-shadow:0 6px 14px rgba(247,168,27,.4)}
+.prize-card__body{padding:20px 22px 24px}
+.prize-card__body h3{font-family:var(--display);margin:0 0 .4em;color:var(--blue);font-size:1.22rem}
+.prize-card__body p{margin:0;color:var(--muted);font-size:.96rem;line-height:1.55}
+@media(max-width:920px){.prize-cards{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.prize-cards{grid-template-columns:1fr}}
+
 /* ===== Alternating feature rows ===== */
 .split{display:grid;grid-template-columns:1fr 1fr;gap:46px;align-items:center}
 .split img,.split .media{border-radius:var(--radius);box-shadow:var(--shadow)}

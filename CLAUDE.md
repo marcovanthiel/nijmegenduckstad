@@ -189,6 +189,10 @@ De site wordt uitgebreid van static-only naar een Worker-met-code + D1:
 
 ## Recente architectuur-besluiten (changelog)
 
+- **2026-06-17** (Code): 3 concrete **topprijzen** op `prijzen.html` (ballonvaart, weekend
+  Maastricht, weekend Saalbach Hinterglemm) met foto's, via nieuwe `.prize-card`-component
+  in `style.css`. Foto's: Pexels (commercieel/zonder watermerk) in `assets/img/prijzen/`.
+
 - **2026-06-17** (Code, PR #1 → `main`, commit `0ee90e4`): **bestelsysteem LIVE**.
   `bestelsysteem` gemerged → GitHub Action deploy `success`. Vooraf: alle gevoelige
   waarden van plaintext-variabelen omgezet naar **secrets** (`ADMIN_PASSWORD`,
