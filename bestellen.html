@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bestel je eendje · Nijmegen Duckstad</title>
+<meta name="description" content="Adopteer online één of meer badeendjes voor de Rotary Badeendjesrace 2026. Veilig betalen met iDEAL.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <nav class="nav" aria-label="Hoofdmenu">
+    <a class="nav__logo" href="index.html" aria-label="Nijmegen Duckstad home"><img src="assets/img/logo.svg" alt="Nijmegen Duckstad" width="220" height="50"></a>
+    <button class="nav__toggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+    <ul class="nav__links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="adopteren.html">Adopteer een eendje</a></li>
+      <li><a href="evenement.html">Het evenement</a></li>
+      <li><a href="prijzen.html">Prijzen</a></li>
+      <li><a href="sponsoren.html">Sponsoren</a></li>
+      <li><a href="goede-doel.html">Goede doel</a></li>
+      <li><a href="contact.html">Contact</a></li>
+      <li class="nav__cta"><a class="btn btn--primary" href="bestellen.html">Bestel nu 🦆</a></li>
+    </ul>
+  </nav>
+</header>
+
+<section class="page-hero">
+  <div class="wrap">
+    <div class="crumbs"><a href="index.html">Home</a> › Bestellen</div>
+    <h1>Bestel je badeendje 🦆</h1>
+    <p>Adopteer één of meer eendjes. Je betaalt veilig met iDEAL en krijgt direct je unieke startnummer(s) — je lot in de race én de loterij.</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap" style="max-width:720px">
+    <form class="form" id="orderForm" novalidate>
+      <div class="field">
+        <label>Wat wil je adopteren?</label>
+        <div class="grid grid-2" style="gap:12px">
+          <label class="card" style="padding:16px;cursor:pointer;display:flex;gap:10px;align-items:flex-start">
+            <input type="radio" name="type" value="regular" checked style="width:auto;margin-top:4px">
+            <span><strong>Eendje</strong> · <span data-price>€5</span><br><span class="muted" style="font-size:.9rem">Doet mee in de hoofdrace</span></span>
+          </label>
+          <label class="card" style="padding:16px;cursor:pointer;display:flex;gap:10px;align-items:flex-start">
+            <input type="radio" name="type" value="business" style="width:auto;margin-top:4px">
+            <span><strong>Bedrijfseendje</strong> · <span data-business-price>€150</span><br><span class="muted" style="font-size:.9rem">Aparte bedrijvenrace + vermelding</span></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="qty">Aantal</label>
+        <div style="display:flex;align-items:center;gap:12px">
+          <button type="button" class="btn btn--ghost-blue" id="minus" aria-label="Minder" style="padding:8px 16px">−</button>
+          <input id="qty" name="quantity" type="number" min="1" value="1" inputmode="numeric" style="width:90px;text-align:center">
+          <button type="button" class="btn btn--ghost-blue" id="plus" aria-label="Meer" style="padding:8px 16px">+</button>
+          <span class="muted" id="stockHint"></span>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="field"><label for="name">Naam *</label><input id="name" name="name" required autocomplete="name"></div>
+        <div class="field"><label for="email">E-mailadres *</label><input id="email" name="email" type="email" required autocomplete="email"></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label for="phone">Telefoonnummer</label><input id="phone" name="phone" autocomplete="tel"></div>
+        <div class="field"><label for="city">Woonplaats</label><input id="city" name="city" autocomplete="address-level2"></div>
+      </div>
+
+      <div class="field" style="margin-bottom:10px">
+        <label style="display:flex;gap:10px;align-items:flex-start;font-weight:400">
+          <input type="checkbox" id="newsletter" name="newsletter" style="width:auto;margin-top:4px">
+          <span>Houd me per e-mail op de hoogte van de race en toekomstige edities.</span>
+        </label>
+      </div>
+      <div class="field">
+        <label style="display:flex;gap:10px;align-items:flex-start;font-weight:400">
+          <input type="checkbox" id="consent" name="consent" required style="width:auto;margin-top:4px">
+          <span>Ik ga akkoord dat mijn gegevens worden gebruikt voor het verwerken van mijn bestelling en de loterij. *</span>
+        </label>
+      </div>
+
+      <div class="card" style="background:#eef3fb;border:0;display:flex;justify-content:space-between;align-items:center;margin:10px 0 18px">
+        <span style="font-family:var(--display);font-weight:600;font-size:1.1rem">Totaal</span>
+        <span style="font-family:var(--display);font-weight:700;font-size:1.6rem;color:var(--blue)" id="total">€5,00</span>
+      </div>
+
+      <button class="btn btn--primary btn--lg" type="submit" id="submitBtn" style="width:100%;justify-content:center">Betaal met iDEAL →</button>
+      <div class="form-status" role="status"></div>
+      <p class="form__note" style="margin-top:14px">Veilig betalen via Mollie. Je gegevens gebruiken we alleen voor je bestelling en de loterij — zie ook onze <a href="contact.html">contactpagina</a>. Liever op een verkoopweekend kopen? Dat kan ook (zie <a href="evenement.html">Het evenement</a>).</p>
+    </form>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-bottom" style="border:0">
+      <span>© <span data-year>2026</span> Nijmegen Duckstad · Rotary Badeendjesrace</span>
+      <span><a href="index.html">Home</a> · <a href="contact.html">Contact</a></span>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/js/config.js"></script>
+<script src="assets/js/main.js"></script>
+<script>
+(function () {
+  var C = window.DUCKSTAD || {};
+  var form = document.getElementById('orderForm');
+  var qty = document.getElementById('qty');
+  var totalEl = document.getElementById('total');
+  var status = form.querySelector('.form-status');
+  var btn = document.getElementById('submitBtn');
+  var stockHint = document.getElementById('stockHint');
+  function priceCents() { return form.type.value === 'business' ? (C.businessDuckPrice||150)*100 : (C.pricePerDuck||5)*100; }
+  function fmt(c){ return '€' + (c/100).toLocaleString('nl-NL',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function update(){ var n=Math.max(1,parseInt(qty.value||'1',10)); totalEl.textContent = fmt(priceCents()*n); }
+  document.getElementById('plus').onclick=function(){ qty.value=Math.max(1,(parseInt(qty.value||'1',10))+1); update(); };
+  document.getElementById('minus').onclick=function(){ qty.value=Math.max(1,(parseInt(qty.value||'1',10))-1); update(); };
+  qty.oninput=update;
+  form.querySelectorAll('input[name=type]').forEach(function(r){ r.onchange=update; });
+  update();
+
+  // Live voorraad tonen
+  fetch('/api/status').then(function(r){return r.json();}).then(function(s){
+    if (s && typeof s.sold==='number'){ var left=s.total-s.sold; stockHint.textContent = left>0 ? ('nog ~'+left.toLocaleString('nl-NL')+' eendjes') : 'bijna uitverkocht'; if(!s.sales_open){ btn.disabled=true; show(false,'De online verkoop is op dit moment gesloten.'); } }
+  }).catch(function(){});
+
+  function show(ok,msg){ status.textContent=msg; status.className='form-status show '+(ok?'ok':'err'); }
+
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    if (!form.consent.checked){ show(false,'Vink even aan dat je akkoord gaat.'); return; }
+    if (!form.name.value.trim()){ show(false,'Vul je naam in.'); return; }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email.value)){ show(false,'Vul een geldig e-mailadres in.'); return; }
+    var payload = {
+      type: form.type.value, quantity: parseInt(qty.value||'1',10),
+      name: form.name.value, email: form.email.value, phone: form.phone.value,
+      city: form.city.value, newsletter: form.newsletter.checked, consent: true
+    };
+    btn.disabled=true; btn.textContent='Bezig…'; show(true,'Je wordt doorgestuurd naar de beveiligde betaalpagina…');
+    fetch('/api/order',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)})
+      .then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j};});})
+      .then(function(res){
+        if(res.ok && res.j.checkoutUrl){ window.location.href=res.j.checkoutUrl; }
+        else { var m={uitverkocht:'Helaas, er zijn niet genoeg eendjes meer beschikbaar.',verkoop_gesloten:'De online verkoop is gesloten.'}; show(false, m[res.j.error]||('Er ging iets mis: '+(res.j.error||'onbekend'))); btn.disabled=false; btn.textContent='Betaal met iDEAL →'; }
+      })
+      .catch(function(){ show(false,'Geen verbinding. Probeer het zo nog eens.'); btn.disabled=false; btn.textContent='Betaal met iDEAL →'; });
+  });
+})();
+</script>
+</body>
+</html>

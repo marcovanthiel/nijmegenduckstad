@@ -172,7 +172,27 @@ Voordat je begint met code-wijzigingen:
 - [ ] Bij verandering aan deploy-pipeline of architectuur: update
       de relevante sectie hierboven
 
+## Bestelsysteem (branch `bestelsysteem`, nog niet op main)
+
+De site wordt uitgebreid van static-only naar een Worker-met-code + D1:
+
+- `src/index.js` — `/api/*` (bestellen, Mollie-webhook, status, admin); rest valt door
+  naar de ASSETS-binding (statische site). `wrangler.toml` krijgt `main`, een
+  `[[d1_databases]]`-binding en `[assets] binding="ASSETS"`.
+- `migrations/0001_init.sql` — tabellen orders/ducks/counters/settings/draws.
+- Nieuwe pagina’s: `bestellen.html`, `bestelling.html`, `admin.html`.
+- Nummering is atomair (counter + `RETURNING`).
+- Secrets: `MOLLIE_API_KEY`, `ADMIN_PASSWORD` (+ optioneel `ADMIN_USER`,
+  `RESEND_API_KEY`, `MAIL_FROM`). Token heeft **D1 Edit** nodig.
+- **Niet naar main mergen** voordat D1 + secrets bestaan, anders faalt de deploy.
+- `.assetsignore` sluit `src/`, `migrations/`, configs uit de publieke assets.
+
 ## Recente architectuur-besluiten (changelog)
+
+- **2026-06-17** (Cowork, branch `bestelsysteem`): online **bestel-/betaal-/loterijsysteem**
+  toegevoegd — Worker-code (`src/index.js`) + D1-database + Mollie iDEAL + admin-
+  dashboard (`/admin`) met CSV/PDF-export en trekkingen. Staat op een aparte branch;
+  gaat live na infra-setup (zie `SETUP-BESTELSYSTEEM.md`) en merge naar `main`.
 
 - **2026-06-17** (Cowork): verkoopweekenden voorlopig gezet op 27–28 mrt, 3–4 apr,
   10–11 apr 2027 (CONCEPT — te bevestigen door Marco); introductieweek-regel

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin · Nijmegen Duckstad</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+<style>
+  .admin-wrap{max-width:1100px;margin:0 auto;padding:24px}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin:18px 0}
+  .kpi{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px}
+  .kpi b{font-family:var(--display);font-size:1.9rem;color:var(--blue);display:block;line-height:1.1}
+  .kpi span{color:var(--muted);font-size:.9rem}
+  table{width:100%;border-collapse:collapse;font-size:.9rem;background:#fff}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+  th{font-family:var(--display);color:var(--blue-dark)}
+  .panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;margin:18px 0}
+  .tag{font-size:.78rem;padding:2px 8px;border-radius:999px}
+  .tag.paid{background:#e7f7ef;color:#13754f}.tag.pending{background:#fff5dd;color:#7a5200}.tag.other{background:#fdecec;color:#b3261e}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .scroll{overflow:auto;max-height:420px}
+</style>
+</head>
+<body style="background:var(--bg)">
+<div class="admin-wrap">
+  <div class="row" style="justify-content:space-between">
+    <h1 style="margin:0">🦆 Duckstad admin</h1>
+    <button class="btn btn--ghost-blue" id="logout" style="display:none;padding:8px 16px">Uitloggen</button>
+  </div>
+
+  <div id="login" class="panel" style="max-width:420px;margin-top:24px">
+    <h3>Inloggen</h3>
+    <div class="field"><label for="pw">Wachtwoord</label><input id="pw" type="password" autocomplete="current-password"></div>
+    <button class="btn btn--primary" id="loginBtn">Inloggen</button>
+    <div class="form-status" id="loginStatus"></div>
+  </div>
+
+  <div id="app" style="display:none">
+    <div class="kpis" id="kpis"></div>
+
+    <div class="panel">
+      <div class="row" style="justify-content:space-between">
+        <h3 style="margin:0">Exporteren</h3>
+        <div class="row">
+          <button class="btn btn--ghost-blue" data-export="export-lottery" style="padding:8px 16px">🎟️ Loterijlijst (CSV)</button>
+          <button class="btn btn--ghost-blue" data-export="export-orders" style="padding:8px 16px">📋 Bestellingen (CSV)</button>
+          <button class="btn btn--ghost-blue" data-export="export-newsletter" style="padding:8px 16px">✉️ Nieuwsbrief (CSV)</button>
+          <button class="btn btn--ghost-blue" id="printList" style="padding:8px 16px">🖨️ Loterijlijst printen/PDF</button>
+        </div>
+      </div>
+      <p class="form__note">CSV opent in Excel/Numbers. "Printen/PDF" opent een printbare lijst — kies in het printvenster "Bewaar als PDF".</p>
+    </div>
+
+    <div class="panel">
+      <h3>🎲 Trekking</h3>
+      <div class="row">
+        <input id="prize" placeholder="Prijs (bv. Ballonvaart)" style="flex:1;min-width:200px">
+        <label class="row" style="gap:6px"><input type="checkbox" id="incBus" checked style="width:auto"> bedrijfseendjes meenemen</label>
+        <button class="btn btn--primary" id="drawBtn" style="padding:10px 18px">Trek een winnaar</button>
+        <button class="btn btn--ghost-blue" id="drawReset" style="padding:10px 18px">Reset trekkingen</button>
+      </div>
+      <div id="drawResult" style="margin-top:12px"></div>
+      <div class="scroll" style="margin-top:12px"><table id="drawsTable"><thead><tr><th>#</th><th>Prijs</th><th>Eend</th><th>Winnaar</th><th>E-mail</th></tr></thead><tbody></tbody></table></div>
+    </div>
+
+    <div class="panel">
+      <h3>⚙️ Instellingen</h3>
+      <div class="row">
+        <label class="row" style="gap:6px"><input type="checkbox" id="salesOpen" style="width:auto"> online verkoop open</label>
+        <span class="muted">|</span>
+        <label>Max. reguliere eendjes <input id="maxReg" type="number" style="width:110px"></label>
+        <button class="btn btn--ghost-blue" id="saveSettings" style="padding:8px 16px">Opslaan</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>➕ Handmatige verkoop (contant / Tikkie)</h3>
+      <div class="row">
+        <select id="mType"><option value="regular">Eendje(s)</option><option value="business">Bedrijfseendje(s)</option></select>
+        <input id="mQty" type="number" min="1" value="1" style="width:80px" placeholder="aantal">
+        <input id="mName" placeholder="Naam">
+        <input id="mEmail" placeholder="E-mail (optioneel)">
+        <input id="mCity" placeholder="Woonplaats">
+        <button class="btn btn--primary" id="mAdd" style="padding:10px 18px">Toevoegen + nummers</button>
+      </div>
+      <div id="mResult" style="margin-top:10px"></div>
+    </div>
+
+    <div class="panel">
+      <h3>Bestellingen</h3>
+      <div class="scroll"><table id="ordersTable"><thead><tr><th>Datum</th><th>Naam</th><th>E-mail</th><th>Type</th><th>Aantal</th><th>Bedrag</th><th>Status</th><th>Plaats</th></tr></thead><tbody></tbody></table></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var KEY='duck_admin';
+  var login=document.getElementById('login'), app=document.getElementById('app');
+  var loginStatus=document.getElementById('loginStatus');
+  function authHeader(){ return sessionStorage.getItem(KEY); }
+  function setAuth(pw){ sessionStorage.setItem(KEY,'Basic '+btoa('admin:'+pw)); }
+  function clearAuth(){ sessionStorage.removeItem(KEY); }
+  function api(path, opts){ opts=opts||{}; opts.headers=Object.assign({'authorization':authHeader()},opts.headers||{}); return fetch('/api/admin/'+path,opts); }
+  function euro(c){ return '€'+(c/100).toLocaleString('nl-NL',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function esc(s){ return (s==null?'':String(s)).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];}); }
+
+  document.getElementById('loginBtn').onclick=function(){
+    var pw=document.getElementById('pw').value; if(!pw){return;}
+    setAuth(pw);
+    api('stats').then(function(r){ if(r.ok){ start(); } else { clearAuth(); loginStatus.className='form-status show err'; loginStatus.textContent='Onjuist wachtwoord.'; } })
+      .catch(function(){ loginStatus.className='form-status show err'; loginStatus.textContent='Geen verbinding.'; });
+  };
+  document.getElementById('pw').addEventListener('keydown',function(e){ if(e.key==='Enter') document.getElementById('loginBtn').click(); });
+  document.getElementById('logout').onclick=function(){ clearAuth(); location.reload(); };
+
+  function start(){
+    login.style.display='none'; app.style.display='block'; document.getElementById('logout').style.display='';
+    loadStats(); loadOrders(); loadDraws();
+  }
+
+  function loadStats(){
+    api('stats').then(function(r){return r.json();}).then(function(s){
+      document.getElementById('kpis').innerHTML=[
+        ['Eendjes verkocht', s.regular_sold+' / '+s.max_regular],
+        ['Bedrijfseendjes', s.business_sold],
+        ['Opbrengst', euro(s.revenue_cents)],
+        ['Betaalde bestellingen', s.paid_orders],
+        ['In behandeling', s.pending_orders],
+        ['Nieuwsbrief-aanmeldingen', s.newsletter_count]
+      ].map(function(k){return '<div class="kpi"><b>'+k[1]+'</b><span>'+k[0]+'</span></div>';}).join('');
+      document.getElementById('salesOpen').checked=!!s.sales_open;
+      document.getElementById('maxReg').value=s.max_regular;
+    });
+  }
+  function loadOrders(){
+    api('orders').then(function(r){return r.json();}).then(function(d){
+      var tb=document.querySelector('#ordersTable tbody');
+      tb.innerHTML=(d.orders||[]).map(function(o){
+        var cls=o.status==='paid'?'paid':(o.status==='pending'?'pending':'other');
+        return '<tr><td>'+esc((o.created_at||'').slice(0,16).replace('T',' '))+'</td><td>'+esc(o.name)+'</td><td>'+esc(o.email)+'</td><td>'+esc(o.type)+'</td><td>'+o.quantity+'</td><td>'+euro(o.amount_cents)+'</td><td><span class="tag '+cls+'">'+esc(o.status)+'</span></td><td>'+esc(o.city)+'</td></tr>';
+      }).join('');
+    });
+  }
+  function loadDraws(){
+    api('draws').then(function(r){return r.json();}).then(function(d){
+      document.querySelector('#drawsTable tbody').innerHTML=(d.draws||[]).map(function(w){
+        return '<tr><td>'+w.id+'</td><td>'+esc(w.prize)+'</td><td>'+esc(w.duck_type)+' #'+w.duck_number+'</td><td>'+esc(w.winner_name)+'</td><td>'+esc(w.winner_email)+'</td></tr>';
+      }).join('');
+    });
+  }
+
+  // exports (met auth -> blob download)
+  document.querySelectorAll('[data-export]').forEach(function(b){
+    b.onclick=function(){
+      api(b.dataset.export).then(function(r){return r.blob();}).then(function(blob){
+        var u=URL.createObjectURL(blob), a=document.createElement('a'); a.href=u; a.download=b.dataset.export.replace('export-','')+'.csv'; a.click(); URL.revokeObjectURL(u);
+      });
+    };
+  });
+  document.getElementById('printList').onclick=function(){
+    api('export-lottery').then(function(r){return r.text();}).then(function(txt){
+      var rows=txt.replace(/^﻿/,'').split('\r\n').filter(Boolean).map(function(l){return l.split(';');});
+      var w=window.open('','_blank');
+      var html='<h2>Loterijlijst — Nijmegen Duckstad</h2><table border="1" cellpadding="4" style="border-collapse:collapse;font-family:sans-serif;font-size:12px">';
+      html+=rows.map(function(r,i){return '<tr>'+r.map(function(c){var t=c.replace(/^"|"$/g,'').replace(/""/g,'"');return (i===0?'<th>':'<td>')+t+(i===0?'</th>':'</td>');}).join('')+'</tr>';}).join('');
+      html+='</table>'; w.document.write(html); w.document.close(); w.print();
+    });
+  };
+
+  document.getElementById('drawBtn').onclick=function(){
+    var prize=document.getElementById('prize').value.trim(); if(!prize){alert('Vul een prijs in.');return;}
+    api('draw',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({prize:prize,include_business:document.getElementById('incBus').checked})})
+      .then(function(r){return r.json();}).then(function(d){
+        var el=document.getElementById('drawResult');
+        if(d.winner){ el.innerHTML='<div class="card" style="background:#fff5dd;border:0">🏆 <strong>'+esc(d.winner.prize)+'</strong> → eend '+esc(d.winner.type)+' <strong>#'+d.winner.number+'</strong> — '+esc(d.winner.name)+' ('+esc(d.winner.email)+')</div>'; document.getElementById('prize').value=''; loadDraws(); }
+        else { el.innerHTML='<span class="muted">'+esc(d.error||'geen winnaar')+'</span>'; }
+      });
+  };
+  document.getElementById('drawReset').onclick=function(){ if(!confirm('Alle trekkingen wissen?'))return; api('draw-reset',{method:'POST'}).then(function(){loadDraws();document.getElementById('drawResult').innerHTML='';}); };
+
+  document.getElementById('saveSettings').onclick=function(){
+    var open=document.getElementById('salesOpen').checked?'1':'0';
+    var max=document.getElementById('maxReg').value;
+    Promise.all([
+      api('setting',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({key:'sales_open',value:open})}),
+      api('setting',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({key:'max_regular',value:max})})
+    ]).then(function(){ loadStats(); alert('Opgeslagen.'); });
+  };
+
+  document.getElementById('mAdd').onclick=function(){
+    var p={type:document.getElementById('mType').value,quantity:parseInt(document.getElementById('mQty').value,10),name:document.getElementById('mName').value,email:document.getElementById('mEmail').value,city:document.getElementById('mCity').value};
+    if(!p.name||!p.quantity){alert('Naam en aantal verplicht.');return;}
+    api('manual-order',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(p)}).then(function(r){return r.json();}).then(function(d){
+      if(d.ok){ document.getElementById('mResult').innerHTML='Toegevoegd. Nummers: <strong>'+d.numbers.map(function(n){return '#'+n;}).join(', ')+'</strong>'; document.getElementById('mName').value='';document.getElementById('mEmail').value='';document.getElementById('mCity').value='';document.getElementById('mQty').value='1'; loadStats(); loadOrders(); }
+      else { document.getElementById('mResult').textContent=d.error||'fout'; }
+    });
+  };
+
+  if(authHeader()){ api('stats').then(function(r){ if(r.ok) start(); else clearAuth(); }); }
+})();
+</script>
+</body>
+</html>

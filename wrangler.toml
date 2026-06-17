@@ -1,14 +1,27 @@
 name = "nijmegenduckstad"
+main = "src/index.js"
 compatibility_date = "2026-06-17"
 workers_dev = false
 
-# Static-only Worker (geen Worker-code). De Worker serveert direct
-# de bestanden uit de repo-root.
+# De Worker draait nu eigen code (src/index.js) ÉN serveert de statische
+# site. Voor /api/* handelt de Worker af; al het andere valt door naar de
+# static assets via de ASSETS-binding.
 [assets]
 directory = "."
-# Clean URLs: /adopteren → serveert /adopteren.html zonder redirect
-# (en /adopteren.html → 308 naar /adopteren). Vervangt de eerdere
-# `_redirects`-rewrites die op Workers Static Assets in een loop liepen.
+binding = "ASSETS"
 html_handling = "auto-trailing-slash"
-# Onbekende paden vallen naar 404.html.
 not_found_handling = "404-page"
+
+# D1-database voor bestellingen, eendnummers en trekkingen.
+# >>> Vul database_id in na: wrangler d1 create nijmegenduckstad <<<
+[[d1_databases]]
+binding = "DB"
+database_name = "nijmegenduckstad"
+database_id = "VUL_HIER_DATABASE_ID_IN"
+
+# Secrets (NIET hier zetten — via `wrangler secret put` of het dashboard):
+#   MOLLIE_API_KEY     (test_... of live_...)
+#   ADMIN_PASSWORD     (wachtwoord voor /admin)
+#   ADMIN_USER         (optioneel, standaard 'admin')
+#   RESEND_API_KEY     (optioneel — bevestigingsmails via resend.com)
+#   MAIL_FROM          (optioneel — afzender, bv. "Nijmegen Duckstad <info@nijmegenduckstad.nl>")
