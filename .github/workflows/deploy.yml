@@ -1,0 +1,33 @@
+name: Deploy to Cloudflare Workers
+
+# Auto-deploy bij elke push naar main. Manueel triggeren kan ook
+# (Actions tab → "Deploy to Cloudflare Workers" → Run workflow).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Voorkom dat twee deploys elkaar inhalen — annuleer een lopende deploy
+# als er een nieuwere commit komt.
+concurrency:
+  group: deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Deploy met wrangler
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

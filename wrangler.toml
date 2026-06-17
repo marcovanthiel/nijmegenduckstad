@@ -1,0 +1,14 @@
+name = "nijmegenduckstad"
+compatibility_date = "2026-06-17"
+workers_dev = false
+
+# Static-only Worker (geen Worker-code). De Worker serveert direct
+# de bestanden uit de repo-root.
+[assets]
+directory = "."
+# Clean URLs: /adopteren → serveert /adopteren.html zonder redirect
+# (en /adopteren.html → 308 naar /adopteren). Vervangt de eerdere
+# `_redirects`-rewrites die op Workers Static Assets in een loop liepen.
+html_handling = "auto-trailing-slash"
+# Onbekende paden vallen naar 404.html.
+not_found_handling = "404-page"
