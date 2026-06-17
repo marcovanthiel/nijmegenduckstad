@@ -189,6 +189,12 @@ De site wordt uitgebreid van static-only naar een Worker-met-code + D1:
 
 ## Recente architectuur-besluiten (changelog)
 
+- **2026-06-17** (Code): **navigatiebalk opgeschoond**. 8 links + CTA pasten niet inline
+  (labels braken over 2 regels tussen ~900–1280px). Fix: nav-labels ingekort ("Adopteer een
+  eendje"→"Adopteren", "Het evenement"→"Evenement", alléén binnen `<ul class="nav__links">`,
+  in alle HTML's), `white-space:nowrap` + compactere links, en hamburger-breakpoint van
+  900→**1100px** (los van de overige 900px-layout-breakpoints). Footer-/body-tekst ongemoeid.
+
 - **2026-06-17** (Code): **bevestigingsmail werkend**. `marcovanthiel.nl` draait op M365 en
   is NIET in Resend geverifieerd; enige verified domein = `kunstcollectie.marcovanthiel.nl`.
   Daarom `MAIL_FROM` = `Nijmegen Duckstad <noreply@kunstcollectie.marcovanthiel.nl>` + in
