@@ -8,3 +8,4 @@ node_modules
 .assetsignore
 wrangler.toml
 README.md
+CLAUDE.md
