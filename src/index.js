@@ -1,5 +1,5 @@
 /**
- * Nijmegen Duckstad — bestel-, betaal- en loterijsysteem
+ * Nijmegen Duckstad — bestel- en betaalsysteem voor de badeendjesrace
  * Cloudflare Worker + D1 + Mollie (iDEAL).
  *
  * Routes:
@@ -7,8 +7,8 @@
  *   POST /api/order                nieuwe bestelling -> Mollie checkout-URL
  *   GET  /api/order-status?id=...  status + toegekende nummers van 1 bestelling
  *   POST /api/mollie-webhook       Mollie meldt betaalstatus -> nummers toekennen
- *   /admin                         dashboard (Basic Auth)
- *   /api/admin/*                   beveiligde admin-API (Basic Auth)
+ *   /admin                         dashboard (login met account + rol)
+ *   /api/admin/*                   beveiligde admin-API (sessie-cookie + rollen)
  * Al het andere -> statische site (env.ASSETS).
  */
 
@@ -187,19 +187,26 @@ async function apiWebhook(request, env, ctx) {
   return new Response("ok");
 }
 
-// Ken opvolgende nummers toe (atomair via counter + RETURNING).
+// Ken de LAAGSTE VRIJE nummers toe (per type). Zo komen nummers die door het
+// verwijderen van een bestelling zijn vrijgekomen, vanzelf weer in gebruik.
 async function assignNumbers(env, order) {
   // Voorkom dubbel toekennen als de webhook 2x binnenkomt.
   const existing = await env.DB.prepare("SELECT COUNT(*) AS n FROM ducks WHERE order_id=?1").bind(order.id).first();
   if (existing && existing.n > 0) return;
-  const c = await env.DB.prepare("UPDATE counters SET n = n + ?1 WHERE name = ?2 RETURNING n").bind(order.quantity, order.type).first();
-  const high = c.n, start = high - order.quantity + 1;
-  const stmts = [];
-  const t = now();
-  for (let i = start; i <= high; i++) {
-    stmts.push(env.DB.prepare("INSERT INTO ducks (number,type,order_id,created_at) VALUES (?1,?2,?3,?4)").bind(i, order.type, order.id, t));
+  for (let attempt = 0; attempt < 6; attempt++) {
+    const usedR = await env.DB.prepare("SELECT number FROM ducks WHERE type=?1").bind(order.type).all();
+    const used = new Set((usedR.results || []).map((r) => r.number));
+    const pick = [];
+    for (let n = 1; pick.length < order.quantity; n++) if (!used.has(n)) pick.push(n);
+    try {
+      const t = now();
+      await env.DB.batch(pick.map((i) => env.DB.prepare("INSERT INTO ducks (number,type,order_id,created_at) VALUES (?1,?2,?3,?4)").bind(i, order.type, order.id, t)));
+      return;
+    } catch (e) {
+      // PRIMARY KEY-conflict bij gelijktijdige toewijzing → opnieuw proberen met verse stand.
+    }
   }
-  await env.DB.batch(stmts);
+  throw new Error("nummer_toewijzing_mislukt");
 }
 
 /* ---------------- e-mail (optioneel, via Resend) ---------------- */
@@ -211,13 +218,13 @@ async function sendConfirmation(env, orderId) {
   const nums = (d.results || []).map((r) => r.number);
   const isBiz = o.type === "business";
   const jaar = new Date().getFullYear();
-  // Eén "loterijticket" per eendje: blauwe stub met 🦆 + afgescheurde bon met het nummer.
+  // Eén racekaartje per eendje: blauwe stub met 🦆 + afgescheurde bon met het nummer.
   const ticket = (n) => `
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:460px;margin:0 auto 12px;border-collapse:separate;">
           <tr>
             <td width="92" style="width:92px;background:#17458f;border-radius:14px 0 0 14px;text-align:center;vertical-align:middle;padding:16px 0;font-size:38px;line-height:1;">🦆</td>
             <td style="background:#fff8e9;border:2px dashed #f7a81b;border-left:0;border-radius:0 14px 14px 0;padding:12px 20px;font-family:Arial,Helvetica,sans-serif;">
-              <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#9a7b22;font-weight:bold;">Startnummer · ${isBiz ? "bedrijfseendje" : "race &amp; loterij"}</div>
+              <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#9a7b22;font-weight:bold;">Startnummer · ${isBiz ? "bedrijfseendje" : "badeendjesrace"}</div>
               <div style="font-family:Georgia,'Times New Roman',serif;font-size:33px;font-weight:bold;color:#17458f;line-height:1.15;">${String(n).padStart(4, "0")}</div>
             </td>
           </tr>
@@ -237,7 +244,7 @@ async function sendConfirmation(env, orderId) {
       </td></tr>
       <tr><td style="padding:8px 30px 6px;">${ticketsHtml}</td></tr>
       <tr><td style="padding:8px 34px 26px;font-family:Arial,Helvetica,sans-serif;color:#1d2433;font-size:15px;line-height:1.6;">
-        <p style="margin:0 0 6px;">Met ${nums.length === 1 ? "dit nummer doe" : "deze nummers doe"} je mee in de <strong>race &eacute;n de loterij</strong> met mooie prijzen.</p>
+        <p style="margin:0 0 6px;">Met ${nums.length === 1 ? "dit nummer doe" : "deze nummers doe"} je mee in de <strong>badeendjesrace</strong> met mooie prijzen.</p>
         <p style="margin:0;color:#5b6679;">Tot zaterdag 17 april 2027 in de Spiegelwaal! 🦆</p>
       </td></tr>
       <tr><td style="background:#0e2d63;padding:26px 34px 28px;font-family:Arial,Helvetica,sans-serif;">
@@ -271,23 +278,145 @@ async function sendConfirmation(env, orderId) {
   } catch (e) { console.error("resend_exception", String((e && e.message) || e)); }
 }
 
-/* ---------------- admin ---------------- */
-function checkAuth(request, env) {
-  const h = request.headers.get("authorization") || "";
-  if (!h.startsWith("Basic ")) return false;
-  let dec = "";
-  try { dec = atob(h.slice(6)); } catch { return false; }
-  const i = dec.indexOf(":");
-  const user = dec.slice(0, i), pass = dec.slice(i + 1);
-  const okUser = user === (env.ADMIN_USER || "admin");
-  const okPass = !!env.ADMIN_PASSWORD && pass === env.ADMIN_PASSWORD;
-  return okUser && okPass;
+/* ---------------- admin: accounts, rollen, sessies ---------------- */
+const te = new TextEncoder();
+const b64 = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf)));
+const fromB64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+const randToken = () => b64(crypto.getRandomValues(new Uint8Array(32))).replace(/[+/=]/g, (c) => (c === "+" ? "-" : c === "/" ? "_" : ""));
+
+async function hashPassword(pw) {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iter = 100000;
+  const key = await crypto.subtle.importKey("raw", te.encode(pw), "PBKDF2", false, ["deriveBits"]);
+  const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", salt, iterations: iter, hash: "SHA-256" }, key, 256);
+  return `pbkdf2$${iter}$${b64(salt)}$${b64(bits)}`;
 }
-const authChallenge = () => new Response(JSON.stringify({ error: "unauthorized" }), { status: 401, headers: { "content-type": "application/json", "www-authenticate": 'Basic realm="Nijmegen Duckstad admin"' } });
+async function verifyPassword(pw, stored) {
+  if (!stored || stored.indexOf("pbkdf2$") !== 0) return false;
+  const [, iterStr, saltB64, hashB64] = stored.split("$");
+  const key = await crypto.subtle.importKey("raw", te.encode(pw), "PBKDF2", false, ["deriveBits"]);
+  const bits = new Uint8Array(await crypto.subtle.deriveBits({ name: "PBKDF2", salt: fromB64(saltB64), iterations: parseInt(iterStr, 10), hash: "SHA-256" }, key, 256));
+  const want = fromB64(hashB64);
+  if (bits.length !== want.length) return false;
+  let diff = 0;
+  for (let i = 0; i < bits.length; i++) diff |= bits[i] ^ want[i];
+  return diff === 0;
+}
+
+function getCookie(request, name) {
+  const m = (request.headers.get("cookie") || "").match(new RegExp("(?:^|; )" + name + "=([^;]+)"));
+  return m ? m[1] : null;
+}
+const sessionCookie = (token, maxAge) => `dd_session=${token}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${maxAge}`;
+
+async function resolveSession(request, env) {
+  const token = getCookie(request, "dd_session");
+  if (!token) return null;
+  const s = await env.DB.prepare("SELECT user_id, email, role, expires FROM sessions WHERE token=?1").bind(token).first();
+  if (!s || s.expires < now()) return null;
+  return { user_id: s.user_id, email: s.email, role: s.role, token };
+}
+
+async function doLogin(request, env) {
+  const b = await request.json().catch(() => ({}));
+  const email = String(b.email || "").trim().toLowerCase();
+  const password = String(b.password || "");
+  let user = null;
+  const u = await env.DB.prepare("SELECT id, email, role, pass_hash FROM users WHERE email=?1").bind(email).first();
+  if (u && u.pass_hash && (await verifyPassword(password, u.pass_hash))) user = { id: u.id, email: u.email, role: u.role };
+  // break-glass: env-admin blijft altijd werken, zodat je nooit buitengesloten raakt
+  if (!user && email === String(env.ADMIN_USER || "admin").toLowerCase() && env.ADMIN_PASSWORD && password === env.ADMIN_PASSWORD) {
+    user = { id: "env-admin", email, role: "admin" };
+  }
+  if (!user) return bad("ongeldige_login", 401);
+  const token = randToken();
+  const maxAge = 7 * 24 * 3600;
+  const exp = new Date(Date.now() + maxAge * 1000).toISOString();
+  await env.DB.prepare("INSERT INTO sessions (token,user_id,email,role,created_at,expires) VALUES (?1,?2,?3,?4,?5,?6)")
+    .bind(token, user.id, user.email, user.role, now(), exp).run();
+  return json({ ok: true, email: user.email, role: user.role }, 200, { "set-cookie": sessionCookie(token, maxAge) });
+}
+
+async function doLogout(request, env) {
+  const token = getCookie(request, "dd_session");
+  if (token) await env.DB.prepare("DELETE FROM sessions WHERE token=?1").bind(token).run();
+  return json({ ok: true }, 200, { "set-cookie": "dd_session=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0" });
+}
+
+async function doRequestReset(request, env) {
+  const b = await request.json().catch(() => ({}));
+  const email = String(b.email || "").trim().toLowerCase();
+  const u = await env.DB.prepare("SELECT id, email FROM users WHERE email=?1").bind(email).first();
+  if (u) {
+    const token = randToken();
+    const exp = new Date(Date.now() + 3600 * 1000).toISOString();
+    await env.DB.prepare("UPDATE users SET reset_token=?2, reset_expires=?3 WHERE id=?1").bind(u.id, token, exp).run();
+    await sendResetMail(env, u.email, token, false);
+  }
+  return json({ ok: true }); // lek nooit of een account bestaat
+}
+
+async function doSetPassword(request, env) {
+  const b = await request.json().catch(() => ({}));
+  const token = String(b.token || "");
+  const password = String(b.password || "");
+  if (!token) return bad("token_ontbreekt");
+  if (password.length < 8) return bad("wachtwoord_te_kort");
+  const u = await env.DB.prepare("SELECT id, reset_expires FROM users WHERE reset_token=?1").bind(token).first();
+  if (!u || !u.reset_expires || u.reset_expires < now()) return bad("token_ongeldig_of_verlopen", 400);
+  const hash = await hashPassword(password);
+  await env.DB.prepare("UPDATE users SET pass_hash=?2, reset_token=NULL, reset_expires=NULL WHERE id=?1").bind(u.id, hash).run();
+  return json({ ok: true });
+}
+
+async function sendResetMail(env, email, token, isNew) {
+  if (!env.RESEND_API_KEY) return;
+  const link = `https://nijmegenduckstad.nl/admin-wachtwoord?token=${token}`;
+  const titel = isNew ? "Stel je wachtwoord in" : "Wachtwoord opnieuw instellen";
+  const intro = isNew
+    ? "Er is een beheeraccount voor je aangemaakt voor het admin-dashboard van Nijmegen Duckstad. Stel hieronder je wachtwoord in."
+    : "Je hebt een nieuw wachtwoord aangevraagd voor het admin-dashboard van Nijmegen Duckstad.";
+  const html = `
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#eef3fb;margin:0;padding:0;">
+  <tr><td align="center" style="padding:24px 12px;font-family:Arial,Helvetica,sans-serif;">
+    <table role="presentation" width="520" cellpadding="0" cellspacing="0" border="0" style="width:520px;max-width:520px;background:#fff;border-radius:16px;overflow:hidden;">
+      <tr><td style="background:#17458f;padding:22px 28px;color:#fff;font-family:Georgia,serif;font-size:20px;font-weight:bold;">Nijmegen Duckstad &middot; admin</td></tr>
+      <tr><td style="padding:26px 28px;color:#1d2433;font-size:15px;line-height:1.6;">
+        <p style="margin:0 0 14px;font-weight:bold;">${titel}</p>
+        <p style="margin:0 0 20px;color:#5b6679;">${intro}</p>
+        <p style="margin:0 0 20px;"><a href="${link}" style="background:#f7a81b;color:#3a2600;font-weight:bold;text-decoration:none;padding:12px 22px;border-radius:999px;display:inline-block;">${titel}</a></p>
+        <p style="margin:0;color:#8a94a6;font-size:12px;line-height:1.5;">Werkt de knop niet? Open: ${link}<br>Deze link verloopt vanzelf. Niet aangevraagd? Negeer deze mail.</p>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>`;
+  try {
+    const r = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { authorization: "Bearer " + env.RESEND_API_KEY, "content-type": "application/json" },
+      body: JSON.stringify({ from: env.MAIL_FROM || "Nijmegen Duckstad <info@nijmegenduckstad.nl>", reply_to: env.MAIL_REPLY_TO || "marco@marcovanthiel.nl", to: [email], subject: `${titel} — Nijmegen Duckstad admin`, html }),
+    });
+    if (!r.ok) console.error("reset_mail_fout", r.status, (await r.text().catch(() => "")).slice(0, 300));
+  } catch (e) { console.error("reset_mail_exception", String((e && e.message) || e)); }
+}
 
 async function adminApi(path, request, env) {
-  if (!checkAuth(request, env)) return authChallenge();
   const sub = path.slice("/api/admin/".length);
+
+  // Publieke (sessieloze) endpoints
+  if (sub === "login" && request.method === "POST") return doLogin(request, env);
+  if (sub === "logout" && request.method === "POST") return doLogout(request, env);
+  if (sub === "request-reset" && request.method === "POST") return doRequestReset(request, env);
+  if (sub === "set-password" && request.method === "POST") return doSetPassword(request, env);
+
+  // Vanaf hier: geldige sessie vereist
+  const session = await resolveSession(request, env);
+  if (!session) return json({ error: "unauthorized" }, 401);
+  if (sub === "me") return json({ email: session.email, role: session.role });
+
+  // Muteren mag alleen 'admin'; read-only mag bekijken + exports
+  const ADMIN_ONLY = new Set(["delete-order", "setting", "manual-order", "winner", "draw-reset", "users", "user-role", "user-reset", "user-delete"]);
+  if (ADMIN_ONLY.has(sub) && session.role !== "admin") return json({ error: "forbidden" }, 403);
 
   if (sub === "stats") {
     const s = await settings(env);
@@ -322,7 +451,7 @@ async function adminApi(path, request, env) {
        FROM ducks d JOIN orders o ON o.id = d.order_id ORDER BY d.type, d.number`).all();
     const rows = [["Type", "Nummer", "Naam", "E-mail", "Woonplaats", "Telefoon"]];
     (r.results || []).forEach((x) => rows.push([x.type, x.number, x.name, x.email, x.city, x.phone]));
-    return new Response("﻿" + csv(rows), { headers: { "content-type": "text/csv; charset=utf-8", "content-disposition": 'attachment; filename="loterijlijst.csv"' } });
+    return new Response("﻿" + csv(rows), { headers: { "content-type": "text/csv; charset=utf-8", "content-disposition": 'attachment; filename="eendjeslijst.csv"' } });
   }
 
   if (sub === "export-orders") {
@@ -345,22 +474,22 @@ async function adminApi(path, request, env) {
     return json({ draws: r.results || [] });
   }
 
-  if (sub === "draw" && request.method === "POST") {
+  // Winnaar invoeren: admin voert het winnende startnummer in (uit de race-uitslag).
+  if (sub === "winner" && request.method === "POST") {
     const b = await request.json().catch(() => ({}));
     const prize = esc(b.prize).trim().slice(0, 160);
+    const type = b.duck_type === "business" ? "business" : "regular";
+    const number = parseInt(b.duck_number, 10);
     if (!prize) return bad("prijs_verplicht");
-    const filterBusiness = b.include_business === false ? " AND d.type='regular'" : "";
-    // willekeurig eendje dat nog niet eerder gewonnen heeft
-    const pick = await env.DB.prepare(
+    if (!Number.isFinite(number)) return bad("startnummer_ongeldig");
+    const duck = await env.DB.prepare(
       `SELECT d.type AS type, d.number AS number, o.id AS order_id, o.name AS name, o.email AS email
-       FROM ducks d JOIN orders o ON o.id=d.order_id
-       WHERE NOT EXISTS (SELECT 1 FROM draws w WHERE w.duck_type=d.type AND w.duck_number=d.number)${filterBusiness}
-       ORDER BY RANDOM() LIMIT 1`).first();
-    if (!pick) return bad("geen_eendjes_beschikbaar", 409);
+       FROM ducks d JOIN orders o ON o.id=d.order_id WHERE d.type=?1 AND d.number=?2`).bind(type, number).first();
+    if (!duck) return bad("startnummer_niet_gevonden", 404);
     await env.DB.prepare(
       "INSERT INTO draws (created_at,prize,duck_type,duck_number,order_id,winner_name,winner_email) VALUES (?1,?2,?3,?4,?5,?6,?7)")
-      .bind(now(), prize, pick.type, pick.number, pick.order_id, pick.name, pick.email).run();
-    return json({ winner: { prize, type: pick.type, number: pick.number, name: pick.name, email: pick.email } });
+      .bind(now(), prize, duck.type, duck.number, duck.order_id, duck.name, duck.email).run();
+    return json({ winner: { prize, type: duck.type, number: duck.number, name: duck.name, email: duck.email } });
   }
 
   if (sub === "draw-reset" && request.method === "POST") {
@@ -391,6 +520,79 @@ async function adminApi(path, request, env) {
     await assignNumbers(env, { id, quantity: qty, type });
     const d = await env.DB.prepare("SELECT number FROM ducks WHERE order_id=?1 ORDER BY number").bind(id).all();
     return json({ ok: true, order_id: id, numbers: (d.results || []).map((r) => r.number) });
+  }
+
+  // Bestelling verwijderen: nummers komen vrij (hergebruikbaar), betaling/nummers/order weg uit het systeem.
+  if (sub === "delete-order" && request.method === "POST") {
+    const b = await request.json().catch(() => ({}));
+    const id = String(b.id || "");
+    if (!id) return bad("id_verplicht");
+    const o = await env.DB.prepare("SELECT id FROM orders WHERE id=?1").bind(id).first();
+    if (!o) return bad("niet_gevonden", 404);
+    await env.DB.batch([
+      env.DB.prepare("DELETE FROM ducks WHERE order_id=?1").bind(id),
+      env.DB.prepare("DELETE FROM draws WHERE order_id=?1").bind(id),
+      env.DB.prepare("DELETE FROM orders WHERE id=?1").bind(id),
+    ]);
+    return json({ ok: true });
+  }
+
+  /* ----- gebruikersbeheer (admin-only) ----- */
+  if (sub === "users" && request.method === "GET") {
+    const r = await env.DB.prepare("SELECT id, email, role, created_at, (pass_hash IS NOT NULL) AS has_pw FROM users ORDER BY email").all();
+    return json({ users: r.results || [], me: session.email });
+  }
+  if (sub === "users" && request.method === "POST") {
+    const b = await request.json().catch(() => ({}));
+    const email = String(b.email || "").trim().toLowerCase();
+    const role = b.role === "admin" ? "admin" : "readonly";
+    if (!isEmail(email)) return bad("email_ongeldig");
+    const exists = await env.DB.prepare("SELECT id FROM users WHERE email=?1").bind(email).first();
+    if (exists) return bad("bestaat_al", 409);
+    const id = crypto.randomUUID();
+    const token = randToken();
+    const exp = new Date(Date.now() + 72 * 3600 * 1000).toISOString();
+    await env.DB.prepare("INSERT INTO users (id,email,role,created_at,reset_token,reset_expires) VALUES (?1,?2,?3,?4,?5,?6)")
+      .bind(id, email, role, now(), token, exp).run();
+    await sendResetMail(env, email, token, true);
+    return json({ ok: true, mailed: !!env.RESEND_API_KEY });
+  }
+  if (sub === "user-role" && request.method === "POST") {
+    const b = await request.json().catch(() => ({}));
+    const id = String(b.id || "");
+    const role = b.role === "admin" ? "admin" : "readonly";
+    if (role !== "admin") {
+      const t = await env.DB.prepare("SELECT role FROM users WHERE id=?1").bind(id).first();
+      const admins = await env.DB.prepare("SELECT COUNT(*) AS n FROM users WHERE role='admin'").first();
+      if (t && t.role === "admin" && admins.n <= 1) return bad("laatste_admin", 409);
+    }
+    await env.DB.prepare("UPDATE users SET role=?2 WHERE id=?1").bind(id, role).run();
+    return json({ ok: true });
+  }
+  if (sub === "user-reset" && request.method === "POST") {
+    const b = await request.json().catch(() => ({}));
+    const u = await env.DB.prepare("SELECT id, email FROM users WHERE id=?1").bind(String(b.id || "")).first();
+    if (!u) return bad("niet_gevonden", 404);
+    const token = randToken();
+    const exp = new Date(Date.now() + 72 * 3600 * 1000).toISOString();
+    await env.DB.prepare("UPDATE users SET reset_token=?2, reset_expires=?3 WHERE id=?1").bind(u.id, token, exp).run();
+    await sendResetMail(env, u.email, token, false);
+    return json({ ok: true, mailed: !!env.RESEND_API_KEY });
+  }
+  if (sub === "user-delete" && request.method === "POST") {
+    const b = await request.json().catch(() => ({}));
+    const u = await env.DB.prepare("SELECT id, email, role FROM users WHERE id=?1").bind(String(b.id || "")).first();
+    if (!u) return bad("niet_gevonden", 404);
+    if (u.email === session.email) return bad("niet_jezelf_verwijderen", 409);
+    if (u.role === "admin") {
+      const admins = await env.DB.prepare("SELECT COUNT(*) AS n FROM users WHERE role='admin'").first();
+      if (admins.n <= 1) return bad("laatste_admin", 409);
+    }
+    await env.DB.batch([
+      env.DB.prepare("DELETE FROM users WHERE id=?1").bind(u.id),
+      env.DB.prepare("DELETE FROM sessions WHERE user_id=?1").bind(u.id),
+    ]);
+    return json({ ok: true });
   }
 
   return bad("onbekende_admin-route", 404);

@@ -1,8 +1,8 @@
-# Setup — bestel-, betaal- & loterijsysteem
+# Setup — bestel-, betaal- & racesysteem
 
 Dit systeem maakt van de site een echte webshop voor badeendjes: online
 bestellen → iDEAL betalen (Mollie) → automatisch opvolgende eendnummers →
-bevestiging → admin-dashboard met loterijlijst-export en trekkingen.
+bevestiging → admin-dashboard met eendjeslijst-export en winnaar-invoer.
 
 > **Het staat op een aparte branch** (`feature/bestelsysteem`), zodat de live
 > site ongemoeid blijft. De stappen hieronder zet je éénmalig op; pas daarna
@@ -16,8 +16,8 @@ bevestiging → admin-dashboard met loterijlijst-export en trekkingen.
 - Bevestigingspagina met de toegekende nummers + (optioneel) bevestigingsmail.
 - Live verkoopteller op de homepage (echte cijfers).
 - **Admin-dashboard** (`/admin`, wachtwoord): verkoopstand, bestellingen,
-  CSV-export van loterijlijst / bestellingen / nieuwsbrief, printbare loterijlijst (PDF),
-  **trekkingsmodule** (random winnaar per prijs), instellingen (verkoop open/dicht,
+  CSV-export van eendjeslijst / bestellingen / nieuwsbrief, printbare eendjeslijst (PDF),
+  **winnaar-invoer** (winnend startnummer per prijs, uit de race-uitslag), instellingen (verkoop open/dicht,
   voorraad), en handmatige verkoop (contant/Tikkie) met directe nummering.
 
 ## Benodigd
@@ -71,16 +71,16 @@ wrangler secret put MAIL_FROM           # bv. "Nijmegen Duckstad <info@nijmegend
 
 ## Beheer & administratie
 - **Dashboard:** `https://nijmegenduckstad.nl/admin` (gebruiker `admin` + jouw wachtwoord).
-- **Loterijlijst** (nummer ↔ koper) exporteer je als CSV of print je als PDF voor de trekking.
-- **Trekking:** vul een prijs in en klik "Trek een winnaar" — het systeem kiest willekeurig
-  een nog niet-gewonnen eendje en legt de winnaar vast.
+- **Eendjeslijst** (startnummer ↔ koper) exporteer je als CSV of print je als PDF.
+- **Winnaar invoeren:** vul per prijs het winnende startnummer in — het systeem toont de
+  koper en legt de winnaar vast.
 - **Verkoop sluiten:** zet in het dashboard "online verkoop open" uit.
 
 ## Privacy (AVG)
 - We slaan alleen op wat nodig is: naam, e-mail, (optioneel) telefoon/woonplaats,
   nieuwsbrief-keuze. Toestemming is verplicht bij het bestellen.
 - Betaalgegevens lopen volledig via Mollie; die raken onze servers niet.
-- Wil je later data verwijderen na de trekking: dat kan met een SQL-statement
+- Wil je later data verwijderen na de race: dat kan met een SQL-statement
   (`wrangler d1 execute …`). Vraag me gerust om een opschoonscript.
 
 ## Architectuur (kort)

@@ -48,7 +48,7 @@
       icon.textContent='🎉'; title.textContent='Gelukt — bedankt!';
       msg.innerHTML='Je betaling is gelukt. Je hebt <strong>'+d.quantity+'x '+(d.type==='business'?'bedrijfseendje':'eendje')+'</strong> geadopteerd.';
       numbersEl.style.display='block';
-      numbersEl.innerHTML='<p style="margin-bottom:8px" class="muted">Jouw startnummer(s) voor de race &amp; loterij:</p><div class="chips" style="justify-content:center">'+
+      numbersEl.innerHTML='<p style="margin-bottom:8px" class="muted">Jouw startnummer(s) voor de badeendjesrace:</p><div class="chips" style="justify-content:center">'+
         d.numbers.map(function(n){return '<li style="background:#fff5dd;color:#7a5200;font-weight:700">#'+n+'</li>';}).join('')+'</div>'+
         '<p class="form__note" style="margin-top:14px">Bewaar deze nummers goed (we sturen ze ook per e-mail). Veel succes! 🦆</p>';
       actions.innerHTML='<a class="btn btn--primary" href="index.html">Terug naar de site</a>';

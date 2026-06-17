@@ -22,19 +22,34 @@
   .tag.paid{background:#e7f7ef;color:#13754f}.tag.pending{background:#fff5dd;color:#7a5200}.tag.other{background:#fdecec;color:#b3261e}
   .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
   .scroll{overflow:auto;max-height:420px}
+  .mini{padding:4px 10px;font-size:.82rem}
+  .admin-only{display:none}
+  body.is-admin .admin-only{display:block}
+  .whoami{color:var(--muted);font-size:.88rem}
+  select{padding:6px 8px;border:1px solid var(--line);border-radius:8px}
+  a.link{color:var(--blue);cursor:pointer;text-decoration:underline}
 </style>
 </head>
 <body style="background:var(--bg)">
 <div class="admin-wrap">
   <div class="row" style="justify-content:space-between">
     <h1 style="margin:0">🦆 Duckstad admin</h1>
-    <button class="btn btn--ghost-blue" id="logout" style="display:none;padding:8px 16px">Uitloggen</button>
+    <div class="row" style="gap:14px"><span class="whoami" id="whoami" style="display:none"></span><button class="btn btn--ghost-blue" id="logout" style="display:none;padding:8px 16px">Uitloggen</button></div>
   </div>
 
-  <div id="login" class="panel" style="max-width:420px;margin-top:24px">
-    <h3>Inloggen</h3>
-    <div class="field"><label for="pw">Wachtwoord</label><input id="pw" type="password" autocomplete="current-password"></div>
-    <button class="btn btn--primary" id="loginBtn">Inloggen</button>
+  <div id="login" class="panel" style="max-width:440px;margin-top:24px">
+    <h3 id="loginTitle">Inloggen</h3>
+    <div id="loginForm">
+      <div class="field"><label for="email">E-mailadres</label><input id="email" type="email" autocomplete="username"></div>
+      <div class="field"><label for="pw">Wachtwoord</label><input id="pw" type="password" autocomplete="current-password"></div>
+      <button class="btn btn--primary" id="loginBtn">Inloggen</button>
+      <p style="margin-top:12px"><a class="link" id="forgotLink">Wachtwoord vergeten?</a></p>
+    </div>
+    <div id="forgotForm" style="display:none">
+      <div class="field"><label for="fEmail">E-mailadres</label><input id="fEmail" type="email" autocomplete="username"></div>
+      <button class="btn btn--primary" id="forgotBtn">Stuur reset-link</button>
+      <p style="margin-top:12px"><a class="link" id="backToLogin">← Terug naar inloggen</a></p>
+    </div>
     <div class="form-status" id="loginStatus"></div>
   </div>
 
@@ -45,28 +60,30 @@
       <div class="row" style="justify-content:space-between">
         <h3 style="margin:0">Exporteren</h3>
         <div class="row">
-          <button class="btn btn--ghost-blue" data-export="export-lottery" style="padding:8px 16px">🎟️ Loterijlijst (CSV)</button>
-          <button class="btn btn--ghost-blue" data-export="export-orders" style="padding:8px 16px">📋 Bestellingen (CSV)</button>
-          <button class="btn btn--ghost-blue" data-export="export-newsletter" style="padding:8px 16px">✉️ Nieuwsbrief (CSV)</button>
-          <button class="btn btn--ghost-blue" id="printList" style="padding:8px 16px">🖨️ Loterijlijst printen/PDF</button>
+          <button class="btn btn--ghost-blue" data-export="export-lottery" data-filename="eendjeslijst" style="padding:8px 16px">🦆 Eendjeslijst (CSV)</button>
+          <button class="btn btn--ghost-blue" data-export="export-orders" data-filename="bestellingen" style="padding:8px 16px">📋 Bestellingen (CSV)</button>
+          <button class="btn btn--ghost-blue" data-export="export-newsletter" data-filename="nieuwsbrief" style="padding:8px 16px">✉️ Nieuwsbrief (CSV)</button>
+          <button class="btn btn--ghost-blue" id="printList" style="padding:8px 16px">🖨️ Eendjeslijst printen/PDF</button>
         </div>
       </div>
       <p class="form__note">CSV opent in Excel/Numbers. "Printen/PDF" opent een printbare lijst — kies in het printvenster "Bewaar als PDF".</p>
     </div>
 
-    <div class="panel">
-      <h3>🎲 Trekking</h3>
+    <div class="panel admin-only">
+      <h3>🏁 Winnaar invoeren (race-uitslag)</h3>
+      <p class="form__note">Vul de prijs en het winnende startnummer in. Het systeem toont de koper.</p>
       <div class="row">
-        <input id="prize" placeholder="Prijs (bv. Ballonvaart)" style="flex:1;min-width:200px">
-        <label class="row" style="gap:6px"><input type="checkbox" id="incBus" checked style="width:auto"> bedrijfseendjes meenemen</label>
-        <button class="btn btn--primary" id="drawBtn" style="padding:10px 18px">Trek een winnaar</button>
-        <button class="btn btn--ghost-blue" id="drawReset" style="padding:10px 18px">Reset trekkingen</button>
+        <input id="prize" placeholder="Prijs (bv. Ballonvaart)" style="flex:1;min-width:180px">
+        <select id="wType"><option value="regular">Eendje</option><option value="business">Bedrijfseendje</option></select>
+        <input id="wNum" type="number" min="1" placeholder="startnummer" style="width:130px">
+        <button class="btn btn--primary" id="winBtn" style="padding:10px 18px">Winnaar vastleggen</button>
+        <button class="btn btn--ghost-blue" id="winReset" style="padding:10px 18px">Reset winnaars</button>
       </div>
-      <div id="drawResult" style="margin-top:12px"></div>
-      <div class="scroll" style="margin-top:12px"><table id="drawsTable"><thead><tr><th>#</th><th>Prijs</th><th>Eend</th><th>Winnaar</th><th>E-mail</th></tr></thead><tbody></tbody></table></div>
+      <div id="winResult" style="margin-top:12px"></div>
+      <div class="scroll" style="margin-top:12px"><table id="drawsTable"><thead><tr><th>#</th><th>Prijs</th><th>Startnummer</th><th>Winnaar</th><th>E-mail</th></tr></thead><tbody></tbody></table></div>
     </div>
 
-    <div class="panel">
+    <div class="panel admin-only">
       <h3>⚙️ Instellingen</h3>
       <div class="row">
         <label class="row" style="gap:6px"><input type="checkbox" id="salesOpen" style="width:auto"> online verkoop open</label>
@@ -76,7 +93,7 @@
       </div>
     </div>
 
-    <div class="panel">
+    <div class="panel admin-only">
       <h3>➕ Handmatige verkoop (contant / Tikkie)</h3>
       <div class="row">
         <select id="mType"><option value="regular">Eendje(s)</option><option value="business">Bedrijfseendje(s)</option></select>
@@ -89,39 +106,63 @@
       <div id="mResult" style="margin-top:10px"></div>
     </div>
 
+    <div class="panel admin-only">
+      <h3>👥 Gebruikersbeheer</h3>
+      <p class="form__note">Gebruikersnaam = e-mailadres. Een nieuwe gebruiker krijgt een mail om zelf een wachtwoord in te stellen.</p>
+      <div class="row">
+        <input id="uEmail" type="email" placeholder="E-mailadres" style="flex:1;min-width:200px">
+        <select id="uRole"><option value="readonly">Read-only (bekijken + exports)</option><option value="admin">Admin (alle rechten)</option></select>
+        <button class="btn btn--primary" id="uAdd" style="padding:10px 18px">Gebruiker toevoegen</button>
+      </div>
+      <div id="uResult" style="margin-top:8px"></div>
+      <div class="scroll" style="margin-top:12px"><table id="usersTable"><thead><tr><th>E-mail</th><th>Rol</th><th>Status</th><th></th></tr></thead><tbody></tbody></table></div>
+    </div>
+
     <div class="panel">
       <h3>Bestellingen</h3>
-      <div class="scroll"><table id="ordersTable"><thead><tr><th>Datum</th><th>Naam</th><th>E-mail</th><th>Type</th><th>Aantal</th><th>Bedrag</th><th>Status</th><th>Plaats</th></tr></thead><tbody></tbody></table></div>
+      <div class="scroll"><table id="ordersTable"><thead><tr><th>Datum</th><th>Naam</th><th>E-mail</th><th>Type</th><th>Aantal</th><th>Bedrag</th><th>Status</th><th>Plaats</th><th class="admin-col"></th></tr></thead><tbody></tbody></table></div>
     </div>
   </div>
 </div>
 
 <script>
 (function(){
-  var KEY='duck_admin';
   var login=document.getElementById('login'), app=document.getElementById('app');
   var loginStatus=document.getElementById('loginStatus');
-  function authHeader(){ return sessionStorage.getItem(KEY); }
-  function setAuth(pw){ sessionStorage.setItem(KEY,'Basic '+btoa('admin:'+pw)); }
-  function clearAuth(){ sessionStorage.removeItem(KEY); }
-  function api(path, opts){ opts=opts||{}; opts.headers=Object.assign({'authorization':authHeader()},opts.headers||{}); return fetch('/api/admin/'+path,opts); }
+  var isAdmin=false;
+  function api(path, opts){ opts=opts||{}; opts.credentials='same-origin'; return fetch('/api/admin/'+path,opts); }
+  function postJSON(path, obj){ return api(path,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(obj||{})}); }
   function euro(c){ return '€'+(c/100).toLocaleString('nl-NL',{minimumFractionDigits:2,maximumFractionDigits:2}); }
-  function esc(s){ return (s==null?'':String(s)).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];}); }
+  function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+  function status(msg, ok){ loginStatus.className='form-status show '+(ok?'ok':'err'); loginStatus.textContent=msg; }
 
+  // ----- login / sessie -----
   document.getElementById('loginBtn').onclick=function(){
-    var pw=document.getElementById('pw').value; if(!pw){return;}
-    setAuth(pw);
-    api('stats').then(function(r){ if(r.ok){ start(); } else { clearAuth(); loginStatus.className='form-status show err'; loginStatus.textContent='Onjuist wachtwoord.'; } })
-      .catch(function(){ loginStatus.className='form-status show err'; loginStatus.textContent='Geen verbinding.'; });
+    var email=document.getElementById('email').value.trim(), pw=document.getElementById('pw').value;
+    if(!email||!pw){ status('Vul e-mail en wachtwoord in.'); return; }
+    postJSON('login',{email:email,password:pw}).then(function(r){return r.json().then(function(d){return {ok:r.ok,d:d};});})
+      .then(function(res){ if(res.ok){ start(res.d.email,res.d.role); } else { status('Onjuiste inloggegevens.'); } })
+      .catch(function(){ status('Geen verbinding.'); });
   };
   document.getElementById('pw').addEventListener('keydown',function(e){ if(e.key==='Enter') document.getElementById('loginBtn').click(); });
-  document.getElementById('logout').onclick=function(){ clearAuth(); location.reload(); };
+  document.getElementById('logout').onclick=function(){ postJSON('logout').then(function(){ location.reload(); }); };
+  document.getElementById('forgotLink').onclick=function(){ document.getElementById('loginForm').style.display='none'; document.getElementById('forgotForm').style.display='block'; document.getElementById('loginTitle').textContent='Wachtwoord vergeten'; loginStatus.className='form-status'; };
+  document.getElementById('backToLogin').onclick=function(){ document.getElementById('forgotForm').style.display='none'; document.getElementById('loginForm').style.display='block'; document.getElementById('loginTitle').textContent='Inloggen'; loginStatus.className='form-status'; };
+  document.getElementById('forgotBtn').onclick=function(){
+    var email=document.getElementById('fEmail').value.trim(); if(!email){ status('Vul je e-mailadres in.'); return; }
+    postJSON('request-reset',{email:email}).then(function(){ status('Als dit account bestaat, is er een reset-link gemaild.',true); });
+  };
 
-  function start(){
-    login.style.display='none'; app.style.display='block'; document.getElementById('logout').style.display='';
-    loadStats(); loadOrders(); loadDraws();
+  function start(email, role){
+    isAdmin = role==='admin';
+    document.body.classList.toggle('is-admin', isAdmin);
+    login.style.display='none'; app.style.display='block';
+    document.getElementById('logout').style.display='';
+    var who=document.getElementById('whoami'); who.style.display=''; who.textContent='Ingelogd als '+email+' · '+(isAdmin?'admin':'read-only');
+    loadStats(); loadOrders(); loadDraws(); if(isAdmin) loadUsers();
   }
 
+  // ----- data laden -----
   function loadStats(){
     api('stats').then(function(r){return r.json();}).then(function(s){
       document.getElementById('kpis').innerHTML=[
@@ -132,8 +173,8 @@
         ['In behandeling', s.pending_orders],
         ['Nieuwsbrief-aanmeldingen', s.newsletter_count]
       ].map(function(k){return '<div class="kpi"><b>'+k[1]+'</b><span>'+k[0]+'</span></div>';}).join('');
-      document.getElementById('salesOpen').checked=!!s.sales_open;
-      document.getElementById('maxReg').value=s.max_regular;
+      var so=document.getElementById('salesOpen'); if(so) so.checked=!!s.sales_open;
+      var mr=document.getElementById('maxReg'); if(mr) mr.value=s.max_regular;
     });
   }
   function loadOrders(){
@@ -141,7 +182,8 @@
       var tb=document.querySelector('#ordersTable tbody');
       tb.innerHTML=(d.orders||[]).map(function(o){
         var cls=o.status==='paid'?'paid':(o.status==='pending'?'pending':'other');
-        return '<tr><td>'+esc((o.created_at||'').slice(0,16).replace('T',' '))+'</td><td>'+esc(o.name)+'</td><td>'+esc(o.email)+'</td><td>'+esc(o.type)+'</td><td>'+o.quantity+'</td><td>'+euro(o.amount_cents)+'</td><td><span class="tag '+cls+'">'+esc(o.status)+'</span></td><td>'+esc(o.city)+'</td></tr>';
+        var act=isAdmin?'<td class="admin-col"><button class="btn btn--ghost-blue mini" data-delorder="'+esc(o.id)+'">🗑</button></td>':'<td class="admin-col"></td>';
+        return '<tr><td>'+esc((o.created_at||'').slice(0,16).replace('T',' '))+'</td><td>'+esc(o.name)+'</td><td>'+esc(o.email)+'</td><td>'+esc(o.type)+'</td><td>'+o.quantity+'</td><td>'+euro(o.amount_cents)+'</td><td><span class="tag '+cls+'">'+esc(o.status)+'</span></td><td>'+esc(o.city)+'</td>'+act+'</tr>';
       }).join('');
     });
   }
@@ -152,12 +194,26 @@
       }).join('');
     });
   }
+  var myEmail='';
+  function loadUsers(){
+    api('users').then(function(r){return r.json();}).then(function(d){
+      myEmail=d.me||'';
+      function opt(v,cur,label){ return '<option value="'+v+'"'+(cur===v?' selected':'')+'>'+label+'</option>'; }
+      document.querySelector('#usersTable tbody').innerHTML=(d.users||[]).map(function(u){
+        var mine=u.email===d.me;
+        var roleSel='<select class="uroleSel" data-uid="'+u.id+'">'+opt('readonly',u.role,'read-only')+opt('admin',u.role,'admin')+'</select>';
+        var st=u.has_pw?'<span class="tag paid">actief</span>':'<span class="tag pending">wacht op wachtwoord</span>';
+        var act='<button class="btn btn--ghost-blue mini" data-ureset="'+u.id+'">Reset-link</button>'+(mine?'':' <button class="btn btn--ghost-blue mini" data-udel="'+u.id+'">🗑</button>');
+        return '<tr><td>'+esc(u.email)+(mine?' <span class="muted">(jij)</span>':'')+'</td><td>'+roleSel+'</td><td>'+st+'</td><td class="row" style="gap:6px">'+act+'</td></tr>';
+      }).join('');
+    });
+  }
 
-  // exports (met auth -> blob download)
+  // ----- exports -----
   document.querySelectorAll('[data-export]').forEach(function(b){
     b.onclick=function(){
       api(b.dataset.export).then(function(r){return r.blob();}).then(function(blob){
-        var u=URL.createObjectURL(blob), a=document.createElement('a'); a.href=u; a.download=b.dataset.export.replace('export-','')+'.csv'; a.click(); URL.revokeObjectURL(u);
+        var u=URL.createObjectURL(blob), a=document.createElement('a'); a.href=u; a.download=(b.dataset.filename||b.dataset.export.replace('export-',''))+'.csv'; a.click(); URL.revokeObjectURL(u);
       });
     };
   });
@@ -165,42 +221,72 @@
     api('export-lottery').then(function(r){return r.text();}).then(function(txt){
       var rows=txt.replace(/^﻿/,'').split('\r\n').filter(Boolean).map(function(l){return l.split(';');});
       var w=window.open('','_blank');
-      var html='<h2>Loterijlijst — Nijmegen Duckstad</h2><table border="1" cellpadding="4" style="border-collapse:collapse;font-family:sans-serif;font-size:12px">';
+      var html='<h2>Eendjeslijst — Nijmegen Duckstad</h2><table border="1" cellpadding="4" style="border-collapse:collapse;font-family:sans-serif;font-size:12px">';
       html+=rows.map(function(r,i){return '<tr>'+r.map(function(c){var t=c.replace(/^"|"$/g,'').replace(/""/g,'"');return (i===0?'<th>':'<td>')+t+(i===0?'</th>':'</td>');}).join('')+'</tr>';}).join('');
       html+='</table>'; w.document.write(html); w.document.close(); w.print();
     });
   };
 
-  document.getElementById('drawBtn').onclick=function(){
-    var prize=document.getElementById('prize').value.trim(); if(!prize){alert('Vul een prijs in.');return;}
-    api('draw',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({prize:prize,include_business:document.getElementById('incBus').checked})})
-      .then(function(r){return r.json();}).then(function(d){
-        var el=document.getElementById('drawResult');
-        if(d.winner){ el.innerHTML='<div class="card" style="background:#fff5dd;border:0">🏆 <strong>'+esc(d.winner.prize)+'</strong> → eend '+esc(d.winner.type)+' <strong>#'+d.winner.number+'</strong> — '+esc(d.winner.name)+' ('+esc(d.winner.email)+')</div>'; document.getElementById('prize').value=''; loadDraws(); }
-        else { el.innerHTML='<span class="muted">'+esc(d.error||'geen winnaar')+'</span>'; }
-      });
+  // ----- winnaar invoeren (admin) -----
+  document.getElementById('winBtn').onclick=function(){
+    var prize=document.getElementById('prize').value.trim();
+    var type=document.getElementById('wType').value;
+    var num=parseInt(document.getElementById('wNum').value,10);
+    if(!prize){ alert('Vul een prijs in.'); return; }
+    if(!num){ alert('Vul een startnummer in.'); return; }
+    postJSON('winner',{prize:prize,duck_type:type,duck_number:num}).then(function(r){return r.json();}).then(function(d){
+      var el=document.getElementById('winResult');
+      if(d.winner){ el.innerHTML='<div class="card" style="background:#fff5dd;border:0">🏆 <strong>'+esc(d.winner.prize)+'</strong> → startnummer '+esc(d.winner.type)+' <strong>#'+d.winner.number+'</strong> — '+esc(d.winner.name)+' ('+esc(d.winner.email)+')</div>'; document.getElementById('prize').value=''; document.getElementById('wNum').value=''; loadDraws(); }
+      else { el.innerHTML='<span class="muted">'+esc(d.error==='startnummer_niet_gevonden'?'Geen verkocht eendje met dat startnummer.':(d.error||'fout'))+'</span>'; }
+    });
   };
-  document.getElementById('drawReset').onclick=function(){ if(!confirm('Alle trekkingen wissen?'))return; api('draw-reset',{method:'POST'}).then(function(){loadDraws();document.getElementById('drawResult').innerHTML='';}); };
+  document.getElementById('winReset').onclick=function(){ if(!confirm('Alle ingevoerde winnaars wissen?'))return; postJSON('draw-reset').then(function(){loadDraws();document.getElementById('winResult').innerHTML='';}); };
 
+  // ----- instellingen (admin) -----
   document.getElementById('saveSettings').onclick=function(){
     var open=document.getElementById('salesOpen').checked?'1':'0';
     var max=document.getElementById('maxReg').value;
     Promise.all([
-      api('setting',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({key:'sales_open',value:open})}),
-      api('setting',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({key:'max_regular',value:max})})
+      postJSON('setting',{key:'sales_open',value:open}),
+      postJSON('setting',{key:'max_regular',value:max})
     ]).then(function(){ loadStats(); alert('Opgeslagen.'); });
   };
 
+  // ----- handmatige verkoop (admin) -----
   document.getElementById('mAdd').onclick=function(){
     var p={type:document.getElementById('mType').value,quantity:parseInt(document.getElementById('mQty').value,10),name:document.getElementById('mName').value,email:document.getElementById('mEmail').value,city:document.getElementById('mCity').value};
     if(!p.name||!p.quantity){alert('Naam en aantal verplicht.');return;}
-    api('manual-order',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(p)}).then(function(r){return r.json();}).then(function(d){
+    postJSON('manual-order',p).then(function(r){return r.json();}).then(function(d){
       if(d.ok){ document.getElementById('mResult').innerHTML='Toegevoegd. Nummers: <strong>'+d.numbers.map(function(n){return '#'+n;}).join(', ')+'</strong>'; document.getElementById('mName').value='';document.getElementById('mEmail').value='';document.getElementById('mCity').value='';document.getElementById('mQty').value='1'; loadStats(); loadOrders(); }
       else { document.getElementById('mResult').textContent=d.error||'fout'; }
     });
   };
 
-  if(authHeader()){ api('stats').then(function(r){ if(r.ok) start(); else clearAuth(); }); }
+  // ----- gebruikersbeheer (admin) -----
+  document.getElementById('uAdd').onclick=function(){
+    var email=document.getElementById('uEmail').value.trim(), role=document.getElementById('uRole').value;
+    if(!email){ alert('Vul een e-mailadres in.'); return; }
+    postJSON('users',{email:email,role:role}).then(function(r){return r.json();}).then(function(d){
+      var el=document.getElementById('uResult');
+      if(d.ok){ el.innerHTML='<span class="muted">Toegevoegd'+(d.mailed?' — er is een mail gestuurd om het wachtwoord in te stellen.':' (let op: geen mail verstuurd).')+'</span>'; document.getElementById('uEmail').value=''; loadUsers(); }
+      else { el.textContent=d.error==='bestaat_al'?'Dit e-mailadres bestaat al.':(d.error||'fout'); }
+    });
+  };
+  // event-delegatie voor gebruikers- en order-acties
+  document.body.addEventListener('click',function(e){
+    var t=e.target;
+    if(t.dataset && t.dataset.delorder){ if(confirm('Bestelling verwijderen? De eendnummers komen weer vrij.')){ postJSON('delete-order',{id:t.dataset.delorder}).then(function(){ loadOrders(); loadStats(); }); } }
+    if(t.dataset && t.dataset.ureset){ postJSON('user-reset',{id:t.dataset.ureset}).then(function(r){return r.json();}).then(function(d){ alert(d.ok?'Reset-link gemaild.':(d.error||'fout')); }); }
+    if(t.dataset && t.dataset.udel){ if(confirm('Gebruiker verwijderen?')){ postJSON('user-delete',{id:t.dataset.udel}).then(function(r){return r.json();}).then(function(d){ if(!d.ok) alert(d.error==='laatste_admin'?'Kan de laatste admin niet verwijderen.':(d.error||'fout')); loadUsers(); }); } }
+  });
+  document.body.addEventListener('change',function(e){
+    if(e.target.classList && e.target.classList.contains('uroleSel')){
+      postJSON('user-role',{id:e.target.dataset.uid,role:e.target.value}).then(function(r){return r.json();}).then(function(d){ if(!d.ok){ alert(d.error==='laatste_admin'?'Er moet minstens één admin blijven.':(d.error||'fout')); loadUsers(); } });
+    }
+  });
+
+  // ----- sessie herstellen bij laden -----
+  api('me').then(function(r){ if(r.ok) return r.json(); throw 0; }).then(function(d){ start(d.email,d.role); }).catch(function(){ /* toon login */ });
 })();
 </script>
 </body>

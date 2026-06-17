@@ -189,6 +189,18 @@ De site wordt uitgebreid van static-only naar een Worker-met-code + D1:
 
 ## Recente architectuur-besluiten (changelog)
 
+- **2026-06-17** (Code): **admin-accounts + rollen, orders verwijderen, "loterij"→race**.
+  (1) Basic-auth (`ADMIN_PASSWORD`) vervangen door **gebruikersaccounts** (e-mail=gebruikersnaam)
+  met **rollen** admin/read-only, **sessie-cookies** (`sessions`-tabel), **PBKDF2**-hashing en
+  **wachtwoordreset** via Resend (pagina `admin-wachtwoord.html`). Migratie `0002_users.sql`
+  (`users`+`sessions`). `ADMIN_USER`/`ADMIN_PASSWORD` blijven als **break-glass**-admin. Read-only
+  mag bekijken + exports; muteren is admin-only (set in `adminApi`). (2) `POST /api/admin/delete-order`
+  verwijdert order+ducks+winnaars; `assignNumbers` toegekend nu de **laagste vrije** nummers, dus
+  vrijgekomen nummers worden hergebruikt (teller vervallen). (3) Willekeurige **trekking vervangen
+  door winnaar-invoer** (`/api/admin/winner`, winnend startnummer); overal "loterij" hernoemd naar
+  race/badeendjesrace/eendjeslijst (UI, mail, export `eendjeslijst.csv`, bestelpagina's, SETUP).
+  Deploy-vereiste: migratie 0002 op remote D1 vóór de code-deploy.
+
 - **2026-06-17** (Code): **bevestigingsmail vernieuwd** (`sendConfirmation` in `src/index.js`):
   HTML-mail met loterijticket-kaartjes per eendje (🦆 + startnummer, padStart 4) en een
   Rotary-footer (logo `assets/img/rotary-nijmegen-stadenland.png`, gekopieerd uit de

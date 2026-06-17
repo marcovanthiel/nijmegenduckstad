@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wachtwoord instellen · Nijmegen Duckstad admin</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+<style>
+  .wrap-mid{max-width:440px;margin:48px auto;padding:0 20px}
+  .panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px}
+</style>
+</head>
+<body style="background:var(--bg)">
+<div class="wrap-mid">
+  <div class="panel">
+    <h1 style="margin:0 0 4px">🦆 Nijmegen Duckstad</h1>
+    <h3 style="margin:0 0 16px;color:var(--blue)">Wachtwoord instellen</h3>
+    <div id="form">
+      <div class="field"><label for="pw1">Nieuw wachtwoord (min. 8 tekens)</label><input id="pw1" type="password" autocomplete="new-password"></div>
+      <div class="field"><label for="pw2">Herhaal wachtwoord</label><input id="pw2" type="password" autocomplete="new-password"></div>
+      <button class="btn btn--primary" id="save">Wachtwoord opslaan</button>
+      <div class="form-status" id="msg"></div>
+    </div>
+    <div id="done" style="display:none">
+      <p>✅ Je wachtwoord is ingesteld. Je kunt nu inloggen.</p>
+      <p><a class="btn btn--primary" href="/admin" style="display:inline-block">Naar het dashboard →</a></p>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  var token=new URLSearchParams(location.search).get('token')||'';
+  var msg=document.getElementById('msg');
+  function show(m,ok){ msg.className='form-status show '+(ok?'ok':'err'); msg.textContent=m; }
+  if(!token){ document.getElementById('form').style.display='none'; show('Geen geldige link. Vraag een nieuwe reset-link aan.'); return; }
+  document.getElementById('save').onclick=function(){
+    var a=document.getElementById('pw1').value, b=document.getElementById('pw2').value;
+    if(a.length<8){ show('Minimaal 8 tekens.'); return; }
+    if(a!==b){ show('De wachtwoorden komen niet overeen.'); return; }
+    fetch('/api/admin/set-password',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({token:token,password:a})})
+      .then(function(r){return r.json().then(function(d){return {ok:r.ok,d:d};});})
+      .then(function(res){ if(res.ok){ document.getElementById('form').style.display='none'; document.getElementById('done').style.display='block'; } else { show(res.d.error==='token_ongeldig_of_verlopen'?'Deze link is verlopen of al gebruikt. Vraag een nieuwe aan.':(res.d.error||'Er ging iets mis.')); } })
+      .catch(function(){ show('Geen verbinding.'); });
+  };
+})();
+</script>
+</body>
+</html>
