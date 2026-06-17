@@ -1,11 +1,13 @@
-# Wrangler-equivalent van .gitignore voor de assets-bundle.
-# wrangler installeert tijdens de CI-build wrangler zelf in node_modules
-# (incl. workerd-binary van ~120MB). Die hoort niet in de upload.
+# Wat NIET als publieke asset geserveerd mag worden.
 node_modules
 .git
 .github
 .gitignore
 .assetsignore
 wrangler.toml
+package.json
 README.md
 CLAUDE.md
+SETUP-BESTELSYSTEEM.md
+src
+migrations

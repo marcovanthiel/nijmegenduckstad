@@ -22,7 +22,7 @@
 
   function animateCount(el, target, fmt) {
     if (!el) return;
-    var start = 0, dur = 1400, t0 = null;
+    var dur = 1400, t0 = null;
     function step(ts) {
       if (!t0) t0 = ts;
       var p = Math.min((ts - t0) / dur, 1);
@@ -33,12 +33,23 @@
     requestAnimationFrame(step);
   }
 
-  function runCounter() {
-    var pct = C.ducksTotal ? Math.min(100, (C.ducksSold / C.ducksTotal) * 100) : 0;
+  function applyCounter(sold, total, raisedCents) {
+    var pct = total ? Math.min(100, (sold / total) * 100) : 0;
     if (fill) fill.style.width = pct.toFixed(1) + '%';
-    animateCount(numEl, C.ducksSold || 0);
-    animateCount(raisedEl, (C.ducksSold || 0) * (C.pricePerDuck || 0), euro);
+    animateCount(numEl, sold || 0);
+    animateCount(raisedEl, raisedCents != null ? Math.round(raisedCents / 100) : (sold || 0) * (C.pricePerDuck || 0), euro);
   }
+
+  function runCounter() {
+    // Haal de echte stand op; val terug op config bij een statische deploy.
+    fetch('/api/status').then(function (r) { return r.ok ? r.json() : null; }).then(function (s) {
+      if (s && typeof s.sold === 'number') {
+        if (totEl) totEl.textContent = Number(s.total).toLocaleString('nl-NL');
+        applyCounter(s.sold, s.total, s.raised_cents);
+      } else { applyCounter(C.ducksSold || 0, C.ducksTotal || 0, null); }
+    }).catch(function () { applyCounter(C.ducksSold || 0, C.ducksTotal || 0, null); });
+  }
+
   if (numEl || fill) {
     var counter = document.querySelector('.counter') || numEl;
     if ('IntersectionObserver' in window && counter) {
@@ -58,10 +69,8 @@
     function tick() {
       var diff = target - Date.now();
       if (diff < 0) diff = 0;
-      var d = Math.floor(diff / 864e5),
-          h = Math.floor(diff % 864e5 / 36e5),
-          m = Math.floor(diff % 36e5 / 6e4),
-          s = Math.floor(diff % 6e4 / 1e3);
+      var d = Math.floor(diff / 864e5), h = Math.floor(diff % 864e5 / 36e5),
+          m = Math.floor(diff % 36e5 / 6e4), s = Math.floor(diff % 6e4 / 1e3);
       if (elD) elD.textContent = d;
       if (elH) elH.textContent = ('0' + h).slice(-2);
       if (elM) elM.textContent = ('0' + m).slice(-2);
@@ -72,7 +81,10 @@
 
   /* --- Dynamische links / teksten --- */
   document.querySelectorAll('[data-sales-link]').forEach(function (a) {
-    if (C.salesUrl) { a.href = C.salesUrl; a.target = '_blank'; a.rel = 'noopener'; }
+    if (C.salesUrl) {
+      a.href = C.salesUrl;
+      if (/^https?:/i.test(C.salesUrl)) { a.target = '_blank'; a.rel = 'noopener'; }
+    }
   });
   document.querySelectorAll('[data-price]').forEach(function (el) { el.textContent = euro(C.pricePerDuck); });
   document.querySelectorAll('[data-business-price]').forEach(function (el) { el.textContent = euro(C.businessDuckPrice); });
@@ -84,7 +96,6 @@
   document.querySelectorAll('[data-goal-net]').forEach(function (el) { el.textContent = euro(C.goalNet); });
   var year = document.querySelector('[data-year]'); if (year) year.textContent = new Date().getFullYear();
 
-  /* Social links tonen indien ingevuld */
   function setSocial(sel, url) {
     document.querySelectorAll(sel).forEach(function (a) {
       if (url) { a.href = url; a.style.display = ''; } else { a.style.display = 'none'; }
@@ -93,19 +104,13 @@
   setSocial('[data-instagram]', C.instagram);
   setSocial('[data-facebook]', C.facebook);
 
-  /* --- Formulieren (Web3Forms of mailto-fallback) --- */
+  /* --- Contact-/aanmeldformulieren (Web3Forms of mailto-fallback) --- */
   document.querySelectorAll('form[data-mailform]').forEach(function (form) {
     var status = form.querySelector('.form-status');
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       var data = new FormData(form);
-
-      function show(ok, msg) {
-        if (!status) { alert(msg); return; }
-        status.textContent = msg;
-        status.className = 'form-status show ' + (ok ? 'ok' : 'err');
-      }
-
+      function show(ok, msg) { if (!status) { alert(msg); return; } status.textContent = msg; status.className = 'form-status show ' + (ok ? 'ok' : 'err'); }
       if (C.formAccessKey) {
         data.append('access_key', C.formAccessKey);
         data.append('subject', 'Nijmegen Duckstad — ' + (form.dataset.mailform || 'formulier'));
@@ -113,16 +118,11 @@
         if (btn) { btn.disabled = true; btn.dataset.lbl = btn.textContent; btn.textContent = 'Versturen…'; }
         fetch('https://api.web3forms.com/submit', { method: 'POST', body: data })
           .then(function (r) { return r.json(); })
-          .then(function (j) {
-            if (j.success) { form.reset(); show(true, 'Bedankt! Je bericht is verstuurd. We nemen snel contact op.'); }
-            else { show(false, 'Er ging iets mis. Probeer het later opnieuw of mail ons direct.'); }
-          })
+          .then(function (j) { if (j.success) { form.reset(); show(true, 'Bedankt! Je bericht is verstuurd. We nemen snel contact op.'); } else { show(false, 'Er ging iets mis. Probeer het later opnieuw of mail ons direct.'); } })
           .catch(function () { show(false, 'Geen verbinding. Mail ons gerust direct via ' + (C.contactEmail || '')); })
           .finally(function () { if (btn) { btn.disabled = false; btn.textContent = btn.dataset.lbl; } });
       } else {
-        /* Fallback: open e-mailprogramma met vooringevulde gegevens */
-        var lines = [];
-        data.forEach(function (v, k) { if (v) lines.push(k + ': ' + v); });
+        var lines = []; data.forEach(function (v, k) { if (v) lines.push(k + ': ' + v); });
         var subject = encodeURIComponent('Nijmegen Duckstad — ' + (form.dataset.mailform || 'formulier'));
         var body = encodeURIComponent(lines.join('\n'));
         window.location.href = 'mailto:' + (C.contactEmail || '') + '?subject=' + subject + '&body=' + body;

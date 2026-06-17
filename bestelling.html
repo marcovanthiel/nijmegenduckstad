@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Je bestelling · Nijmegen Duckstad</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <nav class="nav" aria-label="Hoofdmenu">
+    <a class="nav__logo" href="index.html"><img src="assets/img/logo.svg" alt="Nijmegen Duckstad" width="220" height="50"></a>
+    <ul class="nav__links"><li><a href="index.html">Home</a></li><li><a href="evenement.html">Het evenement</a></li><li><a href="contact.html">Contact</a></li></ul>
+  </nav>
+</header>
+
+<section class="section">
+  <div class="wrap center" style="max-width:680px">
+    <div id="box" class="card" style="padding:40px">
+      <div style="font-size:3rem">⏳</div>
+      <h1 id="title">Je betaling wordt verwerkt…</h1>
+      <p class="muted" id="msg">Een moment geduld, we controleren je betaling.</p>
+      <div id="numbers" style="margin:24px 0;display:none"></div>
+      <div id="actions" style="margin-top:18px"></div>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer"><div class="wrap"><div class="footer-bottom" style="border:0"><span>© <span data-year>2026</span> Nijmegen Duckstad</span><span><a href="index.html">Home</a></span></div></div></footer>
+
+<script src="assets/js/config.js"></script>
+<script src="assets/js/main.js"></script>
+<script>
+(function(){
+  var id = new URLSearchParams(location.search).get('id');
+  var box=document.getElementById('box'), title=document.getElementById('title'),
+      msg=document.getElementById('msg'), numbersEl=document.getElementById('numbers'),
+      actions=document.getElementById('actions'), icon=box.querySelector('div');
+  if(!id){ title.textContent='Geen bestelling gevonden'; msg.textContent='De link is onvolledig.'; icon.textContent='🦆'; return; }
+  var tries=0, maxTries=15;
+  function render(d){
+    if(d.status==='paid'){
+      icon.textContent='🎉'; title.textContent='Gelukt — bedankt!';
+      msg.innerHTML='Je betaling is gelukt. Je hebt <strong>'+d.quantity+'x '+(d.type==='business'?'bedrijfseendje':'eendje')+'</strong> geadopteerd.';
+      numbersEl.style.display='block';
+      numbersEl.innerHTML='<p style="margin-bottom:8px" class="muted">Jouw startnummer(s) voor de race &amp; loterij:</p><div class="chips" style="justify-content:center">'+
+        d.numbers.map(function(n){return '<li style="background:#fff5dd;color:#7a5200;font-weight:700">#'+n+'</li>';}).join('')+'</div>'+
+        '<p class="form__note" style="margin-top:14px">Bewaar deze nummers goed (we sturen ze ook per e-mail). Veel succes! 🦆</p>';
+      actions.innerHTML='<a class="btn btn--primary" href="index.html">Terug naar de site</a>';
+      return true;
+    }
+    if(['failed','canceled','expired'].indexOf(d.status)>=0){
+      icon.textContent='😕'; title.textContent='Betaling niet voltooid';
+      msg.textContent='Je betaling is niet afgerond. Er is niets afgeschreven. Probeer het gerust opnieuw.';
+      actions.innerHTML='<a class="btn btn--primary" href="bestellen.html">Opnieuw proberen</a>';
+      return true;
+    }
+    return false; // pending
+  }
+  function poll(){
+    fetch('/api/order-status?id='+encodeURIComponent(id)).then(function(r){return r.json();}).then(function(d){
+      if(d.error){ title.textContent='Bestelling niet gevonden'; msg.textContent=''; icon.textContent='🦆'; return; }
+      if(render(d)) return;
+      tries++;
+      if(tries<maxTries){ setTimeout(poll,2000); }
+      else { msg.innerHTML='Je betaling is nog niet bevestigd. Dit kan soms even duren.<br>Ververs deze pagina over een minuut, of mail ons via de contactpagina als het lang duurt.'; actions.innerHTML='<a class="btn btn--ghost-blue" href="">Ververs</a>'; }
+    }).catch(function(){ setTimeout(poll,3000); });
+  }
+  poll();
+})();
+</script>
+</body>
+</html>
