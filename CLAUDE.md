@@ -189,6 +189,15 @@ De site wordt uitgebreid van static-only naar een Worker-met-code + D1:
 
 ## Recente architectuur-besluiten (changelog)
 
+- **2026-06-17** (Code, PR #1 → `main`, commit `0ee90e4`): **bestelsysteem LIVE**.
+  `bestelsysteem` gemerged → GitHub Action deploy `success`. Vooraf: alle gevoelige
+  waarden van plaintext-variabelen omgezet naar **secrets** (`ADMIN_PASSWORD`,
+  `MOLLIE_API_KEY`, `RESEND_API_KEY`, `MAIL_FROM`) — plaintext-vars worden door
+  `wrangler deploy` gewist, secrets niet. Live geverifieerd: `/bestellen` 200,
+  `/admin` 401 zonder ww, `/api/status` leest D1 (sold 0/5000), `/api/order` valideert (400).
+  Let op: Mollie staat op de **test**-key; voor echt geld de live-key zetten. Resend-mail
+  werkt alleen als het `MAIL_FROM`-domein in Resend geverifieerd is (faalt anders zacht).
+
 - **2026-06-17** (Code, branch `bestelsysteem`): infra-setup van het bestelsysteem
   uitgevoerd. D1 `nijmegenduckstad` bestond al (uuid `6bb084ee-43a2-4e17-9d11-1966ef6a1c74`);
   `database_id` ingevuld in `wrangler.toml` en migratie `0001_init.sql` --remote gedraaid →
