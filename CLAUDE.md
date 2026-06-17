@@ -174,6 +174,9 @@ Voordat je begint met code-wijzigingen:
 
 ## Recente architectuur-besluiten (changelog)
 
+- **2026-06-17** (Cowork): verkoopweekenden voorlopig gezet op 27–28 mrt, 3–4 apr,
+  10–11 apr 2027 (CONCEPT — te bevestigen door Marco); introductieweek-regel
+  verwijderd (paste niet bij april).
 - **2026-06-17** (Cowork, via web-upload): evenementdatum gezet op **zaterdag 17 april 2027 / 15:00** in `config.js` + HTML’s, op verzoek van
   Marco. NB: verkoopweekend-datums (aug/sep 2026) moeten nog
   geactualiseerd worden naar 2027.
