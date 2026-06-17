@@ -189,6 +189,13 @@ De site wordt uitgebreid van static-only naar een Worker-met-code + D1:
 
 ## Recente architectuur-besluiten (changelog)
 
+- **2026-06-17** (Code, branch `bestelsysteem`): infra-setup van het bestelsysteem
+  uitgevoerd. D1 `nijmegenduckstad` bestond al (uuid `6bb084ee-43a2-4e17-9d11-1966ef6a1c74`);
+  `database_id` ingevuld in `wrangler.toml` en migratie `0001_init.sql` --remote gedraaid →
+  tabellen orders/ducks/counters/settings/draws + seed (prijzen €5/€150, `sales_open=1`).
+  **Nog open vóór merge:** D1-Edit-permissie op het GitHub-`CLOUDFLARE_API_TOKEN` + secrets
+  (`MOLLIE_API_KEY` test, `ADMIN_PASSWORD`). **NIET gemerged naar main** (afspraak).
+
 - **2026-06-17** (Cowork, branch `bestelsysteem`): online **bestel-/betaal-/loterijsysteem**
   toegevoegd — Worker-code (`src/index.js`) + D1-database + Mollie iDEAL + admin-
   dashboard (`/admin`) met CSV/PDF-export en trekkingen. Staat op een aparte branch;

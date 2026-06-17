@@ -17,7 +17,7 @@ not_found_handling = "404-page"
 [[d1_databases]]
 binding = "DB"
 database_name = "nijmegenduckstad"
-database_id = "VUL_HIER_DATABASE_ID_IN"
+database_id = "6bb084ee-43a2-4e17-9d11-1966ef6a1c74"
 
 # Secrets (NIET hier zetten — via `wrangler secret put` of het dashboard):
 #   MOLLIE_API_KEY     (test_... of live_...)
