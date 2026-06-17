@@ -208,13 +208,54 @@ async function sendConfirmation(env, orderId) {
   const o = await env.DB.prepare("SELECT * FROM orders WHERE id=?1").bind(orderId).first();
   if (!o) return;
   const d = await env.DB.prepare("SELECT number FROM ducks WHERE order_id=?1 ORDER BY number").bind(orderId).all();
-  const nums = (d.results || []).map((r) => r.number).join(", ");
-  const html = `<p>Hoi ${esc(o.name)},</p>
-    <p>Bedankt voor je deelname aan de <strong>Nijmegen Duckstad</strong> badeendjesrace!</p>
-    <p>Je hebt <strong>${o.quantity}x ${o.type === "business" ? "bedrijfseendje" : "eendje"}</strong> geadopteerd.
-    Jouw startnummer(s): <strong>${nums}</strong>.</p>
-    <p>Bewaar deze mail — met deze nummers doe je mee in de race en de loterij.</p>
-    <p>Tot 17 april 2027 in de Spiegelwaal! 🦆</p>`;
+  const nums = (d.results || []).map((r) => r.number);
+  const isBiz = o.type === "business";
+  const jaar = new Date().getFullYear();
+  // Eén "loterijticket" per eendje: blauwe stub met 🦆 + afgescheurde bon met het nummer.
+  const ticket = (n) => `
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:460px;margin:0 auto 12px;border-collapse:separate;">
+          <tr>
+            <td width="92" style="width:92px;background:#17458f;border-radius:14px 0 0 14px;text-align:center;vertical-align:middle;padding:16px 0;font-size:38px;line-height:1;">🦆</td>
+            <td style="background:#fff8e9;border:2px dashed #f7a81b;border-left:0;border-radius:0 14px 14px 0;padding:12px 20px;font-family:Arial,Helvetica,sans-serif;">
+              <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#9a7b22;font-weight:bold;">Startnummer · ${isBiz ? "bedrijfseendje" : "race &amp; loterij"}</div>
+              <div style="font-family:Georgia,'Times New Roman',serif;font-size:33px;font-weight:bold;color:#17458f;line-height:1.15;">${String(n).padStart(4, "0")}</div>
+            </td>
+          </tr>
+        </table>`;
+  const ticketsHtml = nums.map(ticket).join("");
+  const html = `
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#eef3fb;margin:0;padding:0;">
+  <tr><td align="center" style="padding:24px 12px;">
+    <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;background:#ffffff;border-radius:18px;overflow:hidden;">
+      <tr><td style="background:#17458f;background:linear-gradient(135deg,#17458f,#0e2d63);padding:28px 30px;text-align:center;font-family:Georgia,serif;">
+        <div style="font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#ffd60a;font-weight:bold;">Rotary Badeendjesrace</div>
+        <div style="font-size:29px;color:#ffffff;font-weight:bold;margin-top:4px;">Nijmegen Duckstad 🦆</div>
+      </td></tr>
+      <tr><td style="padding:28px 34px 6px;font-family:Arial,Helvetica,sans-serif;color:#1d2433;font-size:16px;line-height:1.6;">
+        <p style="margin:0 0 14px;">Hoi <strong>${esc(o.name)}</strong>,</p>
+        <p style="margin:0 0 14px;">Bedankt dat je meedoet aan de <strong>Nijmegen Duckstad</strong> badeendjesrace! Je hebt <strong>${o.quantity}&times; ${isBiz ? "bedrijfseendje" : "eendje"}${o.quantity === 1 ? "" : "s"}</strong> geadopteerd. Hieronder ${nums.length === 1 ? "jouw persoonlijke lot" : "jouw persoonlijke loten"} &mdash; <strong>bewaar deze mail goed.</strong></p>
+      </td></tr>
+      <tr><td style="padding:8px 30px 6px;">${ticketsHtml}</td></tr>
+      <tr><td style="padding:8px 34px 26px;font-family:Arial,Helvetica,sans-serif;color:#1d2433;font-size:15px;line-height:1.6;">
+        <p style="margin:0 0 6px;">Met ${nums.length === 1 ? "dit nummer doe" : "deze nummers doe"} je mee in de <strong>race &eacute;n de loterij</strong> met mooie prijzen.</p>
+        <p style="margin:0;color:#5b6679;">Tot zaterdag 17 april 2027 in de Spiegelwaal! 🦆</p>
+      </td></tr>
+      <tr><td style="background:#0e2d63;padding:26px 34px 28px;font-family:Arial,Helvetica,sans-serif;">
+        <img src="https://nijmegenduckstad.nl/assets/img/rotary-nijmegen-stadenland.png" alt="Rotary Nijmegen Stad en Land" width="210" style="display:block;width:210px;max-width:210px;height:auto;background:#ffffff;border-radius:8px;padding:9px;">
+        <p style="margin:14px 0 12px;color:#cdd7ea;font-size:13px;line-height:1.6;">Rotary Nijmegen Stad en Land zet zich het hele jaar in voor goede doelen &mdash; lokaal, regionaal &eacute;n wereldwijd. Jouw deelname steunt dat werk direct. Onze lopende fundraisingacties:</p>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr><td style="padding:3px 0;color:#ffffff;font-size:14px;font-family:Arial,Helvetica,sans-serif;">🦆 <strong>Badeendjesrace</strong> in de Spiegelwaal <span style="color:#9fb2d6;">&middot; lente 2027</span></td></tr>
+          <tr><td style="padding:3px 0;color:#ffffff;font-size:14px;font-family:Arial,Helvetica,sans-serif;">🎄 <strong>Kerststollen</strong> voor All4small <span style="color:#9fb2d6;">&middot; december 2026</span></td></tr>
+          <tr><td style="padding:3px 0;color:#ffffff;font-size:14px;font-family:Arial,Helvetica,sans-serif;">🏰 <strong>Kasteeldiner</strong> met de Soroptimisten <span style="color:#9fb2d6;">&middot; november 2026</span></td></tr>
+        </table>
+        <p style="margin:16px 0 0;"><a href="https://marcovanthiel.nl/fundraising" style="color:#ffd60a;font-weight:bold;text-decoration:none;font-size:14px;">Bekijk alle acties &rarr; marcovanthiel.nl/fundraising</a></p>
+        <hr style="border:0;border-top:1px solid #1f3f72;margin:18px 0 14px;">
+        <p style="margin:0 0 6px;color:#cdd7ea;font-size:12px;line-height:1.55;">Een initiatief van de <a href="https://www.rotary.nl/nijmegenstadenland/" style="color:#ffd60a;text-decoration:none;">Rotary club &ndash; Nijmegen Stad en Land</a> (<a href="https://www.rotary.nl/nijmegenstadenland/" style="color:#9fb2d6;text-decoration:none;">rotary.nl/nijmegenstadenland</a>).</p>
+        <p style="margin:0;color:#7d92b8;font-size:12px;line-height:1.55;">&copy; ${jaar} Rotary club &ndash; Nijmegen Stad en Land. Je ontvangt deze mail omdat je eendje(s) hebt geadopteerd. Vragen? Beantwoord gerust deze mail.</p>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>`;
   try {
     const r = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -222,7 +263,7 @@ async function sendConfirmation(env, orderId) {
       body: JSON.stringify({
         from: env.MAIL_FROM || "Nijmegen Duckstad <info@nijmegenduckstad.nl>",
         reply_to: env.MAIL_REPLY_TO || "marco@marcovanthiel.nl",
-        to: [o.email], subject: "Je badeendje(s) — Nijmegen Duckstad", html,
+        to: [o.email], subject: `🦆 Je startnummer${nums.length === 1 ? "" : "s"} — Nijmegen Duckstad badeendjesrace`, html,
       }),
     });
     // Log Resend-fouten (anders falen mails ongemerkt; nummers staan ook op de bedankpagina + admin).

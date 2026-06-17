@@ -189,6 +189,13 @@ De site wordt uitgebreid van static-only naar een Worker-met-code + D1:
 
 ## Recente architectuur-besluiten (changelog)
 
+- **2026-06-17** (Code): **bevestigingsmail vernieuwd** (`sendConfirmation` in `src/index.js`):
+  HTML-mail met loterijticket-kaartjes per eendje (🦆 + startnummer, padStart 4) en een
+  Rotary-footer (logo `assets/img/rotary-nijmegen-stadenland.png`, gekopieerd uit de
+  fundraising-hub) met de 3 acties + link naar marcovanthiel.nl/fundraising. Plus: website-
+  **footer-copyright** in alle pagina's → "Rotary club - Nijmegen Stad en Land", gelinkt naar
+  https://www.rotary.nl/nijmegenstadenland/ (ook in de mailfooter).
+
 - **2026-06-17** (Code): **navigatiebalk opgeschoond**. 8 links + CTA pasten niet inline
   (labels braken over 2 regels tussen ~900–1280px). Fix: nav-labels ingekort ("Adopteer een
   eendje"→"Adopteren", "Het evenement"→"Evenement", alléén binnen `<ul class="nav__links">`,
