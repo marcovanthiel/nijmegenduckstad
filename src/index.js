@@ -39,6 +39,12 @@ const bad = (msg, status = 400) => json({ error: msg }, status);
 const euro = (c) => "€" + (c / 100).toLocaleString("nl-NL", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const isEmail = (s) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(s || "");
 const esc = (s) => String(s == null ? "" : s);
+const escHtml = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+// Vrije tekst (admin-geschreven) veilig naar HTML: dubbele newline -> nieuwe alinea, enkele -> <br>.
+function htmlParagraphs(text) {
+  return String(text || "").trim().split(/\n{2,}/).map((para) =>
+    `<p style="margin:0 0 14px;">${escHtml(para).replace(/\n/g, "<br>")}</p>`).join("");
+}
 function csvCell(s) { s = esc(s); return /[",\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
 function csv(rows) { return rows.map((r) => r.map(csvCell).join(";")).join("\r\n"); }
 
@@ -400,6 +406,58 @@ async function sendResetMail(env, email, token, isNew) {
   } catch (e) { console.error("reset_mail_exception", String((e && e.message) || e)); }
 }
 
+// Bevestigingsmail aan de inbrenger van een prijs. `subject`/`message` zijn door de
+// admin aanpasbaar; `message` is platte tekst die we veilig naar HTML omzetten.
+async function sendPrizeConfirmation(env, prize, subject, message) {
+  const jaar = new Date().getFullYear();
+  const prizeCard = `
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;">
+          <tr><td style="background:#fff8e9;border:2px dashed #f7a81b;border-radius:14px;padding:14px 18px;font-family:Arial,Helvetica,sans-serif;">
+            <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#9a7b22;font-weight:bold;">Ingebrachte prijs</div>
+            <div style="font-family:Georgia,'Times New Roman',serif;font-size:21px;font-weight:bold;color:#17458f;line-height:1.2;margin-top:2px;">🎁 ${escHtml(prize.title)}${prize.value ? ` <span style="font-size:14px;color:#9a7b22;font-weight:normal;">${escHtml(prize.value)}</span>` : ""}</div>
+          </td></tr>
+        </table>`;
+  const html = `
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#eef3fb;margin:0;padding:0;">
+  <tr><td align="center" style="padding:24px 12px;">
+    <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;background:#ffffff;border-radius:18px;overflow:hidden;">
+      <tr><td style="background:#17458f;background:linear-gradient(135deg,#17458f,#0e2d63);padding:28px 30px;text-align:center;font-family:Georgia,serif;">
+        <div style="font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#ffd60a;font-weight:bold;">Rotary Badeendjesrace</div>
+        <div style="font-size:29px;color:#ffffff;font-weight:bold;margin-top:4px;">Nijmegen Duckstad 🦆</div>
+      </td></tr>
+      <tr><td style="padding:28px 34px 8px;font-family:Arial,Helvetica,sans-serif;color:#1d2433;font-size:16px;line-height:1.6;">
+        ${htmlParagraphs(message)}
+      </td></tr>
+      <tr><td style="padding:4px 34px 22px;">${prizeCard}</td></tr>
+      <tr><td style="background:#0e2d63;padding:26px 34px 28px;font-family:Arial,Helvetica,sans-serif;">
+        <img src="https://nijmegenduckstad.nl/assets/img/rotary-nijmegen-stadenland.png" alt="Rotary Nijmegen Stad en Land" width="210" style="display:block;width:210px;max-width:210px;height:auto;background:#ffffff;border-radius:8px;padding:9px;">
+        <p style="margin:14px 0 0;color:#cdd7ea;font-size:13px;line-height:1.6;">Met jouw bijdrage maken we er een mooie badeendjesrace van &mdash; de opbrengst gaat naar de goede doelen van Rotary Nijmegen Stad en Land.</p>
+        <hr style="border:0;border-top:1px solid #1f3f72;margin:18px 0 14px;">
+        <p style="margin:0 0 6px;color:#cdd7ea;font-size:12px;line-height:1.55;">Een initiatief van de <a href="https://www.rotary.nl/nijmegenstadenland/" style="color:#ffd60a;text-decoration:none;">Rotary club &ndash; Nijmegen Stad en Land</a>.</p>
+        <p style="margin:0;color:#7d92b8;font-size:12px;line-height:1.55;">&copy; ${jaar} Rotary club &ndash; Nijmegen Stad en Land. Vragen of klopt er iets niet? Beantwoord gerust deze mail.</p>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>`;
+  try {
+    const r = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { authorization: "Bearer " + env.RESEND_API_KEY, "content-type": "application/json" },
+      body: JSON.stringify({
+        from: env.MAIL_FROM || "Nijmegen Duckstad <info@nijmegenduckstad.nl>",
+        reply_to: env.MAIL_REPLY_TO || "marco@marcovanthiel.nl",
+        to: [prize.donor_email], subject, html,
+      }),
+    });
+    if (!r.ok) {
+      const t = (await r.text().catch(() => "")).slice(0, 300);
+      console.error("prize_mail_fout", r.status, t);
+      return { ok: false, error: "resend_" + r.status };
+    }
+    return { ok: true };
+  } catch (e) { console.error("prize_mail_exception", String((e && e.message) || e)); return { ok: false, error: String((e && e.message) || e) }; }
+}
+
 async function adminApi(path, request, env) {
   const sub = path.slice("/api/admin/".length);
 
@@ -415,7 +473,7 @@ async function adminApi(path, request, env) {
   if (sub === "me") return json({ email: session.email, role: session.role });
 
   // Muteren mag alleen 'admin'; read-only mag bekijken + exports
-  const ADMIN_ONLY = new Set(["delete-order", "setting", "manual-order", "winner", "draw-reset", "users", "user-role", "user-reset", "user-delete"]);
+  const ADMIN_ONLY = new Set(["delete-order", "setting", "manual-order", "winner", "draw-reset", "users", "user-role", "user-reset", "user-delete", "prize", "prize-delete", "prize-confirm"]);
   if (ADMIN_ONLY.has(sub) && session.role !== "admin") return json({ error: "forbidden" }, 403);
 
   if (sub === "stats") {
@@ -430,11 +488,12 @@ async function adminApi(path, request, env) {
          COUNT(*) FILTER (WHERE newsletter=1 AND status='paid') AS newsletter_count
        FROM orders`).first();
     const draws = await env.DB.prepare("SELECT COUNT(*) AS n FROM draws").first();
+    const prizes = await env.DB.prepare("SELECT COUNT(*) AS n FROM prizes").first();
     return json({
       regular_sold: reg, business_sold: bus, max_regular: s.max_regular,
       paid_orders: agg.paid_orders, pending_orders: agg.pending_orders,
       revenue_cents: agg.revenue_cents, newsletter_count: agg.newsletter_count,
-      draws: draws.n, sales_open: s.sales_open,
+      draws: draws.n, prizes: prizes.n, sales_open: s.sales_open,
       price_regular_cents: s.price_regular_cents, price_business_cents: s.price_business_cents,
     });
   }
@@ -534,6 +593,67 @@ async function adminApi(path, request, env) {
       env.DB.prepare("DELETE FROM draws WHERE order_id=?1").bind(id),
       env.DB.prepare("DELETE FROM orders WHERE id=?1").bind(id),
     ]);
+    return json({ ok: true });
+  }
+
+  /* ----- prijzen & inbrengers ----- */
+  // Lijst (read-only mag bekijken).
+  if (sub === "prizes" && request.method === "GET") {
+    const r = await env.DB.prepare("SELECT * FROM prizes ORDER BY created_at DESC").all();
+    return json({ prizes: r.results || [] });
+  }
+  // Toevoegen of bijwerken (admin-only). Met `id` => update, anders insert.
+  if (sub === "prize" && request.method === "POST") {
+    const b = await request.json().catch(() => ({}));
+    const title = esc(b.title).trim().slice(0, 200);
+    const donor_name = esc(b.donor_name).trim().slice(0, 160);
+    if (!title) return bad("prijs_verplicht");
+    if (!donor_name) return bad("inbrenger_verplicht");
+    const value = esc(b.value).trim().slice(0, 120);
+    const description = esc(b.description).trim().slice(0, 1000);
+    const donor_company = esc(b.donor_company).trim().slice(0, 160);
+    const donor_email = esc(b.donor_email).trim().slice(0, 200);
+    const donor_phone = esc(b.donor_phone).trim().slice(0, 60);
+    const conditions = esc(b.conditions).trim().slice(0, 2000);
+    if (donor_email && !isEmail(donor_email)) return bad("email_ongeldig");
+    if (b.id) {
+      const ex = await env.DB.prepare("SELECT id FROM prizes WHERE id=?1").bind(String(b.id)).first();
+      if (!ex) return bad("niet_gevonden", 404);
+      await env.DB.prepare(
+        "UPDATE prizes SET title=?2,value=?3,description=?4,donor_name=?5,donor_company=?6,donor_email=?7,donor_phone=?8,conditions=?9 WHERE id=?1")
+        .bind(String(b.id), title, value, description, donor_name, donor_company, donor_email, donor_phone, conditions).run();
+      return json({ ok: true, id: String(b.id) });
+    }
+    const id = crypto.randomUUID();
+    await env.DB.prepare(
+      "INSERT INTO prizes (id,created_at,title,value,description,donor_name,donor_company,donor_email,donor_phone,conditions) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10)")
+      .bind(id, now(), title, value, description, donor_name, donor_company, donor_email, donor_phone, conditions).run();
+    return json({ ok: true, id });
+  }
+  if (sub === "prize-delete" && request.method === "POST") {
+    const b = await request.json().catch(() => ({}));
+    const id = String(b.id || "");
+    if (!id) return bad("id_verplicht");
+    await env.DB.prepare("DELETE FROM prizes WHERE id=?1").bind(id).run();
+    return json({ ok: true });
+  }
+  // Bevestigingsmail naar de inbrenger (admin-only). Onderwerp + bericht zijn
+  // door de admin aangepast vóór verzending.
+  if (sub === "prize-confirm" && request.method === "POST") {
+    const b = await request.json().catch(() => ({}));
+    const id = String(b.id || "");
+    const subject = esc(b.subject).trim().slice(0, 200);
+    const message = esc(b.message);
+    if (!id) return bad("id_verplicht");
+    if (!subject) return bad("onderwerp_verplicht");
+    if (!message.trim()) return bad("bericht_verplicht");
+    const prize = await env.DB.prepare("SELECT * FROM prizes WHERE id=?1").bind(id).first();
+    if (!prize) return bad("niet_gevonden", 404);
+    if (!prize.donor_email) return bad("geen_inbrenger_email");
+    if (!env.RESEND_API_KEY) return bad("mail_niet_geconfigureerd", 503);
+    const res = await sendPrizeConfirmation(env, prize, subject, message);
+    if (!res.ok) return bad("mail_mislukt: " + res.error, 502);
+    await env.DB.prepare("UPDATE prizes SET confirmation_sent_at=?2 WHERE id=?1").bind(id, now()).run();
     return json({ ok: true });
   }
 

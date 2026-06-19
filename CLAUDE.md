@@ -189,6 +189,18 @@ De site wordt uitgebreid van static-only naar een Worker-met-code + D1:
 
 ## Recente architectuur-besluiten (changelog)
 
+- **2026-06-19** (Code): **prijzenadministratie + bevestigingsmail aan inbrengers**. Nieuwe D1-tabel
+  `prizes` (migratie `0003_prizes.sql`, --remote toegepast vóór de deploy): prijs/waarde/omschrijving,
+  inbrenger (naam, bedrijf, e-mail, telefoon), `conditions` (voorwaarden) en `confirmation_sent_at`.
+  Admin-endpoints: `GET prizes` (read-only mag bekijken), `POST prize` (toevoegen/bewerken; met `id`=update),
+  `POST prize-delete`, `POST prize-confirm` (allemaal muteren = admin-only, in `ADMIN_ONLY`-set). `stats`
+  geeft nu ook `prizes`-telling (extra KPI). De bevestigingsmail (`sendPrizeConfirmation`, branded Resend-
+  template met prijs-kaartje + Rotary-footer) gaat naar `donor_email`; **onderwerp + bericht zijn vooraf
+  ingevuld én aanpasbaar in de admin** (`admin.html`, paneel "🎁 Prijzen & inbrengers") voordat verzonden
+  wordt — de voorwaarden zitten standaard in de tekst. Platte tekst → HTML via `htmlParagraphs`/`escHtml`.
+  Mail vereist `RESEND_API_KEY` + een `donor_email` (anders nette foutmelding); na verzenden wordt
+  `confirmation_sent_at` gezet en toont de tabel "verstuurd <datum>".
+
 - **2026-06-17** (Code): **admin-accounts + rollen, orders verwijderen, "loterij"→race**.
   (1) Basic-auth (`ADMIN_PASSWORD`) vervangen door **gebruikersaccounts** (e-mail=gebruikersnaam)
   met **rollen** admin/read-only, **sessie-cookies** (`sessions`-tabel), **PBKDF2**-hashing en

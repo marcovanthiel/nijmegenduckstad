@@ -69,6 +69,50 @@
       <p class="form__note">CSV opent in Excel/Numbers. "Printen/PDF" opent een printbare lijst — kies in het printvenster "Bewaar als PDF".</p>
     </div>
 
+    <div class="panel">
+      <h3>🎁 Prijzen &amp; inbrengers</h3>
+      <p class="form__note">Houd bij welke prijzen zijn ingebracht, door wie en onder welke voorwaarden. Stuur de inbrenger een bevestigingsmail &mdash; de tekst kun je eerst aanpassen.</p>
+
+      <div class="admin-only" id="prizeForm">
+        <input type="hidden" id="pzId">
+        <div class="row">
+          <input id="pzTitle" placeholder="Prijs (bv. Ballonvaart voor 2)" style="flex:2;min-width:200px">
+          <input id="pzValue" placeholder="Waarde (bv. t.w.v. € 250)" style="flex:1;min-width:140px">
+        </div>
+        <div class="row" style="margin-top:8px">
+          <input id="pzDonor" placeholder="Inbrenger (naam)" style="flex:1;min-width:160px">
+          <input id="pzCompany" placeholder="Bedrijf / organisatie (optioneel)" style="flex:1;min-width:160px">
+        </div>
+        <div class="row" style="margin-top:8px">
+          <input id="pzEmail" type="email" placeholder="E-mail inbrenger" style="flex:1;min-width:160px">
+          <input id="pzPhone" placeholder="Telefoon (optioneel)" style="flex:1;min-width:140px">
+        </div>
+        <div class="field" style="margin-top:12px">
+          <label for="pzConditions">Voorwaarden waaronder ingebracht</label>
+          <textarea id="pzConditions" rows="3" placeholder="Bv. geldig t/m 31-12-2027, op vertoon van legitimatie, niet inwisselbaar voor geld, reservering vooraf."></textarea>
+        </div>
+        <div class="row" style="margin-top:4px">
+          <button class="btn btn--primary" id="pzSave" style="padding:10px 18px">Prijs opslaan</button>
+          <button class="btn btn--ghost-blue" id="pzCancel" style="padding:10px 18px;display:none">Annuleren</button>
+          <span id="pzResult" class="muted"></span>
+        </div>
+      </div>
+
+      <div class="scroll" style="margin-top:16px"><table id="prizesTable"><thead><tr><th>Prijs</th><th>Waarde</th><th>Inbrenger</th><th>Voorwaarden</th><th>Bevestiging</th><th class="admin-col"></th></tr></thead><tbody></tbody></table></div>
+
+      <div class="admin-only" id="confirmBox" style="display:none;margin-top:18px;border-top:1px solid var(--line);padding-top:16px">
+        <h4 style="margin:0 0 4px">✉️ Bevestigingsmail aan <span id="confirmTo"></span></h4>
+        <p class="form__note">Pas onderwerp en tekst gerust aan voordat je verzendt. De voorwaarden staan al in het bericht.</p>
+        <div class="field"><label for="confirmSubject">Onderwerp</label><input id="confirmSubject"></div>
+        <div class="field"><label for="confirmMessage">Bericht</label><textarea id="confirmMessage" rows="14"></textarea></div>
+        <div class="row">
+          <button class="btn btn--primary" id="confirmSend" style="padding:10px 18px">Verzenden</button>
+          <button class="btn btn--ghost-blue" id="confirmCancel" style="padding:10px 18px">Annuleren</button>
+          <span id="confirmResult" class="muted"></span>
+        </div>
+      </div>
+    </div>
+
     <div class="panel admin-only">
       <h3>🏁 Winnaar invoeren (race-uitslag)</h3>
       <p class="form__note">Vul de prijs en het winnende startnummer in. Het systeem toont de koper.</p>
@@ -159,7 +203,7 @@
     login.style.display='none'; app.style.display='block';
     document.getElementById('logout').style.display='';
     var who=document.getElementById('whoami'); who.style.display=''; who.textContent='Ingelogd als '+email+' · '+(isAdmin?'admin':'read-only');
-    loadStats(); loadOrders(); loadDraws(); if(isAdmin) loadUsers();
+    loadStats(); loadOrders(); loadDraws(); loadPrizes(); if(isAdmin) loadUsers();
   }
 
   // ----- data laden -----
@@ -171,7 +215,8 @@
         ['Opbrengst', euro(s.revenue_cents)],
         ['Betaalde bestellingen', s.paid_orders],
         ['In behandeling', s.pending_orders],
-        ['Nieuwsbrief-aanmeldingen', s.newsletter_count]
+        ['Nieuwsbrief-aanmeldingen', s.newsletter_count],
+        ['Prijzen ingebracht', s.prizes]
       ].map(function(k){return '<div class="kpi"><b>'+k[1]+'</b><span>'+k[0]+'</span></div>';}).join('');
       var so=document.getElementById('salesOpen'); if(so) so.checked=!!s.sales_open;
       var mr=document.getElementById('maxReg'); if(mr) mr.value=s.max_regular;
@@ -208,6 +253,78 @@
       }).join('');
     });
   }
+
+  // ----- prijzen & inbrengers -----
+  var prizesCache=[];
+  function loadPrizes(){
+    api('prizes').then(function(r){return r.json();}).then(function(d){
+      prizesCache=d.prizes||[];
+      document.querySelector('#prizesTable tbody').innerHTML=prizesCache.map(function(p){
+        var donor=esc(p.donor_name)+(p.donor_company?' <span class="muted">('+esc(p.donor_company)+')</span>':'')+(p.donor_email?'<br><span class="muted">'+esc(p.donor_email)+'</span>':'');
+        var cond=p.conditions?esc(p.conditions):'<span class="muted">—</span>';
+        var conf=p.confirmation_sent_at?'<span class="tag paid">verstuurd '+esc(p.confirmation_sent_at.slice(0,10))+'</span>':'<span class="tag pending">nog niet</span>';
+        var act='<td class="admin-col"></td>';
+        if(isAdmin){
+          var mailBtn=p.donor_email?'<button class="btn btn--ghost-blue mini" data-pzmail="'+esc(p.id)+'">✉️</button>':'<span class="muted" title="geen e-mail van inbrenger">—</span>';
+          act='<td class="admin-col"><div class="row" style="gap:6px;flex-wrap:nowrap">'+mailBtn+'<button class="btn btn--ghost-blue mini" data-pzedit="'+esc(p.id)+'">✏️</button><button class="btn btn--ghost-blue mini" data-pzdel="'+esc(p.id)+'">🗑</button></div></td>';
+        }
+        return '<tr><td><strong>'+esc(p.title)+'</strong></td><td>'+esc(p.value||'')+'</td><td>'+donor+'</td><td style="max-width:260px">'+cond+'</td><td>'+conf+'</td>'+act+'</tr>';
+      }).join('')||'<tr><td colspan="6" class="muted">Nog geen prijzen ingevoerd.</td></tr>';
+    });
+  }
+  var pzFields=['pzId','pzTitle','pzValue','pzDonor','pzCompany','pzEmail','pzPhone','pzConditions'];
+  function resetPrizeForm(){ pzFields.forEach(function(id){document.getElementById(id).value='';}); document.getElementById('pzCancel').style.display='none'; document.getElementById('pzSave').textContent='Prijs opslaan'; }
+  function fillPrizeForm(p){
+    document.getElementById('pzId').value=p.id; document.getElementById('pzTitle').value=p.title||''; document.getElementById('pzValue').value=p.value||'';
+    document.getElementById('pzDonor').value=p.donor_name||''; document.getElementById('pzCompany').value=p.donor_company||'';
+    document.getElementById('pzEmail').value=p.donor_email||''; document.getElementById('pzPhone').value=p.donor_phone||''; document.getElementById('pzConditions').value=p.conditions||'';
+    document.getElementById('pzSave').textContent='Wijziging opslaan'; document.getElementById('pzCancel').style.display='';
+    document.getElementById('prizeForm').scrollIntoView({behavior:'smooth',block:'center'});
+  }
+  document.getElementById('pzSave').onclick=function(){
+    var p={id:document.getElementById('pzId').value||undefined,title:document.getElementById('pzTitle').value.trim(),value:document.getElementById('pzValue').value.trim(),donor_name:document.getElementById('pzDonor').value.trim(),donor_company:document.getElementById('pzCompany').value.trim(),donor_email:document.getElementById('pzEmail').value.trim(),donor_phone:document.getElementById('pzPhone').value.trim(),conditions:document.getElementById('pzConditions').value.trim()};
+    if(!p.title||!p.donor_name){ alert('Prijs en inbrenger (naam) zijn verplicht.'); return; }
+    var res=document.getElementById('pzResult');
+    postJSON('prize',p).then(function(r){return r.json();}).then(function(d){
+      if(d.ok){ res.textContent='Opgeslagen ✓'; resetPrizeForm(); loadPrizes(); loadStats(); setTimeout(function(){res.textContent='';},2500); }
+      else { res.textContent=d.error==='email_ongeldig'?'E-mailadres ongeldig.':(d.error||'fout'); }
+    });
+  };
+  document.getElementById('pzCancel').onclick=resetPrizeForm;
+
+  // bevestigingsmail: vooraf ingevulde, bewerkbare tekst
+  var confirmPrizeId='';
+  function defaultPrizeMessage(p){
+    var l=[];
+    l.push('Beste '+(p.donor_name||'')+',','');
+    l.push('Hartelijk dank voor het beschikbaar stellen van een prijs voor de Rotary Badeendjesrace op zaterdag 17 april 2027 in Nijmegen. Hierbij bevestigen wij dat we de volgende prijs van je hebben ontvangen:','');
+    l.push('• '+(p.title||'')+(p.value?' ('+p.value+')':''),'');
+    if((p.conditions||'').trim()){ l.push('De prijs is ingebracht onder de volgende voorwaarden:', p.conditions.trim(), ''); }
+    l.push('Klopt er iets niet of wil je nog iets aanpassen? Stuur dan gerust een reply op deze mail.','');
+    l.push('Nogmaals hartelijk dank voor je bijdrage — dankzij inbrengers als jij maken we er een prachtige badeendjesrace van, met de opbrengst voor de goede doelen van Rotary Nijmegen Stad en Land.','');
+    l.push('Met vriendelijke groet,','Rotary Nijmegen Stad en Land');
+    return l.join('\n');
+  }
+  function openConfirm(p){
+    confirmPrizeId=p.id;
+    document.getElementById('confirmTo').textContent=p.donor_name+(p.donor_email?' <'+p.donor_email+'>':'');
+    document.getElementById('confirmSubject').value='Bevestiging van je prijs — Nijmegen Duckstad badeendjesrace';
+    document.getElementById('confirmMessage').value=defaultPrizeMessage(p);
+    document.getElementById('confirmResult').textContent='';
+    var box=document.getElementById('confirmBox'); box.style.display='block'; box.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+  document.getElementById('confirmCancel').onclick=function(){ document.getElementById('confirmBox').style.display='none'; confirmPrizeId=''; };
+  document.getElementById('confirmSend').onclick=function(){
+    if(!confirmPrizeId) return;
+    var subject=document.getElementById('confirmSubject').value.trim(), message=document.getElementById('confirmMessage').value, res=document.getElementById('confirmResult');
+    if(!subject||!message.trim()){ alert('Onderwerp en bericht zijn verplicht.'); return; }
+    var btn=this; btn.disabled=true; res.textContent='Versturen…';
+    postJSON('prize-confirm',{id:confirmPrizeId,subject:subject,message:message}).then(function(r){return r.json();}).then(function(d){
+      btn.disabled=false;
+      if(d.ok){ res.textContent=''; document.getElementById('confirmBox').style.display='none'; confirmPrizeId=''; loadPrizes(); alert('Bevestigingsmail verstuurd ✓'); }
+      else { res.textContent=({geen_inbrenger_email:'Deze inbrenger heeft geen e-mailadres.',mail_niet_geconfigureerd:'Mailservice niet geconfigureerd (RESEND_API_KEY ontbreekt).'}[d.error])||(d.error||'verzenden mislukt'); }
+    }).catch(function(){ btn.disabled=false; res.textContent='Geen verbinding.'; });
+  };
 
   // ----- exports -----
   document.querySelectorAll('[data-export]').forEach(function(b){
@@ -278,6 +395,9 @@
     if(t.dataset && t.dataset.delorder){ if(confirm('Bestelling verwijderen? De eendnummers komen weer vrij.')){ postJSON('delete-order',{id:t.dataset.delorder}).then(function(){ loadOrders(); loadStats(); }); } }
     if(t.dataset && t.dataset.ureset){ postJSON('user-reset',{id:t.dataset.ureset}).then(function(r){return r.json();}).then(function(d){ alert(d.ok?'Reset-link gemaild.':(d.error||'fout')); }); }
     if(t.dataset && t.dataset.udel){ if(confirm('Gebruiker verwijderen?')){ postJSON('user-delete',{id:t.dataset.udel}).then(function(r){return r.json();}).then(function(d){ if(!d.ok) alert(d.error==='laatste_admin'?'Kan de laatste admin niet verwijderen.':(d.error||'fout')); loadUsers(); }); } }
+    if(t.dataset && t.dataset.pzedit){ var pe=prizesCache.filter(function(x){return x.id===t.dataset.pzedit;})[0]; if(pe) fillPrizeForm(pe); }
+    if(t.dataset && t.dataset.pzdel){ if(confirm('Deze prijs verwijderen?')){ postJSON('prize-delete',{id:t.dataset.pzdel}).then(function(){ loadPrizes(); loadStats(); }); } }
+    if(t.dataset && t.dataset.pzmail){ var pm=prizesCache.filter(function(x){return x.id===t.dataset.pzmail;})[0]; if(pm) openConfirm(pm); }
   });
   document.body.addEventListener('change',function(e){
     if(e.target.classList && e.target.classList.contains('uroleSel')){
