@@ -410,23 +410,27 @@ async function sendResetMail(env, email, token, isNew) {
 // admin aanpasbaar; `message` is platte tekst die we veilig naar HTML omzetten.
 async function sendPrizeConfirmation(env, prize, subject, message) {
   const jaar = new Date().getFullYear();
-  const prizeCard = `
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;">
-          <tr><td style="background:#fff8e9;border:2px dashed #f7a81b;border-radius:14px;padding:14px 18px;font-family:Arial,Helvetica,sans-serif;">
+  const nl2br = (s) => escHtml(s).replace(/\n/g, "<br>");
+  // Eén kader met de prijs, de omschrijving (websitetekst) en de voorwaarden.
+  const descBlock = prize.description ? `
+            <div style="font-size:14px;line-height:1.55;color:#3a3320;margin-top:8px;">${nl2br(prize.description)}</div>` : "";
+  const condBlock = prize.conditions ? `
+            <div style="border-top:1px solid #f1d79a;margin-top:12px;padding-top:10px;">
+              <div style="font-size:12px;font-weight:bold;color:#9a7b22;">De prijs is ingebracht onder de volgende voorwaarden:</div>
+              <div style="font-size:14px;line-height:1.55;color:#3a3320;margin-top:3px;">${nl2br(prize.conditions)}</div>
+            </div>` : "";
+  const prizeBox = `
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;margin:8px 0 18px;">
+          <tr><td style="background:#fff8e9;border:2px dashed #f7a81b;border-radius:14px;padding:16px 20px;font-family:Arial,Helvetica,sans-serif;">
             <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#9a7b22;font-weight:bold;">Ingebrachte prijs</div>
-            <div style="font-family:Georgia,'Times New Roman',serif;font-size:21px;font-weight:bold;color:#17458f;line-height:1.2;margin-top:2px;">🎁 ${escHtml(prize.title)}${prize.value ? ` <span style="font-size:14px;color:#9a7b22;font-weight:normal;">${escHtml(prize.value)}</span>` : ""}</div>
+            <div style="font-family:Georgia,'Times New Roman',serif;font-size:21px;font-weight:bold;color:#17458f;line-height:1.2;margin-top:2px;">🎁 ${escHtml(prize.title)}${prize.value ? ` <span style="font-size:14px;color:#9a7b22;font-weight:normal;">${escHtml(prize.value)}</span>` : ""}</div>${descBlock}${condBlock}
           </td></tr>
         </table>`;
-  // Apart kader met de omschrijving zoals die op de website staat (alleen als ingevuld).
-  const descBox = prize.description ? `
-      <tr><td style="padding:0 34px 22px;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;">
-          <tr><td style="background:#f2f6fc;border:1px solid #d6e2f3;border-radius:14px;padding:14px 18px;font-family:Arial,Helvetica,sans-serif;">
-            <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#5b6679;font-weight:bold;">Omschrijving (zoals op de website)</div>
-            <div style="font-size:15px;line-height:1.6;color:#1d2433;margin-top:4px;">${htmlParagraphs(prize.description)}</div>
-          </td></tr>
-        </table>
-      </td></tr>` : "";
+  // Plaats het kader op de {{prijs}}-marker in het bericht; geen marker -> onderaan het bericht.
+  const parts = String(message).split(/\{\{\s*prijs\s*\}\}/i);
+  const bodyHtml = parts.length > 1
+    ? parts.map((p) => (p.trim() ? htmlParagraphs(p) : "")).join(prizeBox)
+    : htmlParagraphs(message) + prizeBox;
   const html = `
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#eef3fb;margin:0;padding:0;">
   <tr><td align="center" style="padding:24px 12px;">
@@ -435,11 +439,9 @@ async function sendPrizeConfirmation(env, prize, subject, message) {
         <div style="font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#ffd60a;font-weight:bold;">Rotary Badeendjesrace</div>
         <div style="font-size:29px;color:#ffffff;font-weight:bold;margin-top:4px;">Nijmegen Duckstad 🦆</div>
       </td></tr>
-      <tr><td style="padding:28px 34px 8px;font-family:Arial,Helvetica,sans-serif;color:#1d2433;font-size:16px;line-height:1.6;">
-        ${htmlParagraphs(message)}
+      <tr><td style="padding:28px 34px 18px;font-family:Arial,Helvetica,sans-serif;color:#1d2433;font-size:16px;line-height:1.6;">
+        ${bodyHtml}
       </td></tr>
-      <tr><td style="padding:4px 34px ${prize.description ? "10" : "22"}px;">${prizeCard}</td></tr>
-      ${descBox}
       <tr><td style="background:#0e2d63;padding:26px 34px 28px;font-family:Arial,Helvetica,sans-serif;">
         <img src="https://nijmegenduckstad.nl/assets/img/rotary-nijmegen-stadenland.png" alt="Rotary Nijmegen Stad en Land" width="210" style="display:block;width:210px;max-width:210px;height:auto;background:#ffffff;border-radius:8px;padding:9px;">
         <p style="margin:14px 0 0;color:#cdd7ea;font-size:13px;line-height:1.6;">Met jouw bijdrage maken we er een mooie badeendjesrace van &mdash; de opbrengst gaat naar de goede doelen van Rotary Nijmegen Stad en Land.</p>

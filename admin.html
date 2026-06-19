@@ -106,7 +106,7 @@
 
       <div class="admin-only" id="confirmBox" style="display:none;margin-top:18px;border-top:1px solid var(--line);padding-top:16px">
         <h4 style="margin:0 0 4px">✉️ Bevestigingsmail aan <span id="confirmTo"></span></h4>
-        <p class="form__note">Pas onderwerp en tekst gerust aan voordat je verzendt. De voorwaarden staan al in het bericht.</p>
+        <p class="form__note">Pas onderwerp en tekst gerust aan voordat je verzendt. De regel <code>{{prijs}}</code> wordt vervangen door een kader met de prijs, de omschrijving en de voorwaarden — verplaats die regel om het kader elders in de mail te zetten.</p>
         <div class="field"><label for="confirmSubject">Onderwerp</label><input id="confirmSubject"></div>
         <div class="field"><label for="confirmMessage">Bericht</label><textarea id="confirmMessage" rows="14"></textarea></div>
         <div class="row">
@@ -303,8 +303,7 @@
     var l=[];
     l.push('Beste '+(p.donor_name||'')+',','');
     l.push('Hartelijk dank voor het beschikbaar stellen van een prijs voor de Rotary Badeendjesrace op zaterdag 17 april 2027 in Nijmegen. Hierbij bevestigen wij dat we de volgende prijs van je hebben ontvangen:','');
-    l.push('• '+(p.title||'')+(p.value?' ('+p.value+')':''),'');
-    if((p.conditions||'').trim()){ l.push('De prijs is ingebracht onder de volgende voorwaarden:', p.conditions.trim(), ''); }
+    l.push('{{prijs}}','');
     l.push('Klopt er iets niet of wil je nog iets aanpassen? Stuur dan gerust een reply op deze mail.','');
     l.push('Nogmaals hartelijk dank voor je bijdrage — dankzij inbrengers als jij maken we er een prachtige badeendjesrace van, met de opbrengst voor de goede doelen van Rotary Nijmegen Stad en Land.','');
     l.push('Met vriendelijke groet,','Rotary Nijmegen Stad en Land');

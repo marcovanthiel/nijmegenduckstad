@@ -199,10 +199,12 @@ De site wordt uitgebreid van static-only naar een Worker-met-code + D1:
   ingevuld én aanpasbaar in de admin** (`admin.html`, paneel "🎁 Prijzen & inbrengers") voordat verzonden
   wordt — de voorwaarden zitten standaard in de tekst. Platte tekst → HTML via `htmlParagraphs`/`escHtml`.
   Mail vereist `RESEND_API_KEY` + een `donor_email` (anders nette foutmelding); na verzenden wordt
-  `confirmation_sent_at` gezet en toont de tabel "verstuurd <datum>". De mail bevat náást het prijs-
-  kaartje een **apart kader met de `description`** (de tekst zoals op de website), alleen getoond als
-  ingevuld. De 9 prijzen van `prijzen.html` zijn als voorbeeld-rijen in remote D1 geseed (donor =
-  placeholder, donor_email = marco@ zodat testmails veilig zijn).
+  `confirmation_sent_at` gezet en toont de tabel "verstuurd <datum>". De mail bevat **één kader**
+  (`prizeBox`) met de prijs+waarde, de `description` (websitetekst) én de voorwaarden; het kader wordt
+  in het bericht geplaatst op de **`{{prijs}}`-marker** (admin kan die regel verplaatsen; geen marker →
+  kader onderaan). `description` is bewerkbaar in het adminformulier (ontbrak eerst → werd bij elke
+  prize-update gewist). De 9 prijzen van `prijzen.html` zijn als voorbeeld-rijen in remote D1 geseed
+  (donor = placeholder, donor_email = marco@ zodat testmails veilig zijn).
 
 - **2026-06-17** (Code): **admin-accounts + rollen, orders verwijderen, "loterij"→race**.
   (1) Basic-auth (`ADMIN_PASSWORD`) vervangen door **gebruikersaccounts** (e-mail=gebruikersnaam)
