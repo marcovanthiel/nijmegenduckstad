@@ -246,6 +246,7 @@
     var roleLabel = role==='admin'?'admin':(role==='accountmanager'?'accountmanager':'read-only');
     var who=document.getElementById('whoami'); who.style.display=''; who.textContent='Ingelogd als '+email+' · '+roleLabel;
     loadStats(); loadOrders(); loadDraws(); loadPrizes(); if(canPrizes) loadManagers(); if(isAdmin) loadUsers();
+    refreshScrollHints();
   }
 
   // ----- data laden -----
@@ -480,7 +481,25 @@
     var name=t.dataset.tab;
     var tabs=document.querySelectorAll('.tab'); for(var i=0;i<tabs.length;i++) tabs[i].classList.toggle('active', tabs[i]===t);
     var panes=document.querySelectorAll('.tabpane'); for(var j=0;j<panes.length;j++) panes[j].classList.toggle('active', panes[j].dataset.pane===name);
+    refreshScrollHints();
   });
+
+  // ----- scroll-hint: fade-schaduw boven/onder scrollbare boxen -----
+  function setShade(el){
+    el.classList.toggle('can-scroll-up', el.scrollTop > 2);
+    el.classList.toggle('can-scroll-down', el.scrollTop + el.clientHeight < el.scrollHeight - 2);
+  }
+  function refreshScrollHints(){
+    document.querySelectorAll('.scroll').forEach(function(el){
+      if(!el._shBound){
+        el._shBound=true;
+        el.addEventListener('scroll', function(){ setShade(el); }, {passive:true});
+        try{ new MutationObserver(function(){ setShade(el); }).observe(el,{childList:true,subtree:true}); }catch(e){}
+      }
+      setShade(el);
+    });
+  }
+  window.addEventListener('resize', refreshScrollHints);
 
   // ----- sessie herstellen bij laden -----
   api('me').then(function(r){ if(r.ok) return r.json(); throw 0; }).then(function(d){ start(d.email,d.role); }).catch(function(){ /* toon login */ });

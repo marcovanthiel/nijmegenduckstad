@@ -261,3 +261,38 @@ p{margin:0 0 1rem}
   .footer-grid{grid-template-columns:1fr}
   .counter__num{font-size:2rem}
 }
+
+/* ---------- Scrollbaarheid duidelijk maken (site-breed) ----------
+   macOS verbergt scrollbars, waardoor niet zichtbaar is dat een gebied
+   scrollt. We tonen altijd een nette scrollbar én een fade-schaduw boven/
+   onder scrollbare boxen (.scroll / .scroll-area). De fade verschijnt
+   alleen als er echt meer content is (klassen via JS). */
+
+/* Pagina-scrollbar (alle pagina's), subtiel maar zichtbaar */
+html{scrollbar-width:thin;scrollbar-color:#c2d0e2 transparent}
+html::-webkit-scrollbar{width:14px;height:14px}
+html::-webkit-scrollbar-thumb{background:#c2d0e2;border-radius:8px;border:4px solid var(--bg)}
+html::-webkit-scrollbar-thumb:hover{background:#9db4cf}
+html::-webkit-scrollbar-track{background:var(--bg)}
+
+/* Scrollbare boxen: prominente, altijd zichtbare scrollbar */
+.scroll,.scroll-area{position:relative;scrollbar-width:thin;scrollbar-color:#9db4cf #eef3f8}
+.scroll::-webkit-scrollbar,.scroll-area::-webkit-scrollbar{width:12px;height:12px}
+.scroll::-webkit-scrollbar-track,.scroll-area::-webkit-scrollbar-track{background:#eef3f8;border-radius:8px}
+.scroll::-webkit-scrollbar-thumb,.scroll-area::-webkit-scrollbar-thumb{background:#9db4cf;border-radius:8px;border:3px solid #eef3f8}
+.scroll::-webkit-scrollbar-thumb:hover,.scroll-area::-webkit-scrollbar-thumb:hover{background:var(--azure)}
+
+/* Fade-schaduw: sticky pseudo-elementen die over de content tekenen.
+   Standaard verborgen; JS zet .can-scroll-up/.can-scroll-down. */
+.scroll::before,.scroll::after,.scroll-area::before,.scroll-area::after{
+  content:"";position:sticky;left:0;right:0;display:block;height:34px;
+  pointer-events:none;opacity:0;transition:opacity .18s ease;z-index:3}
+.scroll::before,.scroll-area::before{top:0;margin-bottom:-34px;
+  background:linear-gradient(rgba(255,255,255,.97),rgba(255,255,255,0))}
+.scroll::after,.scroll-area::after{bottom:0;margin-top:-34px;
+  background:linear-gradient(rgba(255,255,255,0),rgba(255,255,255,.97))}
+.scroll.can-scroll-up::before,.scroll-area.can-scroll-up::before{opacity:1}
+.scroll.can-scroll-down::after,.scroll-area.can-scroll-down::after{opacity:1}
+
+/* "scroll voor meer"-hintje onderaan een scrollbare box (alleen als scrollbaar) */
+.scroll.can-scroll-down::after,.scroll-area.can-scroll-down::after{box-shadow:inset 0 -1px 0 var(--line)}

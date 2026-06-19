@@ -189,6 +189,14 @@ De site wordt uitgebreid van static-only naar een Worker-met-code + D1:
 
 ## Recente architectuur-besluiten (changelog)
 
+- **2026-06-19** (Code): **scrollbaarheid zichtbaar gemaakt (site-breed)**. macOS verbergt scrollbars;
+  in `style.css` nu altijd zichtbare, gestylede scrollbars voor de pagina (`html::-webkit-scrollbar`)
+  én voor scrollbare boxen (`.scroll`/`.scroll-area`), plus een **fade-schaduw** boven/onder die boxen
+  via sticky `::before/::after` (tekent over opaque tabellen) — alleen zichtbaar bij echte overflow via
+  JS-klassen `can-scroll-up`/`can-scroll-down`. JS staat in `admin.html` (`setShade`/`refreshScrollHints`,
+  MutationObserver voor async-gevulde tabellen + recalcs bij tabwissel/resize). De 4 admin-tabellen zijn
+  de enige in-content scrollgebieden; publieke pagina's krijgen de zichtbare scrollbars via de gedeelde CSS.
+
 - **2026-06-19** (Code): **admin opgedeeld in tabbladen**. De lange scroll-pagina is nu een
   tabbalk (`.tabs`/`.tabpane`, vanilla JS in `admin.html`): **Bestellingen · Prijzen · Exporteren ·
   Verkoop · Race · Gebruikers**. KPI's blijven boven de tabs. Verkoop = instellingen + handmatige
