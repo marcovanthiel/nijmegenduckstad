@@ -6,3 +6,14 @@
 
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
+
+# Admin-pagina's wijzigen regelmatig: nooit cachen, anders draait de browser
+# op een verouderde admin.html (bv. oude mailteksten / formuliervelden).
+/admin
+  Cache-Control: no-store
+/admin.html
+  Cache-Control: no-store
+/admin-wachtwoord
+  Cache-Control: no-store
+/admin-wachtwoord.html
+  Cache-Control: no-store
