@@ -189,10 +189,16 @@ De site wordt uitgebreid van static-only naar een Worker-met-code + D1:
 
 ## Recente architectuur-besluiten (changelog)
 
-- **2026-06-19** (Code, v1.0.5): **security-hardening (pentest-fixes)**. `_headers` blijkt in deze
-  Worker+Assets-opzet NIET toegepast → security-headers nu **in de Worker** (`withSec()` op elke
-  response): HSTS, CSP, X-Frame-Options DENY, X-Content-Type-Options, Referrer-Policy, Permissions-
-  Policy. **HTTPS afgedwongen** in code (cf-visitor-scheme → 301 naar https). **Rate-limiting** per
+- **2026-06-19** (Code, v1.0.6): security-headers ook in **`_headers`** (volledige set incl. HSTS+CSP,
+  X-Frame-Options DENY). Reden: Cloudflare serveert **gecachte statische pagina's rechtstreeks via de
+  static-pipeline** (Worker draait dan niet) → die kregen alleen de `_headers`-headers en geen
+  withSec/redirect. Nu dekt `_headers` de gecachte pagina's en `withSec` de Worker/API + cache-misses.
+  Resterende handmatige stap: **Cloudflare-dashboard → "Always Use HTTPS" aan** (REST-API lukte niet met
+  de wrangler-OAuth-token); HSTS dekt het praktische risico al na de eerste HTTPS-load.
+
+- **2026-06-19** (Code, v1.0.5): **security-hardening (pentest-fixes)**. Security-headers **in de Worker**
+  (`withSec()` op elke response): HSTS, CSP, X-Frame-Options DENY, X-Content-Type-Options, Referrer-
+  Policy, Permissions-Policy. **HTTPS afgedwongen** in code (cf-visitor-scheme → 301 naar https). **Rate-limiting** per
   IP via nieuwe D1-tabel `rate_limits` (migratie 0005; fail-open) op login (8/5min), reset (5/15min),
   order (15/10min). **Sessies ingetrokken** bij rolwijziging (`user-role`) en wachtwoordreset
   (`set-password`). **CSV-formule-injectie** geneutraliseerd in `csvCell`. **Mail**: kopersnaam via
