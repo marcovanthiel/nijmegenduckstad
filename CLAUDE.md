@@ -189,6 +189,18 @@ De site wordt uitgebreid van static-only naar een Worker-met-code + D1:
 
 ## Recente architectuur-besluiten (changelog)
 
+- **2026-06-19** (Code, v1.0.5): **security-hardening (pentest-fixes)**. `_headers` blijkt in deze
+  Worker+Assets-opzet NIET toegepast → security-headers nu **in de Worker** (`withSec()` op elke
+  response): HSTS, CSP, X-Frame-Options DENY, X-Content-Type-Options, Referrer-Policy, Permissions-
+  Policy. **HTTPS afgedwongen** in code (cf-visitor-scheme → 301 naar https). **Rate-limiting** per
+  IP via nieuwe D1-tabel `rate_limits` (migratie 0005; fail-open) op login (8/5min), reset (5/15min),
+  order (15/10min). **Sessies ingetrokken** bij rolwijziging (`user-role`) en wachtwoordreset
+  (`set-password`). **CSV-formule-injectie** geneutraliseerd in `csvCell`. **Mail**: kopersnaam via
+  `escHtml`. **Login-timing** gelijkgetrokken (dummy-hash) + constant-time vergelijk break-glass.
+  **Generieke 500/502** (geen interne details meer). `setting` heeft nu een key-allowlist + validatie;
+  `managers` beperkt tot admin/accountmanager. NB nog handmatig in Cloudflare-dashboard: "Always Use
+  HTTPS" en (optioneel) WAF rate-limiting als extra laag — de code dekt beide nu al af.
+
 - **2026-06-19** (Code, v1.0.1): **scrollbalk altijd zichtbaar + nieuwe prijs in een dialog**.
   (1) Admin `.scroll` van `overflow:auto` → `overflow-y:scroll` zodat de (azuren) scrollbalk altijd
   zichtbaar is i.p.v. pas bij scrollen (macOS-overlay verborg 'm). (2) Op de Prijzen-tab is het

@@ -15,19 +15,26 @@
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
-    const p = url.pathname;
-    try {
-      if (p === "/api/status" && request.method === "GET") return apiStatus(env);
-      if (p === "/api/order" && request.method === "POST") return apiOrder(request, env, url);
-      if (p === "/api/order-status" && request.method === "GET") return apiOrderStatus(url, env);
-      if (p === "/api/mollie-webhook" && request.method === "POST") return apiWebhook(request, env, ctx);
-      if (p.startsWith("/api/admin/")) return adminApi(p, request, env);
-      // /admin -> /admin.html wordt door html_handling als statische asset geserveerd
-      // (de pagina zelf bevat geen data; de admin-API is met Basic Auth beveiligd).
-    } catch (e) {
-      return json({ error: "server_error", message: String(e && e.message || e) }, 500);
+    // Forceer HTTPS (achter Cloudflare: oorspronkelijke scheme uit cf-visitor; anders url.protocol).
+    if ((request.headers.get("cf-visitor") || "").includes('"scheme":"http"') || url.protocol === "http:") {
+      url.protocol = "https:";
+      return Response.redirect(url.href, 301);
     }
-    return env.ASSETS.fetch(request); // statische site
+    const p = url.pathname;
+    let response = null;
+    try {
+      if (p === "/api/status" && request.method === "GET") response = await apiStatus(env);
+      else if (p === "/api/order" && request.method === "POST") response = await apiOrder(request, env, url);
+      else if (p === "/api/order-status" && request.method === "GET") response = await apiOrderStatus(url, env);
+      else if (p === "/api/mollie-webhook" && request.method === "POST") response = await apiWebhook(request, env, ctx);
+      else if (p.startsWith("/api/admin/")) response = await adminApi(p, request, env);
+      // /admin -> /admin.html wordt door html_handling als statische asset geserveerd.
+    } catch (e) {
+      console.error("server_error", url.pathname, String((e && e.message) || e));
+      response = json({ error: "server_error" }, 500); // generiek: geen interne details naar de client
+    }
+    if (!response) response = await env.ASSETS.fetch(request); // statische site
+    return withSec(response);
   },
 };
 
@@ -45,8 +52,54 @@ function htmlParagraphs(text) {
   return String(text || "").trim().split(/\n{2,}/).map((para) =>
     `<p style="margin:0 0 14px;">${escHtml(para).replace(/\n/g, "<br>")}</p>`).join("");
 }
-function csvCell(s) { s = esc(s); return /[",\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
+function csvCell(s) {
+  s = esc(s);
+  if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; // formule-injectie in Excel/Numbers neutraliseren
+  return /[",\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
 function csv(rows) { return rows.map((r) => r.map(csvCell).join(";")).join("\r\n"); }
+
+/* ---------------- security helpers ---------------- */
+const CSP = "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; " +
+  "img-src 'self' data: https:; script-src 'self' 'unsafe-inline'; " +
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; " +
+  "connect-src 'self' https://api.web3forms.com; form-action 'self'";
+// Security-headers op elke response (in code, want _headers wordt in deze Worker+Assets-opzet niet toegepast).
+function withSec(resp) {
+  const h = new Headers(resp.headers);
+  h.set("X-Content-Type-Options", "nosniff");
+  h.set("X-Frame-Options", "DENY");
+  h.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  h.set("Permissions-Policy", "geolocation=(), microphone=(), camera=()");
+  h.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  h.set("Content-Security-Policy", CSP);
+  return new Response(resp.body, { status: resp.status, statusText: resp.statusText, headers: h });
+}
+// Constante-tijd string-vergelijk (voor het break-glass-wachtwoord).
+function ctEq(a, b) {
+  a = String(a); b = String(b);
+  if (a.length !== b.length) return false;
+  let d = 0;
+  for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return d === 0;
+}
+// Dummy-hash (geldig formaat) om login-timing gelijk te trekken voor onbekende accounts.
+const DUMMY_HASH = "pbkdf2$100000$AAAAAAAAAAAAAAAAAAAAAA==$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+// Eenvoudige per-IP rate-limiter (fixed window) op D1; faalt 'open' als de tabel ontbreekt.
+async function rateLimit(env, request, bucket, max, windowSec) {
+  try {
+    const ip = request.headers.get("cf-connecting-ip") || "unknown";
+    const k = bucket + ":" + ip;
+    const resetAt = new Date(Date.now() + windowSec * 1000).toISOString();
+    const r = await env.DB.prepare(
+      `INSERT INTO rate_limits (k,count,reset_at) VALUES (?1,1,?2)
+       ON CONFLICT(k) DO UPDATE SET
+         count = CASE WHEN reset_at <= ?3 THEN 1 ELSE count + 1 END,
+         reset_at = CASE WHEN reset_at <= ?3 THEN ?2 ELSE reset_at END
+       RETURNING count`).bind(k, resetAt, now()).first();
+    return !r || r.count <= max;
+  } catch (e) { return true; }
+}
 
 async function settings(env) {
   const r = await env.DB.prepare("SELECT key, value FROM settings").all();
@@ -79,6 +132,7 @@ async function apiStatus(env) {
 }
 
 async function apiOrder(request, env, url) {
+  if (!(await rateLimit(env, request, "order", 15, 600))) return bad("te_veel_verzoeken", 429);
   const s = await settings(env);
   if (!s.sales_open) return bad("verkoop_gesloten", 403);
   let b;
@@ -125,8 +179,9 @@ async function apiOrder(request, env, url) {
       metadata: { order_id: id },
     });
   } catch (e) {
+    console.error("mollie_create_fout", String((e && e.message) || e));
     await env.DB.prepare("UPDATE orders SET status='failed', note=?2 WHERE id=?1").bind(id, "mollie_fout: " + String(e.message || e)).run();
-    return bad("betaling_aanmaken_mislukt: " + String(e.message || e), 502);
+    return bad("betaling_aanmaken_mislukt", 502); // generiek; detail staat in de order-note voor de admin
   }
 
   await env.DB.prepare("UPDATE orders SET mollie_payment_id=?2 WHERE id=?1").bind(id, payment.id).run();
@@ -245,7 +300,7 @@ async function sendConfirmation(env, orderId) {
         <div style="font-size:29px;color:#ffffff;font-weight:bold;margin-top:4px;">Nijmegen Duckstad 🦆</div>
       </td></tr>
       <tr><td style="padding:28px 34px 6px;font-family:Arial,Helvetica,sans-serif;color:#1d2433;font-size:16px;line-height:1.6;">
-        <p style="margin:0 0 14px;">Hoi <strong>${esc(o.name)}</strong>,</p>
+        <p style="margin:0 0 14px;">Hoi <strong>${escHtml(o.name)}</strong>,</p>
         <p style="margin:0 0 14px;">Bedankt dat je meedoet aan de <strong>Nijmegen Duckstad</strong> badeendjesrace! Je hebt <strong>${o.quantity}&times; ${isBiz ? "bedrijfseendje" : "eendje"}${o.quantity === 1 ? "" : "s"}</strong> geadopteerd. Hieronder ${nums.length === 1 ? "jouw persoonlijke lot" : "jouw persoonlijke loten"} &mdash; <strong>bewaar deze mail goed.</strong></p>
       </td></tr>
       <tr><td style="padding:8px 30px 6px;">${ticketsHtml}</td></tr>
@@ -324,14 +379,19 @@ async function resolveSession(request, env) {
 }
 
 async function doLogin(request, env) {
+  if (!(await rateLimit(env, request, "login", 8, 300))) return bad("te_veel_pogingen", 429);
   const b = await request.json().catch(() => ({}));
   const email = String(b.email || "").trim().toLowerCase();
   const password = String(b.password || "");
   let user = null;
   const u = await env.DB.prepare("SELECT id, email, role, pass_hash FROM users WHERE email=?1").bind(email).first();
-  if (u && u.pass_hash && (await verifyPassword(password, u.pass_hash))) user = { id: u.id, email: u.email, role: u.role };
+  if (u && u.pass_hash) {
+    if (await verifyPassword(password, u.pass_hash)) user = { id: u.id, email: u.email, role: u.role };
+  } else {
+    await verifyPassword(password, DUMMY_HASH); // gelijke timing voor onbekende accounts (geen user-enumeration)
+  }
   // break-glass: env-admin blijft altijd werken, zodat je nooit buitengesloten raakt
-  if (!user && email === String(env.ADMIN_USER || "admin").toLowerCase() && env.ADMIN_PASSWORD && password === env.ADMIN_PASSWORD) {
+  if (!user && email === String(env.ADMIN_USER || "admin").toLowerCase() && env.ADMIN_PASSWORD && ctEq(password, env.ADMIN_PASSWORD)) {
     user = { id: "env-admin", email, role: "admin" };
   }
   if (!user) return bad("ongeldige_login", 401);
@@ -350,6 +410,7 @@ async function doLogout(request, env) {
 }
 
 async function doRequestReset(request, env) {
+  if (!(await rateLimit(env, request, "reset", 5, 900))) return bad("te_veel_verzoeken", 429);
   const b = await request.json().catch(() => ({}));
   const email = String(b.email || "").trim().toLowerCase();
   const u = await env.DB.prepare("SELECT id, email FROM users WHERE email=?1").bind(email).first();
@@ -371,7 +432,10 @@ async function doSetPassword(request, env) {
   const u = await env.DB.prepare("SELECT id, reset_expires FROM users WHERE reset_token=?1").bind(token).first();
   if (!u || !u.reset_expires || u.reset_expires < now()) return bad("token_ongeldig_of_verlopen", 400);
   const hash = await hashPassword(password);
-  await env.DB.prepare("UPDATE users SET pass_hash=?2, reset_token=NULL, reset_expires=NULL WHERE id=?1").bind(u.id, hash).run();
+  await env.DB.batch([
+    env.DB.prepare("UPDATE users SET pass_hash=?2, reset_token=NULL, reset_expires=NULL WHERE id=?1").bind(u.id, hash),
+    env.DB.prepare("DELETE FROM sessions WHERE user_id=?1").bind(u.id), // trek bestaande sessies in
+  ]);
   return json({ ok: true });
 }
 
@@ -574,8 +638,13 @@ async function adminApi(path, request, env) {
 
   if (sub === "setting" && request.method === "POST") {
     const b = await request.json().catch(() => ({}));
-    if (!b.key) return bad("key_verplicht");
-    await env.DB.prepare("INSERT INTO settings (key,value) VALUES (?1,?2) ON CONFLICT(key) DO UPDATE SET value=?2").bind(String(b.key), String(b.value)).run();
+    const ALLOWED = new Set(["sales_open", "max_regular", "price_regular_cents", "price_business_cents"]);
+    const key = String(b.key || "");
+    if (!ALLOWED.has(key)) return bad("onbekende_setting");
+    let value;
+    if (key === "sales_open") value = (b.value && b.value !== "0") ? "1" : "0";
+    else { const n = parseInt(b.value, 10); if (!Number.isFinite(n) || n < 0) return bad("waarde_ongeldig"); value = String(n); }
+    await env.DB.prepare("INSERT INTO settings (key,value) VALUES (?1,?2) ON CONFLICT(key) DO UPDATE SET value=?2").bind(key, value).run();
     return json({ ok: true });
   }
 
@@ -623,6 +692,7 @@ async function adminApi(path, request, env) {
   }
   // Lijst van mogelijke accountmanagers (admins + accountmanagers) voor de koppel-dropdown.
   if (sub === "managers" && request.method === "GET") {
+    if (session.role !== "admin" && session.role !== "accountmanager") return json({ error: "forbidden" }, 403);
     const r = await env.DB.prepare(
       "SELECT id, name, email, role FROM users WHERE role IN ('admin','accountmanager') ORDER BY COALESCE(NULLIF(name,''), email)").all();
     return json({ managers: r.results || [] });
@@ -718,7 +788,10 @@ async function adminApi(path, request, env) {
       const admins = await env.DB.prepare("SELECT COUNT(*) AS n FROM users WHERE role='admin'").first();
       if (t && t.role === "admin" && admins.n <= 1) return bad("laatste_admin", 409);
     }
-    await env.DB.prepare("UPDATE users SET role=?2 WHERE id=?1").bind(id, role).run();
+    await env.DB.batch([
+      env.DB.prepare("UPDATE users SET role=?2 WHERE id=?1").bind(id, role),
+      env.DB.prepare("DELETE FROM sessions WHERE user_id=?1").bind(id), // forceer her-login met de nieuwe rol
+    ]);
     return json({ ok: true });
   }
   if (sub === "user-update" && request.method === "POST") {
