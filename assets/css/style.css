@@ -275,12 +275,12 @@ html::-webkit-scrollbar-thumb{background:#c2d0e2;border-radius:8px;border:4px so
 html::-webkit-scrollbar-thumb:hover{background:#9db4cf}
 html::-webkit-scrollbar-track{background:var(--bg)}
 
-/* Scrollbare boxen: prominente, altijd zichtbare scrollbar */
-.scroll,.scroll-area{position:relative;scrollbar-width:thin;scrollbar-color:#9db4cf #eef3f8}
-.scroll::-webkit-scrollbar,.scroll-area::-webkit-scrollbar{width:12px;height:12px}
-.scroll::-webkit-scrollbar-track,.scroll-area::-webkit-scrollbar-track{background:#eef3f8;border-radius:8px}
-.scroll::-webkit-scrollbar-thumb,.scroll-area::-webkit-scrollbar-thumb{background:#9db4cf;border-radius:8px;border:3px solid #eef3f8}
-.scroll::-webkit-scrollbar-thumb:hover,.scroll-area::-webkit-scrollbar-thumb:hover{background:var(--azure)}
+/* Scrollbare boxen: prominente, altijd zichtbare scrollbar (azuurblauw) */
+.scroll,.scroll-area{position:relative;scrollbar-width:auto;scrollbar-color:var(--azure) #cfe0f1}
+.scroll::-webkit-scrollbar,.scroll-area::-webkit-scrollbar{width:15px;height:15px}
+.scroll::-webkit-scrollbar-track,.scroll-area::-webkit-scrollbar-track{background:#cfe0f1;border-radius:10px;margin:4px}
+.scroll::-webkit-scrollbar-thumb,.scroll-area::-webkit-scrollbar-thumb{background:var(--azure);border-radius:10px;border:3px solid #cfe0f1;min-height:44px}
+.scroll::-webkit-scrollbar-thumb:hover,.scroll-area::-webkit-scrollbar-thumb:hover{background:var(--azure-dark)}
 
 /* Fade-schaduw: sticky pseudo-elementen die over de content tekenen.
    Standaard verborgen; JS zet .can-scroll-up/.can-scroll-down. */
