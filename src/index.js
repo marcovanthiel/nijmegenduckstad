@@ -485,8 +485,11 @@ async function adminApi(path, request, env) {
   if (!session) return json({ error: "unauthorized" }, 401);
   if (sub === "me") return json({ email: session.email, role: session.role });
 
-  // Muteren mag alleen 'admin'; read-only mag bekijken + exports
-  const ADMIN_ONLY = new Set(["delete-order", "setting", "manual-order", "winner", "draw-reset", "users", "user-role", "user-reset", "user-delete", "prize", "prize-delete", "prize-confirm"]);
+  // Rechten: 'admin' mag alles. 'accountmanager' mag ingebrachte prijzen beheren
+  // (toevoegen/bewerken/verwijderen/mailen) en de rest inzien. 'readonly' mag alleen bekijken + exports.
+  const PRIZE_MANAGE = new Set(["prize", "prize-delete", "prize-confirm"]);
+  const ADMIN_ONLY = new Set(["delete-order", "setting", "manual-order", "winner", "draw-reset", "users", "user-role", "user-reset", "user-delete", "user-update"]);
+  if (PRIZE_MANAGE.has(sub) && session.role !== "admin" && session.role !== "accountmanager") return json({ error: "forbidden" }, 403);
   if (ADMIN_ONLY.has(sub) && session.role !== "admin") return json({ error: "forbidden" }, 403);
 
   if (sub === "stats") {
@@ -610,10 +613,19 @@ async function adminApi(path, request, env) {
   }
 
   /* ----- prijzen & inbrengers ----- */
-  // Lijst (read-only mag bekijken).
+  // Lijst (read-only mag bekijken) — met gekoppelde accountmanager (naam/telefoon/e-mail).
   if (sub === "prizes" && request.method === "GET") {
-    const r = await env.DB.prepare("SELECT * FROM prizes ORDER BY created_at DESC").all();
+    const r = await env.DB.prepare(
+      `SELECT p.*, u.name AS am_name, u.phone AS am_phone, u.email AS am_email
+       FROM prizes p LEFT JOIN users u ON u.id = p.account_manager_id
+       ORDER BY p.created_at DESC`).all();
     return json({ prizes: r.results || [] });
+  }
+  // Lijst van mogelijke accountmanagers (admins + accountmanagers) voor de koppel-dropdown.
+  if (sub === "managers" && request.method === "GET") {
+    const r = await env.DB.prepare(
+      "SELECT id, name, email, role FROM users WHERE role IN ('admin','accountmanager') ORDER BY COALESCE(NULLIF(name,''), email)").all();
+    return json({ managers: r.results || [] });
   }
   // Toevoegen of bijwerken (admin-only). Met `id` => update, anders insert.
   if (sub === "prize" && request.method === "POST") {
@@ -629,18 +641,23 @@ async function adminApi(path, request, env) {
     const donor_phone = esc(b.donor_phone).trim().slice(0, 60);
     const conditions = esc(b.conditions).trim().slice(0, 2000);
     if (donor_email && !isEmail(donor_email)) return bad("email_ongeldig");
+    const account_manager_id = b.account_manager_id ? String(b.account_manager_id) : null;
+    if (account_manager_id) {
+      const amu = await env.DB.prepare("SELECT id FROM users WHERE id=?1 AND role IN ('admin','accountmanager')").bind(account_manager_id).first();
+      if (!amu) return bad("accountmanager_onbekend");
+    }
     if (b.id) {
       const ex = await env.DB.prepare("SELECT id FROM prizes WHERE id=?1").bind(String(b.id)).first();
       if (!ex) return bad("niet_gevonden", 404);
       await env.DB.prepare(
-        "UPDATE prizes SET title=?2,value=?3,description=?4,donor_name=?5,donor_company=?6,donor_email=?7,donor_phone=?8,conditions=?9 WHERE id=?1")
-        .bind(String(b.id), title, value, description, donor_name, donor_company, donor_email, donor_phone, conditions).run();
+        "UPDATE prizes SET title=?2,value=?3,description=?4,donor_name=?5,donor_company=?6,donor_email=?7,donor_phone=?8,conditions=?9,account_manager_id=?10 WHERE id=?1")
+        .bind(String(b.id), title, value, description, donor_name, donor_company, donor_email, donor_phone, conditions, account_manager_id).run();
       return json({ ok: true, id: String(b.id) });
     }
     const id = crypto.randomUUID();
     await env.DB.prepare(
-      "INSERT INTO prizes (id,created_at,title,value,description,donor_name,donor_company,donor_email,donor_phone,conditions) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10)")
-      .bind(id, now(), title, value, description, donor_name, donor_company, donor_email, donor_phone, conditions).run();
+      "INSERT INTO prizes (id,created_at,title,value,description,donor_name,donor_company,donor_email,donor_phone,conditions,account_manager_id) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11)")
+      .bind(id, now(), title, value, description, donor_name, donor_company, donor_email, donor_phone, conditions, account_manager_id).run();
     return json({ ok: true, id });
   }
   if (sub === "prize-delete" && request.method === "POST") {
@@ -672,34 +689,45 @@ async function adminApi(path, request, env) {
 
   /* ----- gebruikersbeheer (admin-only) ----- */
   if (sub === "users" && request.method === "GET") {
-    const r = await env.DB.prepare("SELECT id, email, role, created_at, (pass_hash IS NOT NULL) AS has_pw FROM users ORDER BY email").all();
+    const r = await env.DB.prepare("SELECT id, email, name, phone, role, created_at, (pass_hash IS NOT NULL) AS has_pw FROM users ORDER BY email").all();
     return json({ users: r.results || [], me: session.email });
   }
   if (sub === "users" && request.method === "POST") {
     const b = await request.json().catch(() => ({}));
     const email = String(b.email || "").trim().toLowerCase();
-    const role = b.role === "admin" ? "admin" : "readonly";
+    const role = ["admin", "accountmanager", "readonly"].includes(b.role) ? b.role : "readonly";
+    const name = esc(b.name).trim().slice(0, 120);
+    const phone = esc(b.phone).trim().slice(0, 60);
     if (!isEmail(email)) return bad("email_ongeldig");
     const exists = await env.DB.prepare("SELECT id FROM users WHERE email=?1").bind(email).first();
     if (exists) return bad("bestaat_al", 409);
     const id = crypto.randomUUID();
     const token = randToken();
     const exp = new Date(Date.now() + 72 * 3600 * 1000).toISOString();
-    await env.DB.prepare("INSERT INTO users (id,email,role,created_at,reset_token,reset_expires) VALUES (?1,?2,?3,?4,?5,?6)")
-      .bind(id, email, role, now(), token, exp).run();
+    await env.DB.prepare("INSERT INTO users (id,email,name,phone,role,created_at,reset_token,reset_expires) VALUES (?1,?2,?3,?4,?5,?6,?7,?8)")
+      .bind(id, email, name, phone, role, now(), token, exp).run();
     await sendResetMail(env, email, token, true);
     return json({ ok: true, mailed: !!env.RESEND_API_KEY });
   }
   if (sub === "user-role" && request.method === "POST") {
     const b = await request.json().catch(() => ({}));
     const id = String(b.id || "");
-    const role = b.role === "admin" ? "admin" : "readonly";
+    const role = ["admin", "accountmanager", "readonly"].includes(b.role) ? b.role : "readonly";
     if (role !== "admin") {
       const t = await env.DB.prepare("SELECT role FROM users WHERE id=?1").bind(id).first();
       const admins = await env.DB.prepare("SELECT COUNT(*) AS n FROM users WHERE role='admin'").first();
       if (t && t.role === "admin" && admins.n <= 1) return bad("laatste_admin", 409);
     }
     await env.DB.prepare("UPDATE users SET role=?2 WHERE id=?1").bind(id, role).run();
+    return json({ ok: true });
+  }
+  if (sub === "user-update" && request.method === "POST") {
+    const b = await request.json().catch(() => ({}));
+    const u = await env.DB.prepare("SELECT id FROM users WHERE id=?1").bind(String(b.id || "")).first();
+    if (!u) return bad("niet_gevonden", 404);
+    const name = esc(b.name).trim().slice(0, 120);
+    const phone = esc(b.phone).trim().slice(0, 60);
+    await env.DB.prepare("UPDATE users SET name=?2, phone=?3 WHERE id=?1").bind(u.id, name, phone).run();
     return json({ ok: true });
   }
   if (sub === "user-reset" && request.method === "POST") {

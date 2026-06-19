@@ -25,6 +25,8 @@
   .mini{padding:4px 10px;font-size:.82rem}
   .admin-only{display:none}
   body.is-admin .admin-only{display:block}
+  .prize-manage{display:none}
+  body.can-prizes .prize-manage{display:block}
   .whoami{color:var(--muted);font-size:.88rem}
   select{padding:6px 8px;border:1px solid var(--line);border-radius:8px}
   a.link{color:var(--blue);cursor:pointer;text-decoration:underline}
@@ -73,7 +75,7 @@
       <h3>🎁 Prijzen &amp; inbrengers</h3>
       <p class="form__note">Houd bij welke prijzen zijn ingebracht, door wie en onder welke voorwaarden. Stuur de inbrenger een bevestigingsmail &mdash; de tekst kun je eerst aanpassen.</p>
 
-      <div class="admin-only" id="prizeForm">
+      <div class="prize-manage" id="prizeForm">
         <input type="hidden" id="pzId">
         <div class="row">
           <input id="pzTitle" placeholder="Prijs (bv. Ballonvaart voor 2)" style="flex:2;min-width:200px">
@@ -95,6 +97,10 @@
           <label for="pzConditions">Voorwaarden waaronder ingebracht</label>
           <textarea id="pzConditions" rows="3" placeholder="Bv. geldig t/m 31-12-2027, op vertoon van legitimatie, niet inwisselbaar voor geld, reservering vooraf."></textarea>
         </div>
+        <div class="field" style="margin-top:12px">
+          <label for="pzManager">Accountmanager <span class="muted">(ondertekent de bevestigingsmail met naam + telefoon)</span></label>
+          <select id="pzManager" style="width:100%"><option value="">— geen accountmanager —</option></select>
+        </div>
         <div class="row" style="margin-top:4px">
           <button class="btn btn--primary" id="pzSave" style="padding:10px 18px">Prijs opslaan</button>
           <button class="btn btn--ghost-blue" id="pzCancel" style="padding:10px 18px;display:none">Annuleren</button>
@@ -102,9 +108,9 @@
         </div>
       </div>
 
-      <div class="scroll" style="margin-top:16px"><table id="prizesTable"><thead><tr><th>Prijs</th><th>Waarde</th><th>Inbrenger</th><th>Voorwaarden</th><th>Bevestiging</th><th class="admin-col"></th></tr></thead><tbody></tbody></table></div>
+      <div class="scroll" style="margin-top:16px"><table id="prizesTable"><thead><tr><th>Prijs</th><th>Waarde</th><th>Inbrenger</th><th>Accountmanager</th><th>Voorwaarden</th><th>Bevestiging</th><th class="admin-col"></th></tr></thead><tbody></tbody></table></div>
 
-      <div class="admin-only" id="confirmBox" style="display:none;margin-top:18px;border-top:1px solid var(--line);padding-top:16px">
+      <div class="prize-manage" id="confirmBox" style="display:none;margin-top:18px;border-top:1px solid var(--line);padding-top:16px">
         <h4 style="margin:0 0 4px">✉️ Bevestigingsmail aan <span id="confirmTo"></span></h4>
         <p class="form__note">Pas onderwerp en tekst gerust aan voordat je verzendt. De regel <code>{{prijs}}</code> wordt vervangen door een kader met de prijs, de omschrijving en de voorwaarden — verplaats die regel om het kader elders in de mail te zetten.</p>
         <div class="field"><label for="confirmSubject">Onderwerp</label><input id="confirmSubject"></div>
@@ -156,14 +162,16 @@
 
     <div class="panel admin-only">
       <h3>👥 Gebruikersbeheer</h3>
-      <p class="form__note">Gebruikersnaam = e-mailadres. Een nieuwe gebruiker krijgt een mail om zelf een wachtwoord in te stellen.</p>
+      <p class="form__note">Gebruikersnaam = e-mailadres. Een nieuwe gebruiker krijgt een mail om zelf een wachtwoord in te stellen. <strong>Naam + telefoon</strong> van een accountmanager worden gebruikt als ondertekening van de prijs-bevestigingsmail (achteraf in de tabel aanpasbaar). Rollen: read-only (inzien), accountmanager (prijzen beheren + rest inzien), admin (alles).</p>
       <div class="row">
-        <input id="uEmail" type="email" placeholder="E-mailadres" style="flex:1;min-width:200px">
-        <select id="uRole"><option value="readonly">Read-only (bekijken + exports)</option><option value="admin">Admin (alle rechten)</option></select>
+        <input id="uEmail" type="email" placeholder="E-mailadres" style="flex:2;min-width:180px">
+        <input id="uName" placeholder="Naam" style="flex:1;min-width:130px">
+        <input id="uPhone" placeholder="Telefoon" style="flex:1;min-width:120px">
+        <select id="uRole"><option value="readonly">Read-only (inzien + exports)</option><option value="accountmanager">Accountmanager (prijzen beheren)</option><option value="admin">Admin (alle rechten)</option></select>
         <button class="btn btn--primary" id="uAdd" style="padding:10px 18px">Gebruiker toevoegen</button>
       </div>
       <div id="uResult" style="margin-top:8px"></div>
-      <div class="scroll" style="margin-top:12px"><table id="usersTable"><thead><tr><th>E-mail</th><th>Rol</th><th>Status</th><th></th></tr></thead><tbody></tbody></table></div>
+      <div class="scroll" style="margin-top:12px"><table id="usersTable"><thead><tr><th>E-mail</th><th>Naam</th><th>Telefoon</th><th>Rol</th><th>Status</th><th></th></tr></thead><tbody></tbody></table></div>
     </div>
 
     <div class="panel">
@@ -177,7 +185,7 @@
 (function(){
   var login=document.getElementById('login'), app=document.getElementById('app');
   var loginStatus=document.getElementById('loginStatus');
-  var isAdmin=false;
+  var isAdmin=false, canPrizes=false;
   function api(path, opts){ opts=opts||{}; opts.credentials='same-origin'; return fetch('/api/admin/'+path,opts); }
   function postJSON(path, obj){ return api(path,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(obj||{})}); }
   function euro(c){ return '€'+(c/100).toLocaleString('nl-NL',{minimumFractionDigits:2,maximumFractionDigits:2}); }
@@ -203,11 +211,14 @@
 
   function start(email, role){
     isAdmin = role==='admin';
+    canPrizes = role==='admin' || role==='accountmanager';
     document.body.classList.toggle('is-admin', isAdmin);
+    document.body.classList.toggle('can-prizes', canPrizes);
     login.style.display='none'; app.style.display='block';
     document.getElementById('logout').style.display='';
-    var who=document.getElementById('whoami'); who.style.display=''; who.textContent='Ingelogd als '+email+' · '+(isAdmin?'admin':'read-only');
-    loadStats(); loadOrders(); loadDraws(); loadPrizes(); if(isAdmin) loadUsers();
+    var roleLabel = role==='admin'?'admin':(role==='accountmanager'?'accountmanager':'read-only');
+    var who=document.getElementById('whoami'); who.style.display=''; who.textContent='Ingelogd als '+email+' · '+roleLabel;
+    loadStats(); loadOrders(); loadDraws(); loadPrizes(); if(canPrizes) loadManagers(); if(isAdmin) loadUsers();
   }
 
   // ----- data laden -----
@@ -250,44 +261,59 @@
       function opt(v,cur,label){ return '<option value="'+v+'"'+(cur===v?' selected':'')+'>'+label+'</option>'; }
       document.querySelector('#usersTable tbody').innerHTML=(d.users||[]).map(function(u){
         var mine=u.email===d.me;
-        var roleSel='<select class="uroleSel" data-uid="'+u.id+'">'+opt('readonly',u.role,'read-only')+opt('admin',u.role,'admin')+'</select>';
+        var roleSel='<select class="uroleSel" data-uid="'+u.id+'">'+opt('readonly',u.role,'read-only')+opt('accountmanager',u.role,'accountmanager')+opt('admin',u.role,'admin')+'</select>';
+        var nameInp='<input class="uname" data-uid="'+u.id+'" value="'+esc(u.name||'')+'" placeholder="naam" style="min-width:120px">';
+        var phoneInp='<input class="uphone" data-uid="'+u.id+'" value="'+esc(u.phone||'')+'" placeholder="telefoon" style="min-width:110px">';
         var st=u.has_pw?'<span class="tag paid">actief</span>':'<span class="tag pending">wacht op wachtwoord</span>';
         var act='<button class="btn btn--ghost-blue mini" data-ureset="'+u.id+'">Reset-link</button>'+(mine?'':' <button class="btn btn--ghost-blue mini" data-udel="'+u.id+'">🗑</button>');
-        return '<tr><td>'+esc(u.email)+(mine?' <span class="muted">(jij)</span>':'')+'</td><td>'+roleSel+'</td><td>'+st+'</td><td class="row" style="gap:6px">'+act+'</td></tr>';
+        return '<tr><td>'+esc(u.email)+(mine?' <span class="muted">(jij)</span>':'')+'</td><td>'+nameInp+'</td><td>'+phoneInp+'</td><td>'+roleSel+'</td><td>'+st+'</td><td class="row" style="gap:6px">'+act+'</td></tr>';
       }).join('');
     });
   }
 
   // ----- prijzen & inbrengers -----
-  var prizesCache=[];
+  var prizesCache=[], managersCache=[];
+  function loadManagers(){
+    api('managers').then(function(r){return r.json();}).then(function(d){
+      managersCache=d.managers||[];
+      var sel=document.getElementById('pzManager'); if(!sel) return;
+      var cur=sel.value;
+      sel.innerHTML='<option value="">— geen accountmanager —</option>'+managersCache.map(function(m){
+        return '<option value="'+esc(m.id)+'">'+esc((m.name||m.email)+(m.role==='admin'?' (admin)':''))+'</option>';
+      }).join('');
+      sel.value=cur;
+    });
+  }
   function loadPrizes(){
     api('prizes').then(function(r){return r.json();}).then(function(d){
       prizesCache=d.prizes||[];
       document.querySelector('#prizesTable tbody').innerHTML=prizesCache.map(function(p){
         var donor=esc(p.donor_name)+(p.donor_company?' <span class="muted">('+esc(p.donor_company)+')</span>':'')+(p.donor_email?'<br><span class="muted">'+esc(p.donor_email)+'</span>':'');
+        var am=p.am_name?esc(p.am_name)+(p.am_phone?'<br><span class="muted">'+esc(p.am_phone)+'</span>':''):'<span class="muted">—</span>';
         var cond=p.conditions?esc(p.conditions):'<span class="muted">—</span>';
         var conf=p.confirmation_sent_at?'<span class="tag paid">verstuurd '+esc(p.confirmation_sent_at.slice(0,10))+'</span>':'<span class="tag pending">nog niet</span>';
         var act='<td class="admin-col"></td>';
-        if(isAdmin){
+        if(canPrizes){
           var mailBtn=p.donor_email?'<button class="btn btn--ghost-blue mini" data-pzmail="'+esc(p.id)+'">✉️</button>':'<span class="muted" title="geen e-mail van inbrenger">—</span>';
           act='<td class="admin-col"><div class="row" style="gap:6px;flex-wrap:nowrap">'+mailBtn+'<button class="btn btn--ghost-blue mini" data-pzedit="'+esc(p.id)+'">✏️</button><button class="btn btn--ghost-blue mini" data-pzdel="'+esc(p.id)+'">🗑</button></div></td>';
         }
-        return '<tr><td><strong>'+esc(p.title)+'</strong></td><td>'+esc(p.value||'')+'</td><td>'+donor+'</td><td style="max-width:260px">'+cond+'</td><td>'+conf+'</td>'+act+'</tr>';
-      }).join('')||'<tr><td colspan="6" class="muted">Nog geen prijzen ingevoerd.</td></tr>';
+        return '<tr><td><strong>'+esc(p.title)+'</strong></td><td>'+esc(p.value||'')+'</td><td>'+donor+'</td><td>'+am+'</td><td style="max-width:260px">'+cond+'</td><td>'+conf+'</td>'+act+'</tr>';
+      }).join('')||'<tr><td colspan="7" class="muted">Nog geen prijzen ingevoerd.</td></tr>';
     });
   }
-  var pzFields=['pzId','pzTitle','pzValue','pzDescription','pzDonor','pzCompany','pzEmail','pzPhone','pzConditions'];
+  var pzFields=['pzId','pzTitle','pzValue','pzDescription','pzDonor','pzCompany','pzEmail','pzPhone','pzConditions','pzManager'];
   function resetPrizeForm(){ pzFields.forEach(function(id){document.getElementById(id).value='';}); document.getElementById('pzCancel').style.display='none'; document.getElementById('pzSave').textContent='Prijs opslaan'; }
   function fillPrizeForm(p){
     document.getElementById('pzId').value=p.id; document.getElementById('pzTitle').value=p.title||''; document.getElementById('pzValue').value=p.value||'';
     document.getElementById('pzDescription').value=p.description||'';
     document.getElementById('pzDonor').value=p.donor_name||''; document.getElementById('pzCompany').value=p.donor_company||'';
     document.getElementById('pzEmail').value=p.donor_email||''; document.getElementById('pzPhone').value=p.donor_phone||''; document.getElementById('pzConditions').value=p.conditions||'';
+    document.getElementById('pzManager').value=p.account_manager_id||'';
     document.getElementById('pzSave').textContent='Wijziging opslaan'; document.getElementById('pzCancel').style.display='';
     document.getElementById('prizeForm').scrollIntoView({behavior:'smooth',block:'center'});
   }
   document.getElementById('pzSave').onclick=function(){
-    var p={id:document.getElementById('pzId').value||undefined,title:document.getElementById('pzTitle').value.trim(),value:document.getElementById('pzValue').value.trim(),description:document.getElementById('pzDescription').value.trim(),donor_name:document.getElementById('pzDonor').value.trim(),donor_company:document.getElementById('pzCompany').value.trim(),donor_email:document.getElementById('pzEmail').value.trim(),donor_phone:document.getElementById('pzPhone').value.trim(),conditions:document.getElementById('pzConditions').value.trim()};
+    var p={id:document.getElementById('pzId').value||undefined,title:document.getElementById('pzTitle').value.trim(),value:document.getElementById('pzValue').value.trim(),description:document.getElementById('pzDescription').value.trim(),donor_name:document.getElementById('pzDonor').value.trim(),donor_company:document.getElementById('pzCompany').value.trim(),donor_email:document.getElementById('pzEmail').value.trim(),donor_phone:document.getElementById('pzPhone').value.trim(),conditions:document.getElementById('pzConditions').value.trim(),account_manager_id:document.getElementById('pzManager').value};
     if(!p.title||!p.donor_name){ alert('Prijs en inbrenger (naam) zijn verplicht.'); return; }
     var res=document.getElementById('pzResult');
     postJSON('prize',p).then(function(r){return r.json();}).then(function(d){
@@ -306,7 +332,12 @@
     l.push('{{prijs}}','');
     l.push('Klopt er iets niet of wil je nog iets aanpassen? Stuur dan gerust een reply op deze mail.','');
     l.push('Nogmaals hartelijk dank voor je bijdrage — dankzij inbrengers als jij maken we er een prachtige badeendjesrace van, met de opbrengst voor de goede doelen van Rotary Nijmegen Stad en Land.','');
-    l.push('Met vriendelijke groet,','Rotary Nijmegen Stad en Land');
+    if(p.am_name){
+      l.push('Met vriendelijke groet,', p.am_name, 'Accountmanager · Rotary Nijmegen Stad en Land');
+      if((p.am_phone||'').trim()) l.push('Tel. '+p.am_phone.trim());
+    } else {
+      l.push('Met vriendelijke groet,','Rotary Nijmegen Stad en Land');
+    }
     return l.join('\n');
   }
   function openConfirm(p){
@@ -386,10 +417,11 @@
   // ----- gebruikersbeheer (admin) -----
   document.getElementById('uAdd').onclick=function(){
     var email=document.getElementById('uEmail').value.trim(), role=document.getElementById('uRole').value;
+    var name=document.getElementById('uName').value.trim(), phone=document.getElementById('uPhone').value.trim();
     if(!email){ alert('Vul een e-mailadres in.'); return; }
-    postJSON('users',{email:email,role:role}).then(function(r){return r.json();}).then(function(d){
+    postJSON('users',{email:email,role:role,name:name,phone:phone}).then(function(r){return r.json();}).then(function(d){
       var el=document.getElementById('uResult');
-      if(d.ok){ el.innerHTML='<span class="muted">Toegevoegd'+(d.mailed?' — er is een mail gestuurd om het wachtwoord in te stellen.':' (let op: geen mail verstuurd).')+'</span>'; document.getElementById('uEmail').value=''; loadUsers(); }
+      if(d.ok){ el.innerHTML='<span class="muted">Toegevoegd'+(d.mailed?' — er is een mail gestuurd om het wachtwoord in te stellen.':' (let op: geen mail verstuurd).')+'</span>'; document.getElementById('uEmail').value='';document.getElementById('uName').value='';document.getElementById('uPhone').value=''; loadUsers(); if(canPrizes) loadManagers(); }
       else { el.textContent=d.error==='bestaat_al'?'Dit e-mailadres bestaat al.':(d.error||'fout'); }
     });
   };
@@ -404,8 +436,14 @@
     if(t.dataset && t.dataset.pzmail){ var pm=prizesCache.filter(function(x){return x.id===t.dataset.pzmail;})[0]; if(pm) openConfirm(pm); }
   });
   document.body.addEventListener('change',function(e){
-    if(e.target.classList && e.target.classList.contains('uroleSel')){
-      postJSON('user-role',{id:e.target.dataset.uid,role:e.target.value}).then(function(r){return r.json();}).then(function(d){ if(!d.ok){ alert(d.error==='laatste_admin'?'Er moet minstens één admin blijven.':(d.error||'fout')); loadUsers(); } });
+    var t=e.target; if(!t.classList) return;
+    if(t.classList.contains('uroleSel')){
+      postJSON('user-role',{id:t.dataset.uid,role:t.value}).then(function(r){return r.json();}).then(function(d){ if(!d.ok){ alert(d.error==='laatste_admin'?'Er moet minstens één admin blijven.':(d.error||'fout')); loadUsers(); } else { if(canPrizes) loadManagers(); loadPrizes(); } });
+    }
+    if(t.classList.contains('uname')||t.classList.contains('uphone')){
+      var uid=t.dataset.uid;
+      var nameInp=document.querySelector('.uname[data-uid="'+uid+'"]'), phoneInp=document.querySelector('.uphone[data-uid="'+uid+'"]');
+      postJSON('user-update',{id:uid,name:nameInp?nameInp.value.trim():'',phone:phoneInp?phoneInp.value.trim():''}).then(function(r){return r.json();}).then(function(d){ if(d.ok){ if(canPrizes) loadManagers(); loadPrizes(); } });
     }
   });
 

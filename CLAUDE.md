@@ -189,6 +189,18 @@ De site wordt uitgebreid van static-only naar een Worker-met-code + D1:
 
 ## Recente architectuur-besluiten (changelog)
 
+- **2026-06-19** (Code): **accountmanager-rol + koppeling aan prijzen**. Migratie `0004_accountmanager.sql`
+  (--remote vóór deploy): `users.name`, `users.phone`, `prizes.account_manager_id`. Nieuwe rol
+  **`accountmanager`**: mag ingebrachte prijzen beheren (`prize`/`prize-delete`/`prize-confirm` →
+  nieuwe `PRIZE_MANAGE`-set, naast admin) en de rest inzien; overige mutaties blijven admin-only
+  (`user-update` toegevoegd aan `ADMIN_ONLY`). Per prijs koppel je een accountmanager (dropdown,
+  endpoint `GET managers` = admins+accountmanagers). De **bevestigingsmail-ondertekening** wordt de
+  **naam + telefoon** van de gekoppelde accountmanager (client vult dit in `defaultPrizeMessage`,
+  uit de `am_*`-join op `prizes`). Gebruikersbeheer: naam/telefoon bij aanmaken + inline bewerkbaar
+  (`user-update`), rol-select met accountmanager. Frontend-zichtbaarheid via body-class `can-prizes`
+  (admin|accountmanager) i.p.v. alleen `is-admin`. NB: accountmanager = echt user-account; de
+  break-glass env-admin staat niet in `users` en is dus niet koppelbaar.
+
 - **2026-06-19** (Code): **prijzenadministratie + bevestigingsmail aan inbrengers**. Nieuwe D1-tabel
   `prizes` (migratie `0003_prizes.sql`, --remote toegepast vóór de deploy): prijs/waarde/omschrijving,
   inbrenger (naam, bedrijf, e-mail, telefoon), `conditions` (voorwaarden) en `confirmation_sent_at`.
