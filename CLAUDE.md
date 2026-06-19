@@ -189,6 +189,14 @@ De site wordt uitgebreid van static-only naar een Worker-met-code + D1:
 
 ## Recente architectuur-besluiten (changelog)
 
+- **2026-06-19** (Code): **versienummer in de footer + versiebeleid**. `config.js` heeft nu een veld
+  **`version`** (start `1.0.0`); `main.js` toont `v<version>` in `.footer-bottom` (of vult
+  `[data-version]`-elementen). Admin laadt `config.js` en toont de versie in een eigen footer
+  (`#adminVersion`). **Afspraak: bump `version` in `config.js` bij ELKE update** (patch voor fixes/
+  kleine wijzigingen, minor voor features). Publieke `config.js`/`main.js`-script-refs eenmalig naar
+  `?v=1` gebust (oude immutable-cache breken); voortaan houdt must-revalidate ze vers, dus alleen het
+  versieveld bumpen volstaat.
+
 - **2026-06-19** (Code): **scrollbaarheid zichtbaar gemaakt (site-breed)**. macOS verbergt scrollbars;
   in `style.css` nu altijd zichtbare, gestylede scrollbars voor de pagina (`html::-webkit-scrollbar`)
   én voor scrollbare boxen (`.scroll`/`.scroll-area`), plus een **fade-schaduw** boven/onder die boxen

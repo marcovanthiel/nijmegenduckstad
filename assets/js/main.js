@@ -96,6 +96,22 @@
   document.querySelectorAll('[data-goal-net]').forEach(function (el) { el.textContent = euro(C.goalNet); });
   var year = document.querySelector('[data-year]'); if (year) year.textContent = new Date().getFullYear();
 
+  /* --- Versienummer in de footer --- */
+  (function () {
+    if (!C.version) return;
+    var label = 'v' + C.version;
+    var explicit = document.querySelectorAll('[data-version]');
+    if (explicit.length) { explicit.forEach(function (el) { el.textContent = label; }); return; }
+    var fb = document.querySelector('.footer-bottom');
+    if (!fb) return;
+    var spans = fb.querySelectorAll('span');
+    var host = spans.length ? spans[spans.length - 1] : fb;
+    var v = document.createElement('span');
+    v.className = 'footer-version';
+    v.textContent = ' · ' + label;
+    host.appendChild(v);
+  })();
+
   function setSocial(sel, url) {
     document.querySelectorAll(sel).forEach(function (a) {
       if (url) { a.href = url; a.style.display = ''; } else { a.style.display = 'none'; }

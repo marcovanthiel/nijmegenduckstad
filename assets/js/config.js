@@ -3,6 +3,9 @@
    Pas hier de cijfers en links aan. De rest van de site werkt automatisch mee.
    ========================================================================= */
 window.DUCKSTAD = {
+  // --- Versie (in de footer) — bump bij ELKE update ---
+  version: "1.0.0",
+
   // --- Verkoop / live teller ---
   // ducksSold is alleen een fallback; met het bestelsysteem actief haalt de
   // teller de echte stand op via /api/status.

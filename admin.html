@@ -8,6 +8,7 @@
 <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/style.css?v=3">
+<script src="assets/js/config.js?v=1"></script>
 <style>
   .admin-wrap{max-width:1100px;margin:0 auto;padding:24px}
   .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin:18px 0}
@@ -206,6 +207,7 @@
     </div>
     </section>
   </div>
+  <footer style="text-align:center;color:var(--muted);font-size:.82rem;margin:22px 0 6px">Nijmegen Duckstad &middot; admin <span id="adminVersion"></span></footer>
 </div>
 
 <script>
@@ -213,6 +215,7 @@
   var login=document.getElementById('login'), app=document.getElementById('app');
   var loginStatus=document.getElementById('loginStatus');
   var isAdmin=false, canPrizes=false;
+  (function(){ var av=document.getElementById('adminVersion'); if(av && window.DUCKSTAD) av.textContent='v'+(window.DUCKSTAD.version||''); })();
   function api(path, opts){ opts=opts||{}; opts.credentials='same-origin'; return fetch('/api/admin/'+path,opts); }
   function postJSON(path, obj){ return api(path,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(obj||{})}); }
   function euro(c){ return '€'+(c/100).toLocaleString('nl-NL',{minimumFractionDigits:2,maximumFractionDigits:2}); }
