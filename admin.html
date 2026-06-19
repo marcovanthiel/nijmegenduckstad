@@ -22,7 +22,14 @@
   .tag{font-size:.78rem;padding:2px 8px;border-radius:999px}
   .tag.paid{background:#e7f7ef;color:#13754f}.tag.pending{background:#fff5dd;color:#7a5200}.tag.other{background:#fdecec;color:#b3261e}
   .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-  .scroll{overflow-y:scroll;overflow-x:auto;max-height:420px}
+  .scroll{overflow-y:auto;overflow-x:auto;max-height:420px;scrollbar-width:none;-ms-overflow-style:none;padding-right:14px}
+  .scroll::-webkit-scrollbar{width:0;height:0;display:none}
+  .scroll-wrap{position:relative}
+  .cbar{position:absolute;top:6px;right:3px;bottom:6px;width:9px;border-radius:6px;background:#dbe7f4;opacity:0;transition:opacity .2s;z-index:4}
+  .scroll-wrap.is-scrollable .cbar{opacity:1}
+  .cbar__thumb{position:absolute;left:0;right:0;border-radius:6px;background:var(--azure);min-height:32px;cursor:grab}
+  .cbar__thumb:hover{background:var(--azure-dark)}
+  .cbar__thumb:active{cursor:grabbing;background:var(--azure-dark)}
   .mini{padding:4px 10px;font-size:.82rem}
   .admin-only{display:none}
   body.is-admin .admin-only{display:block}
@@ -508,20 +515,37 @@
     refreshScrollHints();
   });
 
-  // ----- scroll-hint: fade-schaduw boven/onder scrollbare boxen -----
-  function setShade(el){
-    el.classList.toggle('can-scroll-up', el.scrollTop > 2);
-    el.classList.toggle('can-scroll-down', el.scrollTop + el.clientHeight < el.scrollHeight - 2);
+  // ----- eigen altijd-zichtbare scrollbalk (native verborgen) + fade -----
+  function enhanceScroll(el){
+    if(el._cbar) return;
+    var wrap=document.createElement('div'); wrap.className='scroll-wrap';
+    el.parentNode.insertBefore(wrap, el); wrap.appendChild(el);
+    var bar=document.createElement('div'); bar.className='cbar';
+    var thumb=document.createElement('div'); thumb.className='cbar__thumb';
+    bar.appendChild(thumb); wrap.appendChild(bar);
+    el._cbar=bar;
+    function update(){
+      var sh=el.scrollHeight, ch=el.clientHeight, st=el.scrollTop, scrollable=sh>ch+2;
+      wrap.classList.toggle('is-scrollable', scrollable);
+      el.classList.toggle('can-scroll-up', st>2);
+      el.classList.toggle('can-scroll-down', st+ch<sh-2);
+      if(!scrollable) return;
+      var trackH=bar.clientHeight, th=Math.max(32, Math.round(trackH*ch/sh)), maxTop=trackH-th;
+      thumb.style.height=th+'px';
+      thumb.style.top=((sh-ch)>0 ? Math.round(maxTop*(st/(sh-ch))) : 0)+'px';
+    }
+    el._cupdate=update;
+    el.addEventListener('scroll', update, {passive:true});
+    try{ new MutationObserver(update).observe(el,{childList:true,subtree:true}); }catch(e){}
+    var drag=false, sy=0, sst=0;
+    thumb.addEventListener('mousedown', function(e){ drag=true; sy=e.clientY; sst=el.scrollTop; document.body.style.userSelect='none'; e.preventDefault(); });
+    window.addEventListener('mousemove', function(e){ if(!drag) return; var sh=el.scrollHeight, ch=el.clientHeight, trackH=bar.clientHeight, th=Math.max(32,Math.round(trackH*ch/sh)), maxTop=trackH-th; el.scrollTop=sst+(e.clientY-sy)*(sh-ch)/(maxTop||1); });
+    window.addEventListener('mouseup', function(){ if(drag){ drag=false; document.body.style.userSelect=''; } });
+    bar.addEventListener('mousedown', function(e){ if(e.target===thumb) return; el.scrollTop += ((e.clientY-bar.getBoundingClientRect().top) < (parseFloat(thumb.style.top)||0) ? -1 : 1)*el.clientHeight*0.9; });
+    update();
   }
   function refreshScrollHints(){
-    document.querySelectorAll('.scroll').forEach(function(el){
-      if(!el._shBound){
-        el._shBound=true;
-        el.addEventListener('scroll', function(){ setShade(el); }, {passive:true});
-        try{ new MutationObserver(function(){ setShade(el); }).observe(el,{childList:true,subtree:true}); }catch(e){}
-      }
-      setShade(el);
-    });
+    document.querySelectorAll('.scroll').forEach(function(el){ enhanceScroll(el); if(el._cupdate) el._cupdate(); });
   }
   window.addEventListener('resize', refreshScrollHints);
 
