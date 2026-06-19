@@ -27,6 +27,12 @@
   body.is-admin .admin-only{display:block}
   .prize-manage{display:none}
   body.can-prizes .prize-manage{display:block}
+  .tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:2px solid var(--line);margin:22px 0 0;padding:0}
+  .tab{padding:10px 16px;border:0;background:transparent;font-family:var(--display);font-size:.95rem;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;border-radius:10px 10px 0 0;white-space:nowrap}
+  .tab:hover{color:var(--blue);background:#f4f8ff}
+  .tab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:600}
+  .tabpane{display:none}
+  .tabpane.active{display:block}
   .whoami{color:var(--muted);font-size:.88rem}
   select{padding:6px 8px;border:1px solid var(--line);border-radius:8px}
   a.link{color:var(--blue);cursor:pointer;text-decoration:underline}
@@ -58,6 +64,16 @@
   <div id="app" style="display:none">
     <div class="kpis" id="kpis"></div>
 
+    <nav class="tabs" id="tabs">
+      <button class="tab active" data-tab="bestellingen" type="button">📋 Bestellingen</button>
+      <button class="tab" data-tab="prijzen" type="button">🎁 Prijzen</button>
+      <button class="tab" data-tab="exporteren" type="button">📤 Exporteren</button>
+      <button class="tab admin-only" data-tab="verkoop" type="button">🧾 Verkoop</button>
+      <button class="tab admin-only" data-tab="race" type="button">🏁 Race</button>
+      <button class="tab admin-only" data-tab="gebruikers" type="button">👥 Gebruikers</button>
+    </nav>
+
+    <section class="tabpane" data-pane="exporteren">
     <div class="panel">
       <div class="row" style="justify-content:space-between">
         <h3 style="margin:0">Exporteren</h3>
@@ -70,7 +86,9 @@
       </div>
       <p class="form__note">CSV opent in Excel/Numbers. "Printen/PDF" opent een printbare lijst — kies in het printvenster "Bewaar als PDF".</p>
     </div>
+    </section>
 
+    <section class="tabpane" data-pane="prijzen">
     <div class="panel">
       <h3>🎁 Prijzen &amp; inbrengers</h3>
       <p class="form__note">Houd bij welke prijzen zijn ingebracht, door wie en onder welke voorwaarden. Stuur de inbrenger een bevestigingsmail &mdash; de tekst kun je eerst aanpassen.</p>
@@ -122,7 +140,9 @@
         </div>
       </div>
     </div>
+    </section>
 
+    <section class="tabpane" data-pane="race">
     <div class="panel admin-only">
       <h3>🏁 Winnaar invoeren (race-uitslag)</h3>
       <p class="form__note">Vul de prijs en het winnende startnummer in. Het systeem toont de koper.</p>
@@ -136,7 +156,9 @@
       <div id="winResult" style="margin-top:12px"></div>
       <div class="scroll" style="margin-top:12px"><table id="drawsTable"><thead><tr><th>#</th><th>Prijs</th><th>Startnummer</th><th>Winnaar</th><th>E-mail</th></tr></thead><tbody></tbody></table></div>
     </div>
+    </section>
 
+    <section class="tabpane" data-pane="verkoop">
     <div class="panel admin-only">
       <h3>⚙️ Instellingen</h3>
       <div class="row">
@@ -159,7 +181,9 @@
       </div>
       <div id="mResult" style="margin-top:10px"></div>
     </div>
+    </section>
 
+    <section class="tabpane" data-pane="gebruikers">
     <div class="panel admin-only">
       <h3>👥 Gebruikersbeheer</h3>
       <p class="form__note">Gebruikersnaam = e-mailadres. Een nieuwe gebruiker krijgt een mail om zelf een wachtwoord in te stellen. <strong>Naam + telefoon</strong> van een accountmanager worden gebruikt als ondertekening van de prijs-bevestigingsmail (achteraf in de tabel aanpasbaar). Rollen: read-only (inzien), accountmanager (prijzen beheren + rest inzien), admin (alles).</p>
@@ -173,11 +197,14 @@
       <div id="uResult" style="margin-top:8px"></div>
       <div class="scroll" style="margin-top:12px"><table id="usersTable"><thead><tr><th>E-mail</th><th>Naam</th><th>Telefoon</th><th>Rol</th><th>Status</th><th></th></tr></thead><tbody></tbody></table></div>
     </div>
+    </section>
 
+    <section class="tabpane active" data-pane="bestellingen">
     <div class="panel">
       <h3>Bestellingen</h3>
       <div class="scroll"><table id="ordersTable"><thead><tr><th>Datum</th><th>Naam</th><th>E-mail</th><th>Type</th><th>Aantal</th><th>Bedrag</th><th>Status</th><th>Plaats</th><th class="admin-col"></th></tr></thead><tbody></tbody></table></div>
     </div>
+    </section>
   </div>
 </div>
 
@@ -445,6 +472,14 @@
       var nameInp=document.querySelector('.uname[data-uid="'+uid+'"]'), phoneInp=document.querySelector('.uphone[data-uid="'+uid+'"]');
       postJSON('user-update',{id:uid,name:nameInp?nameInp.value.trim():'',phone:phoneInp?phoneInp.value.trim():''}).then(function(r){return r.json();}).then(function(d){ if(d.ok){ if(canPrizes) loadManagers(); loadPrizes(); } });
     }
+  });
+
+  // ----- tabbladen -----
+  document.getElementById('tabs').addEventListener('click',function(e){
+    var t=e.target.closest('.tab'); if(!t) return;
+    var name=t.dataset.tab;
+    var tabs=document.querySelectorAll('.tab'); for(var i=0;i<tabs.length;i++) tabs[i].classList.toggle('active', tabs[i]===t);
+    var panes=document.querySelectorAll('.tabpane'); for(var j=0;j<panes.length;j++) panes[j].classList.toggle('active', panes[j].dataset.pane===name);
   });
 
   // ----- sessie herstellen bij laden -----

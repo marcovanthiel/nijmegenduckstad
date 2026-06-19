@@ -189,6 +189,13 @@ De site wordt uitgebreid van static-only naar een Worker-met-code + D1:
 
 ## Recente architectuur-besluiten (changelog)
 
+- **2026-06-19** (Code): **admin opgedeeld in tabbladen**. De lange scroll-pagina is nu een
+  tabbalk (`.tabs`/`.tabpane`, vanilla JS in `admin.html`): **Bestellingen · Prijzen · Exporteren ·
+  Verkoop · Race · Gebruikers**. KPI's blijven boven de tabs. Verkoop = instellingen + handmatige
+  verkoop; Race = winnaar invoeren. Tabs Verkoop/Race/Gebruikers zijn `admin-only` (verborgen voor
+  readonly/accountmanager via bestaande `is-admin`-class op flex-items). Panelen ongewijzigd, alleen
+  in `<section class="tabpane">` gewikkeld; standaard actief = Bestellingen.
+
 - **2026-06-19** (Code): **accountmanager-rol + koppeling aan prijzen**. Migratie `0004_accountmanager.sql`
   (--remote vóór deploy): `users.name`, `users.phone`, `prizes.account_manager_id`. Nieuwe rol
   **`accountmanager`**: mag ingebrachte prijzen beheren (`prize`/`prize-delete`/`prize-confirm` →
