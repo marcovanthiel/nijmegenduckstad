@@ -4,11 +4,14 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: geolocation=(), microphone=(), camera=()
 
-/assets/*
+# Per-submap (geen brede /assets/*-regel: Cloudflare _headers combineert
+# overlappende regels i.p.v. te overschrijven).
+# Afbeeldingen wijzigen zelden -> lang cachen.
+/assets/img/*
   Cache-Control: public, max-age=31536000, immutable
 
 # CSS/JS hebben geen hash in de bestandsnaam; laat de browser ze hervalideren
-# (ETag → 304 als ongewijzigd) zodat stijl/JS-wijzigingen na een gewone reload
+# (ETag -> 304 als ongewijzigd) zodat stijl/JS-wijzigingen na een gewone reload
 # zichtbaar worden i.p.v. een jaar lang vast te staan.
 /assets/css/*
   Cache-Control: public, max-age=0, must-revalidate
