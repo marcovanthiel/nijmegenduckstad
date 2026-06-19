@@ -189,6 +189,14 @@ De site wordt uitgebreid van static-only naar een Worker-met-code + D1:
 
 ## Recente architectuur-besluiten (changelog)
 
+- **2026-06-19** (Code, v1.0.1): **scrollbalk altijd zichtbaar + nieuwe prijs in een dialog**.
+  (1) Admin `.scroll` van `overflow:auto` → `overflow-y:scroll` zodat de (azuren) scrollbalk altijd
+  zichtbaar is i.p.v. pas bij scrollen (macOS-overlay verborg 'm). (2) Op de Prijzen-tab is het
+  inline-formulier vervangen door een knop **"➕ Nieuwe prijs" rechtsboven** die een **`<dialog>`**
+  (`#prizeDialog`, modal) opent; bewerken (✏️) opent dezelfde dialog vooraf-ingevuld; opslaan/annuleren/
+  ✕ sluit 'm. Dialog staat los onderaan `#app` (buiten de tabpanes). `.modal` + `::backdrop` styles in
+  de admin-`<style>`.
+
 - **2026-06-19** (Code): **versienummer in de footer + versiebeleid**. `config.js` heeft nu een veld
   **`version`** (start `1.0.0`); `main.js` toont `v<version>` in `.footer-bottom` (of vult
   `[data-version]`-elementen). Admin laadt `config.js` en toont de versie in een eigen footer

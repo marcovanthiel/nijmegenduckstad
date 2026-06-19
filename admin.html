@@ -22,7 +22,7 @@
   .tag{font-size:.78rem;padding:2px 8px;border-radius:999px}
   .tag.paid{background:#e7f7ef;color:#13754f}.tag.pending{background:#fff5dd;color:#7a5200}.tag.other{background:#fdecec;color:#b3261e}
   .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-  .scroll{overflow:auto;max-height:420px}
+  .scroll{overflow-y:scroll;overflow-x:auto;max-height:420px}
   .mini{padding:4px 10px;font-size:.82rem}
   .admin-only{display:none}
   body.is-admin .admin-only{display:block}
@@ -37,6 +37,10 @@
   .whoami{color:var(--muted);font-size:.88rem}
   select{padding:6px 8px;border:1px solid var(--line);border-radius:8px}
   a.link{color:var(--blue);cursor:pointer;text-decoration:underline}
+  .modal{border:0;border-radius:18px;padding:0;max-width:640px;width:calc(100vw - 32px);box-shadow:0 24px 70px rgba(14,45,99,.3)}
+  .modal::backdrop{background:rgba(14,45,99,.5)}
+  .modal__body{padding:22px 24px}
+  .modal__body h3{margin:0}
 </style>
 </head>
 <body style="background:var(--bg)">
@@ -91,41 +95,11 @@
 
     <section class="tabpane" data-pane="prijzen">
     <div class="panel">
-      <h3>🎁 Prijzen &amp; inbrengers</h3>
-      <p class="form__note">Houd bij welke prijzen zijn ingebracht, door wie en onder welke voorwaarden. Stuur de inbrenger een bevestigingsmail &mdash; de tekst kun je eerst aanpassen.</p>
-
-      <div class="prize-manage" id="prizeForm">
-        <input type="hidden" id="pzId">
-        <div class="row">
-          <input id="pzTitle" placeholder="Prijs (bv. Ballonvaart voor 2)" style="flex:2;min-width:200px">
-          <input id="pzValue" placeholder="Waarde (bv. t.w.v. € 250)" style="flex:1;min-width:140px">
-        </div>
-        <div class="field" style="margin-top:12px">
-          <label for="pzDescription">Omschrijving <span class="muted">(zoals op de website — komt in een apart kader in de bevestigingsmail)</span></label>
-          <textarea id="pzDescription" rows="2" placeholder="Korte wervende omschrijving van de prijs."></textarea>
-        </div>
-        <div class="row" style="margin-top:8px">
-          <input id="pzDonor" placeholder="Inbrenger (naam)" style="flex:1;min-width:160px">
-          <input id="pzCompany" placeholder="Bedrijf / organisatie (optioneel)" style="flex:1;min-width:160px">
-        </div>
-        <div class="row" style="margin-top:8px">
-          <input id="pzEmail" type="email" placeholder="E-mail inbrenger" style="flex:1;min-width:160px">
-          <input id="pzPhone" placeholder="Telefoon (optioneel)" style="flex:1;min-width:140px">
-        </div>
-        <div class="field" style="margin-top:12px">
-          <label for="pzConditions">Voorwaarden waaronder ingebracht</label>
-          <textarea id="pzConditions" rows="3" placeholder="Bv. geldig t/m 31-12-2027, op vertoon van legitimatie, niet inwisselbaar voor geld, reservering vooraf."></textarea>
-        </div>
-        <div class="field" style="margin-top:12px">
-          <label for="pzManager">Accountmanager <span class="muted">(ondertekent de bevestigingsmail met naam + telefoon)</span></label>
-          <select id="pzManager" style="width:100%"><option value="">— geen accountmanager —</option></select>
-        </div>
-        <div class="row" style="margin-top:4px">
-          <button class="btn btn--primary" id="pzSave" style="padding:10px 18px">Prijs opslaan</button>
-          <button class="btn btn--ghost-blue" id="pzCancel" style="padding:10px 18px;display:none">Annuleren</button>
-          <span id="pzResult" class="muted"></span>
-        </div>
+      <div class="row" style="justify-content:space-between;align-items:center;gap:12px">
+        <h3 style="margin:0">🎁 Prijzen &amp; inbrengers</h3>
+        <button class="btn btn--primary prize-manage" id="pzNew" type="button" style="padding:10px 18px">➕ Nieuwe prijs</button>
       </div>
+      <p class="form__note">Houd bij welke prijzen zijn ingebracht, door wie en onder welke voorwaarden. Stuur de inbrenger een bevestigingsmail &mdash; de tekst kun je eerst aanpassen.</p>
 
       <div class="scroll" style="margin-top:16px"><table id="prizesTable"><thead><tr><th>Prijs</th><th>Waarde</th><th>Inbrenger</th><th>Accountmanager</th><th>Voorwaarden</th><th>Bevestiging</th><th class="admin-col"></th></tr></thead><tbody></tbody></table></div>
 
@@ -206,6 +180,45 @@
       <div class="scroll"><table id="ordersTable"><thead><tr><th>Datum</th><th>Naam</th><th>E-mail</th><th>Type</th><th>Aantal</th><th>Bedrag</th><th>Status</th><th>Plaats</th><th class="admin-col"></th></tr></thead><tbody></tbody></table></div>
     </div>
     </section>
+
+    <dialog id="prizeDialog" class="modal">
+      <div class="modal__body">
+        <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:8px">
+          <h3 id="pzDialogTitle">Nieuwe prijs</h3>
+          <button class="btn btn--ghost-blue mini" id="pzClose" type="button" aria-label="Sluiten">✕</button>
+        </div>
+        <input type="hidden" id="pzId">
+        <div class="row">
+          <input id="pzTitle" placeholder="Prijs (bv. Ballonvaart voor 2)" style="flex:2;min-width:200px">
+          <input id="pzValue" placeholder="Waarde (bv. t.w.v. € 250)" style="flex:1;min-width:140px">
+        </div>
+        <div class="field" style="margin-top:12px">
+          <label for="pzDescription">Omschrijving <span class="muted">(zoals op de website — komt in een apart kader in de bevestigingsmail)</span></label>
+          <textarea id="pzDescription" rows="2" placeholder="Korte wervende omschrijving van de prijs."></textarea>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <input id="pzDonor" placeholder="Inbrenger (naam)" style="flex:1;min-width:160px">
+          <input id="pzCompany" placeholder="Bedrijf / organisatie (optioneel)" style="flex:1;min-width:160px">
+        </div>
+        <div class="row" style="margin-top:8px">
+          <input id="pzEmail" type="email" placeholder="E-mail inbrenger" style="flex:1;min-width:160px">
+          <input id="pzPhone" placeholder="Telefoon (optioneel)" style="flex:1;min-width:140px">
+        </div>
+        <div class="field" style="margin-top:12px">
+          <label for="pzConditions">Voorwaarden waaronder ingebracht</label>
+          <textarea id="pzConditions" rows="3" placeholder="Bv. geldig t/m 31-12-2027, op vertoon van legitimatie, niet inwisselbaar voor geld, reservering vooraf."></textarea>
+        </div>
+        <div class="field" style="margin-top:12px">
+          <label for="pzManager">Accountmanager <span class="muted">(ondertekent de bevestigingsmail met naam + telefoon)</span></label>
+          <select id="pzManager" style="width:100%"><option value="">— geen accountmanager —</option></select>
+        </div>
+        <div class="row" style="margin-top:4px">
+          <button class="btn btn--primary" id="pzSave" type="button" style="padding:10px 18px">Prijs opslaan</button>
+          <button class="btn btn--ghost-blue" id="pzCancel" type="button" style="padding:10px 18px">Annuleren</button>
+          <span id="pzResult" class="muted"></span>
+        </div>
+      </div>
+    </dialog>
   </div>
   <footer style="text-align:center;color:var(--muted);font-size:.82rem;margin:22px 0 6px">Nijmegen Duckstad &middot; admin <span id="adminVersion"></span></footer>
 </div>
@@ -333,26 +346,34 @@
     });
   }
   var pzFields=['pzId','pzTitle','pzValue','pzDescription','pzDonor','pzCompany','pzEmail','pzPhone','pzConditions','pzManager'];
-  function resetPrizeForm(){ pzFields.forEach(function(id){document.getElementById(id).value='';}); document.getElementById('pzCancel').style.display='none'; document.getElementById('pzSave').textContent='Prijs opslaan'; }
+  var prizeDialog=document.getElementById('prizeDialog');
+  function openPrizeDialog(){ document.getElementById('pzResult').textContent=''; if(prizeDialog.showModal) prizeDialog.showModal(); else prizeDialog.setAttribute('open',''); }
+  function closePrizeDialog(){ if(prizeDialog.close && prizeDialog.open) prizeDialog.close(); else prizeDialog.removeAttribute('open'); }
+  function resetPrizeForm(){ pzFields.forEach(function(id){document.getElementById(id).value='';}); document.getElementById('pzSave').textContent='Prijs opslaan'; }
   function fillPrizeForm(p){
+    resetPrizeForm();
     document.getElementById('pzId').value=p.id; document.getElementById('pzTitle').value=p.title||''; document.getElementById('pzValue').value=p.value||'';
     document.getElementById('pzDescription').value=p.description||'';
     document.getElementById('pzDonor').value=p.donor_name||''; document.getElementById('pzCompany').value=p.donor_company||'';
     document.getElementById('pzEmail').value=p.donor_email||''; document.getElementById('pzPhone').value=p.donor_phone||''; document.getElementById('pzConditions').value=p.conditions||'';
     document.getElementById('pzManager').value=p.account_manager_id||'';
-    document.getElementById('pzSave').textContent='Wijziging opslaan'; document.getElementById('pzCancel').style.display='';
-    document.getElementById('prizeForm').scrollIntoView({behavior:'smooth',block:'center'});
+    document.getElementById('pzSave').textContent='Wijziging opslaan';
+    document.getElementById('pzDialogTitle').textContent='Prijs bewerken';
+    openPrizeDialog();
   }
+  document.getElementById('pzNew').onclick=function(){ resetPrizeForm(); document.getElementById('pzDialogTitle').textContent='Nieuwe prijs'; openPrizeDialog(); };
+  document.getElementById('pzClose').onclick=closePrizeDialog;
+  prizeDialog.addEventListener('close', resetPrizeForm);
   document.getElementById('pzSave').onclick=function(){
     var p={id:document.getElementById('pzId').value||undefined,title:document.getElementById('pzTitle').value.trim(),value:document.getElementById('pzValue').value.trim(),description:document.getElementById('pzDescription').value.trim(),donor_name:document.getElementById('pzDonor').value.trim(),donor_company:document.getElementById('pzCompany').value.trim(),donor_email:document.getElementById('pzEmail').value.trim(),donor_phone:document.getElementById('pzPhone').value.trim(),conditions:document.getElementById('pzConditions').value.trim(),account_manager_id:document.getElementById('pzManager').value};
     if(!p.title||!p.donor_name){ alert('Prijs en inbrenger (naam) zijn verplicht.'); return; }
     var res=document.getElementById('pzResult');
     postJSON('prize',p).then(function(r){return r.json();}).then(function(d){
-      if(d.ok){ res.textContent='Opgeslagen ✓'; resetPrizeForm(); loadPrizes(); loadStats(); setTimeout(function(){res.textContent='';},2500); }
+      if(d.ok){ resetPrizeForm(); closePrizeDialog(); loadPrizes(); loadStats(); }
       else { res.textContent=d.error==='email_ongeldig'?'E-mailadres ongeldig.':(d.error||'fout'); }
     });
   };
-  document.getElementById('pzCancel').onclick=resetPrizeForm;
+  document.getElementById('pzCancel').onclick=function(){ resetPrizeForm(); closePrizeDialog(); };
 
   // bevestigingsmail: vooraf ingevulde, bewerkbare tekst
   var confirmPrizeId='';
