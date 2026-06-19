@@ -79,6 +79,10 @@
           <input id="pzTitle" placeholder="Prijs (bv. Ballonvaart voor 2)" style="flex:2;min-width:200px">
           <input id="pzValue" placeholder="Waarde (bv. t.w.v. € 250)" style="flex:1;min-width:140px">
         </div>
+        <div class="field" style="margin-top:12px">
+          <label for="pzDescription">Omschrijving <span class="muted">(zoals op de website — komt in een apart kader in de bevestigingsmail)</span></label>
+          <textarea id="pzDescription" rows="2" placeholder="Korte wervende omschrijving van de prijs."></textarea>
+        </div>
         <div class="row" style="margin-top:8px">
           <input id="pzDonor" placeholder="Inbrenger (naam)" style="flex:1;min-width:160px">
           <input id="pzCompany" placeholder="Bedrijf / organisatie (optioneel)" style="flex:1;min-width:160px">
@@ -272,17 +276,18 @@
       }).join('')||'<tr><td colspan="6" class="muted">Nog geen prijzen ingevoerd.</td></tr>';
     });
   }
-  var pzFields=['pzId','pzTitle','pzValue','pzDonor','pzCompany','pzEmail','pzPhone','pzConditions'];
+  var pzFields=['pzId','pzTitle','pzValue','pzDescription','pzDonor','pzCompany','pzEmail','pzPhone','pzConditions'];
   function resetPrizeForm(){ pzFields.forEach(function(id){document.getElementById(id).value='';}); document.getElementById('pzCancel').style.display='none'; document.getElementById('pzSave').textContent='Prijs opslaan'; }
   function fillPrizeForm(p){
     document.getElementById('pzId').value=p.id; document.getElementById('pzTitle').value=p.title||''; document.getElementById('pzValue').value=p.value||'';
+    document.getElementById('pzDescription').value=p.description||'';
     document.getElementById('pzDonor').value=p.donor_name||''; document.getElementById('pzCompany').value=p.donor_company||'';
     document.getElementById('pzEmail').value=p.donor_email||''; document.getElementById('pzPhone').value=p.donor_phone||''; document.getElementById('pzConditions').value=p.conditions||'';
     document.getElementById('pzSave').textContent='Wijziging opslaan'; document.getElementById('pzCancel').style.display='';
     document.getElementById('prizeForm').scrollIntoView({behavior:'smooth',block:'center'});
   }
   document.getElementById('pzSave').onclick=function(){
-    var p={id:document.getElementById('pzId').value||undefined,title:document.getElementById('pzTitle').value.trim(),value:document.getElementById('pzValue').value.trim(),donor_name:document.getElementById('pzDonor').value.trim(),donor_company:document.getElementById('pzCompany').value.trim(),donor_email:document.getElementById('pzEmail').value.trim(),donor_phone:document.getElementById('pzPhone').value.trim(),conditions:document.getElementById('pzConditions').value.trim()};
+    var p={id:document.getElementById('pzId').value||undefined,title:document.getElementById('pzTitle').value.trim(),value:document.getElementById('pzValue').value.trim(),description:document.getElementById('pzDescription').value.trim(),donor_name:document.getElementById('pzDonor').value.trim(),donor_company:document.getElementById('pzCompany').value.trim(),donor_email:document.getElementById('pzEmail').value.trim(),donor_phone:document.getElementById('pzPhone').value.trim(),conditions:document.getElementById('pzConditions').value.trim()};
     if(!p.title||!p.donor_name){ alert('Prijs en inbrenger (naam) zijn verplicht.'); return; }
     var res=document.getElementById('pzResult');
     postJSON('prize',p).then(function(r){return r.json();}).then(function(d){
