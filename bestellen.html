@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Bestel je eendje · Nijmegen Duckstad</title>
-<meta name="description" content="Adopteer online één of meer badeendjes voor de Rotary Badeendjesrace 2026. Veilig betalen met iDEAL.">
+<meta name="description" content="Adopteer online één of meer badeendjes voor de Rotary Badeendjesrace 2027. Veilig betalen met iDEAL.">
 <meta name="robots" content="noindex">
 <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -56,13 +56,20 @@
       </div>
 
       <div class="field">
-        <label for="qty">Aantal</label>
+        <label for="qty">Aantal eendjes</label>
+        <div class="row" id="bundles" style="gap:8px;margin-bottom:10px">
+          <button type="button" class="bundle btn btn--ghost-blue" data-qty="1" style="padding:8px 18px">1</button>
+          <button type="button" class="bundle btn btn--ghost-blue" data-qty="5" style="padding:8px 18px">5</button>
+          <button type="button" class="bundle btn btn--ghost-blue" data-qty="10" style="padding:8px 18px">10 🦆</button>
+          <button type="button" class="bundle btn btn--ghost-blue" data-qty="25" style="padding:8px 18px">25</button>
+        </div>
         <div style="display:flex;align-items:center;gap:12px">
           <button type="button" class="btn btn--ghost-blue" id="minus" aria-label="Minder" style="padding:8px 16px">−</button>
           <input id="qty" name="quantity" type="number" min="1" value="1" inputmode="numeric" style="width:90px;text-align:center">
           <button type="button" class="btn btn--ghost-blue" id="plus" aria-label="Meer" style="padding:8px 16px">+</button>
           <span class="muted" id="stockHint"></span>
         </div>
+        <p class="form__note" style="margin-top:8px">Hoe meer eendjes, hoe groter je kans op de prijzen — én hoe meer je het goede doel steunt.</p>
       </div>
 
       <div class="form-row">
@@ -92,9 +99,10 @@
         <span style="font-family:var(--display);font-weight:700;font-size:1.6rem;color:var(--blue)" id="total">€5,00</span>
       </div>
 
-      <button class="btn btn--primary btn--lg" type="submit" id="submitBtn" style="width:100%;justify-content:center">Betaal met iDEAL →</button>
+      <button class="btn btn--primary btn--lg" type="submit" id="submitBtn" style="width:100%;justify-content:center">Veilig betalen →</button>
+      <p class="form__note center" style="margin-top:10px">🔒 Beveiligde betaling via Mollie · iDEAL, creditcard &amp; meer · je startnummer(s) direct per e-mail</p>
       <div class="form-status" role="status"></div>
-      <p class="form__note" style="margin-top:14px">Veilig betalen via Mollie. Je gegevens gebruiken we alleen voor je bestelling en de badeendjesrace — zie ook onze <a href="contact.html">contactpagina</a>. Liever op een verkoopweekend kopen? Dat kan ook (zie <a href="evenement.html">Het evenement</a>).</p>
+      <p class="form__note" style="margin-top:14px">Je gegevens gebruiken we alleen voor je bestelling en de badeendjesrace — zie ook onze <a href="contact.html">contactpagina</a>. Liever op een verkoopweekend kopen? Dat kan ook (zie <a href="evenement.html">Het evenement</a>).</p>
     </form>
   </div>
 </section>
@@ -125,6 +133,7 @@
   document.getElementById('plus').onclick=function(){ qty.value=Math.max(1,(parseInt(qty.value||'1',10))+1); update(); };
   document.getElementById('minus').onclick=function(){ qty.value=Math.max(1,(parseInt(qty.value||'1',10))-1); update(); };
   qty.oninput=update;
+  document.querySelectorAll('#bundles .bundle').forEach(function(b){ b.onclick=function(){ qty.value=b.dataset.qty; update(); }; });
   form.querySelectorAll('input[name=type]').forEach(function(r){ r.onchange=update; });
   update();
 
@@ -150,9 +159,9 @@
       .then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j};});})
       .then(function(res){
         if(res.ok && res.j.checkoutUrl){ window.location.href=res.j.checkoutUrl; }
-        else { var m={uitverkocht:'Helaas, er zijn niet genoeg eendjes meer beschikbaar.',verkoop_gesloten:'De online verkoop is gesloten.'}; show(false, m[res.j.error]||('Er ging iets mis: '+(res.j.error||'onbekend'))); btn.disabled=false; btn.textContent='Betaal met iDEAL →'; }
+        else { var m={uitverkocht:'Helaas, er zijn niet genoeg eendjes meer beschikbaar.',verkoop_gesloten:'De online verkoop is gesloten.'}; show(false, m[res.j.error]||('Er ging iets mis: '+(res.j.error||'onbekend'))); btn.disabled=false; btn.textContent='Veilig betalen →'; }
       })
-      .catch(function(){ show(false,'Geen verbinding. Probeer het zo nog eens.'); btn.disabled=false; btn.textContent='Betaal met iDEAL →'; });
+      .catch(function(){ show(false,'Geen verbinding. Probeer het zo nog eens.'); btn.disabled=false; btn.textContent='Veilig betalen →'; });
   });
 })();
 </script>

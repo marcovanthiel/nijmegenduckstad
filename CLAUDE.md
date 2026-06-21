@@ -189,6 +189,15 @@ De site wordt uitgebreid van static-only naar een Worker-met-code + D1:
 
 ## Recente architectuur-besluiten (changelog)
 
+- **2026-06-21** (Code, v1.0.14): **conversie + SEO/social, batch 1**. (1) Branding **2026→2027** site-breed
+  (meta/og-descriptions, hero-eyebrow, FAQ). (2) **Social share**: OG-afbeelding `assets/img/og.jpg`
+  (1200×630, gerenderd via Chrome-headless uit /tmp/og.html) + og:image/og:url/og:site_name/twitter:card
+  + `rel=canonical` op 9 indexeerbare pagina's. (3) **Event JSON-LD** (schema.org/Event) op index.
+  (4) **Bestelpagina**: bundel-snelkeuze (1/5/10/25), knop "Veilig betalen" (Mollie toont alle methoden),
+  trust-regel (🔒 Mollie · iDEAL/creditcard/meer · startnummer per mail). (5) **Bedankpagina**: deelknoppen
+  (WhatsApp/Facebook/X/kopieer-link) met startnummer in de tekst. Backend-batch (apiOrder extra-gift +
+  cadeau-eendje, webhook-notify/refunds, cron) volgt apart.
+
 - **2026-06-21** (Code, v1.0.13): kwaak-bestand vervangen door een **CC0 / volledig rechtenvrije**
   opname (BigSoundBank #0276 "Ducks", DenisChardonnet, CC0 — geen attributieplicht). Passage met
   enkele kwaken uitgesneden (mallard-XC62258 BY-SA verwijderd). Audio-URL `?v=2` (cachebust). Geen

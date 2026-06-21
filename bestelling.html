@@ -51,7 +51,21 @@
       numbersEl.innerHTML='<p style="margin-bottom:8px" class="muted">Jouw startnummer(s) voor de badeendjesrace:</p><div class="chips" style="justify-content:center">'+
         d.numbers.map(function(n){return '<li style="background:#fff5dd;color:#7a5200;font-weight:700">#'+n+'</li>';}).join('')+'</div>'+
         '<p class="form__note" style="margin-top:14px">Bewaar deze nummers goed (we sturen ze ook per e-mail). Veel succes! 🦆</p>';
-      actions.innerHTML='<a class="btn btn--primary" href="index.html">Terug naar de site</a>';
+      var url='https://nijmegenduckstad.nl/';
+      var nums=d.numbers.map(function(n){return '#'+n;}).join(', ');
+      var m='Ik doe mee met de Rotary Badeendjesrace in Nijmegen Duckstad! 🦆 Mijn startnummer'+(d.numbers.length>1?'s':'')+': '+nums+'. Doe jij ook mee?';
+      var enc=encodeURIComponent(m+' '+url), encM=encodeURIComponent(m), encU=encodeURIComponent(url);
+      actions.innerHTML=
+        '<p style="margin:6px 0 10px;font-weight:600">Vertel het door — hoe meer eendjes, hoe meer voor het goede doel:</p>'+
+        '<div class="row" style="justify-content:center;gap:10px;flex-wrap:wrap">'+
+          '<a class="btn btn--ghost-blue" target="_blank" rel="noopener" href="https://wa.me/?text='+enc+'">💬 WhatsApp</a>'+
+          '<a class="btn btn--ghost-blue" target="_blank" rel="noopener" href="https://www.facebook.com/sharer/sharer.php?u='+encU+'">📘 Facebook</a>'+
+          '<a class="btn btn--ghost-blue" target="_blank" rel="noopener" href="https://twitter.com/intent/tweet?text='+encM+'&url='+encU+'">✖ X</a>'+
+          '<button class="btn btn--ghost-blue" id="copyLink" type="button">🔗 Kopieer link</button>'+
+        '</div>'+
+        '<div style="margin-top:18px"><a class="btn btn--primary" href="index.html">Terug naar de site</a></div>';
+      var cb=document.getElementById('copyLink');
+      if(cb) cb.onclick=function(){ try{ navigator.clipboard.writeText(url); cb.textContent='Gekopieerd ✓'; }catch(e){} };
       return true;
     }
     if(['failed','canceled','expired'].indexOf(d.status)>=0){
