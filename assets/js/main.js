@@ -3,6 +3,18 @@
   var C = window.DUCKSTAD || {};
   var euro = function (n) { return '€' + Number(n).toLocaleString('nl-NL'); };
 
+  /* --- Cookieloze, privacy-vriendelijke pageview-telling (first-party, geen PII) --- */
+  (function () {
+    try {
+      var path = (location.pathname || '/').replace(/\/+$/, '') || '/';
+      var ref = '';
+      if (document.referrer) { try { var h = new URL(document.referrer).hostname; if (h && h !== location.hostname) ref = h; } catch (e) {} }
+      var body = JSON.stringify({ path: path, ref: ref });
+      if (navigator.sendBeacon) navigator.sendBeacon('/api/track', new Blob([body], { type: 'application/json' }));
+      else fetch('/api/track', { method: 'POST', headers: { 'content-type': 'application/json' }, body: body, keepalive: true });
+    } catch (e) {}
+  })();
+
   /* --- Mobiele navigatie --- */
   var toggle = document.querySelector('.nav__toggle');
   var links = document.querySelector('.nav__links');

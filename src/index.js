@@ -24,6 +24,7 @@ export default {
     let response = null;
     try {
       if (p === "/api/status" && request.method === "GET") response = await apiStatus(env);
+      else if (p === "/api/track" && request.method === "POST") response = await apiTrack(request, env);
       else if (p === "/api/order" && request.method === "POST") response = await apiOrder(request, env, url);
       else if (p === "/api/order-status" && request.method === "GET") response = await apiOrderStatus(url, env);
       else if (p === "/api/mollie-webhook" && request.method === "POST") response = await apiWebhook(request, env, ctx);
@@ -196,6 +197,22 @@ async function apiOrder(request, env, url) {
   const checkout = payment._links && payment._links.checkout && payment._links.checkout.href;
   if (!checkout) return bad("geen_checkout_url", 502);
   return json({ order_id: id, checkoutUrl: checkout });
+}
+
+// Cookieloze pageview-telling (first-party). Geen PII: alleen pad + referrer-host, geaggregeerd per dag.
+async function apiTrack(request, env) {
+  try {
+    if (!(await rateLimit(env, request, "track", 300, 60))) return new Response(null, { status: 204 });
+    let b; try { b = await request.json(); } catch { return new Response(null, { status: 204 }); }
+    let path = String(b.path || "/").split(/[?#]/)[0].slice(0, 80);
+    if (!path.startsWith("/")) path = "/" + path;
+    if (!/^[/a-z0-9._-]*$/i.test(path)) return new Response(null, { status: 204 }); // alleen nette paden
+    let ref = String(b.ref || "").toLowerCase().replace(/^www\./, "").slice(0, 80);
+    if (!/^[a-z0-9.-]*$/.test(ref)) ref = "";
+    const day = now().slice(0, 10);
+    await env.DB.prepare("INSERT INTO pageviews (day,path,ref,n) VALUES (?1,?2,?3,1) ON CONFLICT(day,path,ref) DO UPDATE SET n=n+1").bind(day, path, ref).run();
+  } catch (e) { /* stil falen — telling mag nooit de site breken */ }
+  return new Response(null, { status: 204 });
 }
 
 async function apiOrderStatus(url, env) {
@@ -674,6 +691,22 @@ async function adminApi(path, request, env) {
     const r = await env.DB.prepare(
       "SELECT id,created_at,name,email,phone,city,type,quantity,amount_cents,status,newsletter,paid_at FROM orders ORDER BY created_at DESC LIMIT 1000").all();
     return json({ orders: r.results || [] });
+  }
+
+  // Eigen, cookieloze webstatistiek (laatste 30 dagen) + conversie-funnel.
+  if (sub === "analytics" && request.method === "GET") {
+    const since = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10);
+    const since14 = new Date(Date.now() - 14 * 864e5).toISOString().slice(0, 10);
+    const total = await env.DB.prepare("SELECT COALESCE(SUM(n),0) AS n FROM pageviews WHERE day>=?1").bind(since).first();
+    const byPath = await env.DB.prepare("SELECT path, SUM(n) AS n FROM pageviews WHERE day>=?1 GROUP BY path ORDER BY n DESC LIMIT 15").bind(since).all();
+    const byRef = await env.DB.prepare("SELECT ref, SUM(n) AS n FROM pageviews WHERE day>=?1 AND ref<>'' GROUP BY ref ORDER BY n DESC LIMIT 12").bind(since).all();
+    const byDay = await env.DB.prepare("SELECT day, SUM(n) AS n FROM pageviews WHERE day>=?1 GROUP BY day ORDER BY day").bind(since14).all();
+    const bv = await env.DB.prepare("SELECT COALESCE(SUM(n),0) AS n FROM pageviews WHERE day>=?1 AND path='/bestellen'").bind(since).first();
+    const paid = await env.DB.prepare("SELECT COUNT(*) AS n FROM orders WHERE status='paid' AND created_at>=?1").bind(since + "T00:00:00").first();
+    return json({
+      total: total.n, bestellen_views: bv.n, paid_orders: paid.n,
+      by_path: byPath.results || [], by_ref: byRef.results || [], by_day: byDay.results || [],
+    });
   }
 
   if (sub === "export-lottery") {

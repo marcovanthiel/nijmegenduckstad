@@ -189,6 +189,13 @@ De site wordt uitgebreid van static-only naar een Worker-met-code + D1:
 
 ## Recente architectuur-besluiten (changelog)
 
+- **2026-06-21** (Code, v1.0.16): **eigen cookieloze webstatistiek** (Cloudflare Web Analytics kon niet
+  via de wrangler-OAuth-token: RUM-API geeft auth-error → zelf gebouwd). Migratie `0007_pageviews.sql`
+  (geaggregeerd: day/path/ref/n, geen PII, geen cookies → geen banner nodig). `POST /api/track` (beacon
+  uit `main.js` op elke publieke pagina, same-origin dus CSP `connect-src 'self'` volstaat; light
+  rate-limit). Admin: `GET /api/admin/analytics` (elke rol) + **Statistiek-tab** met KPI's, dag-grafiek
+  (14d), top-pagina's, verkeersbronnen en **conversie** (betaalde orders ÷ /bestellen-bezoeken).
+
 - **2026-06-21** (Code, v1.0.15): **conversie/ops batch 2 (backend)**. Migratie `0006_order_extras.sql`
   (--remote toegepast): `orders.extra_cents` (default 0) + `orders.gift_name`. `apiOrder`: vrijwillige
   **extra gift** (`extra_cents`, geclampt 0..€500 → kan prijs nooit verlagen) opgeteld bij `amount`, en

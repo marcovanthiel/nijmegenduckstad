@@ -4,7 +4,7 @@
    ========================================================================= */
 window.DUCKSTAD = {
   // --- Versie (in de footer) — bump bij ELKE update ---
-  version: "1.0.15",
+  version: "1.0.16",
 
   // --- Verkoop / live teller ---
   // ducksSold is alleen een fallback; met het bestelsysteem actief haalt de

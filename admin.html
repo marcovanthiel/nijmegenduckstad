@@ -80,6 +80,7 @@
       <button class="tab active" data-tab="bestellingen" type="button">📋 Bestellingen</button>
       <button class="tab" data-tab="prijzen" type="button">🎁 Prijzen</button>
       <button class="tab" data-tab="exporteren" type="button">📤 Exporteren</button>
+      <button class="tab" data-tab="statistiek" type="button">📈 Statistiek</button>
       <button class="tab admin-only" data-tab="verkoop" type="button">🧾 Verkoop</button>
       <button class="tab admin-only" data-tab="race" type="button">🏁 Race</button>
       <button class="tab admin-only" data-tab="gebruikers" type="button">👥 Gebruikers</button>
@@ -97,6 +98,26 @@
         </div>
       </div>
       <p class="form__note">CSV opent in Excel/Numbers. "Printen/PDF" opent een printbare lijst — kies in het printvenster "Bewaar als PDF".</p>
+    </div>
+    </section>
+
+    <section class="tabpane" data-pane="statistiek">
+    <div class="panel">
+      <h3 style="margin:0 0 4px">📈 Webstatistiek <span class="muted" style="font-size:.85rem;font-weight:400">· laatste 30 dagen · cookieloos</span></h3>
+      <div class="kpis" id="anaKpis"></div>
+      <h4 style="margin:18px 0 8px">Bezoeken per dag (14 dagen)</h4>
+      <div id="anaDays" style="display:flex;align-items:flex-end;gap:4px;height:120px;border-bottom:1px solid var(--line);padding-bottom:2px"></div>
+      <div class="row" style="gap:24px;align-items:flex-start;margin-top:22px;flex-wrap:wrap">
+        <div style="flex:1;min-width:260px">
+          <h4 style="margin:0 0 8px">Populairste pagina's</h4>
+          <div class="scroll" style="max-height:320px"><table id="anaPaths"><thead><tr><th>Pagina</th><th style="text-align:right">Bezoeken</th></tr></thead><tbody></tbody></table></div>
+        </div>
+        <div style="flex:1;min-width:260px">
+          <h4 style="margin:0 0 8px">Verkeersbronnen</h4>
+          <div class="scroll" style="max-height:320px"><table id="anaRefs"><thead><tr><th>Bron</th><th style="text-align:right">Bezoeken</th></tr></thead><tbody></tbody></table></div>
+        </div>
+      </div>
+      <p class="form__note" style="margin-top:16px">Cookieloos en zonder persoonsgegevens — géén cookiebanner nodig. Telt bezoeken met JavaScript (echte browsers). Conversie = betaalde bestellingen ÷ bezoeken aan /bestellen.</p>
     </div>
     </section>
 
@@ -268,7 +289,7 @@
     document.getElementById('logout').style.display='';
     var roleLabel = role==='admin'?'admin':(role==='accountmanager'?'accountmanager':'read-only');
     var who=document.getElementById('whoami'); who.style.display=''; who.textContent='Ingelogd als '+email+' · '+roleLabel;
-    loadStats(); loadOrders(); loadDraws(); loadPrizes(); if(canPrizes) loadManagers(); if(isAdmin) loadUsers();
+    loadStats(); loadOrders(); loadDraws(); loadPrizes(); loadAnalytics(); if(canPrizes) loadManagers(); if(isAdmin) loadUsers();
     refreshScrollHints();
   }
 
@@ -286,6 +307,23 @@
       ].map(function(k){return '<div class="kpi"><b>'+k[1]+'</b><span>'+k[0]+'</span></div>';}).join('');
       var so=document.getElementById('salesOpen'); if(so) so.checked=!!s.sales_open;
       var mr=document.getElementById('maxReg'); if(mr) mr.value=s.max_regular;
+    });
+  }
+  function loadAnalytics(){
+    api('analytics').then(function(r){return r.json();}).then(function(d){
+      var conv = d.bestellen_views>0 ? (100*d.paid_orders/d.bestellen_views) : 0;
+      document.getElementById('anaKpis').innerHTML=[
+        ['Pageviews (30d)', (d.total||0).toLocaleString('nl-NL')],
+        ['Bezoeken /bestellen', (d.bestellen_views||0).toLocaleString('nl-NL')],
+        ['Betaalde bestellingen', (d.paid_orders||0)],
+        ['Conversie /bestellen', conv.toFixed(1)+'%']
+      ].map(function(k){return '<div class="kpi"><b>'+k[1]+'</b><span>'+k[0]+'</span></div>';}).join('');
+      var days=d.by_day||[], mx=1; days.forEach(function(x){ if(x.n>mx) mx=x.n; });
+      document.getElementById('anaDays').innerHTML=days.length?days.map(function(x){
+        return '<div title="'+esc(x.day)+': '+x.n+' bezoeken" style="flex:1;min-width:8px;background:var(--azure);border-radius:4px 4px 0 0;height:'+Math.max(3,Math.round(100*x.n/mx))+'%"></div>';
+      }).join(''):'<span class="muted">Nog geen data — zodra er bezoekers zijn, vult dit zich.</span>';
+      document.querySelector('#anaPaths tbody').innerHTML=(d.by_path||[]).map(function(x){return '<tr><td>'+esc(x.path)+'</td><td style="text-align:right">'+x.n+'</td></tr>';}).join('')||'<tr><td colspan="2" class="muted">Nog geen data</td></tr>';
+      document.querySelector('#anaRefs tbody').innerHTML=(d.by_ref||[]).map(function(x){return '<tr><td>'+esc(x.ref)+'</td><td style="text-align:right">'+x.n+'</td></tr>';}).join('')||'<tr><td colspan="2" class="muted">Nog geen externe bronnen</td></tr>';
     });
   }
   function loadOrders(){
