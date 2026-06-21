@@ -189,6 +189,11 @@ De site wordt uitgebreid van static-only naar een Worker-met-code + D1:
 
 ## Recente architectuur-besluiten (changelog)
 
+- **2026-06-21** (Code, v1.0.13): kwaak-bestand vervangen door een **CC0 / volledig rechtenvrije**
+  opname (BigSoundBank #0276 "Ducks", DenisChardonnet, CC0 — geen attributieplicht). Passage met
+  enkele kwaken uitgesneden (mallard-XC62258 BY-SA verwijderd). Audio-URL `?v=2` (cachebust). Geen
+  attributie meer nodig; `CREDITS.txt` bijgewerkt.
+
 - **2026-06-21** (Code, v1.0.12): **echte eendenopname** i.p.v. synth — `assets/audio/kwaak.mp3`
   (mallard, xeno-canto XC62258, opname Jonathon Jongsma, **CC BY-SA 3.0** → attributie in
   `assets/audio/CREDITS.txt`; bijgesneden+mono+genormaliseerd via ffmpeg, 24 KB). `main.js` speelt 'm
