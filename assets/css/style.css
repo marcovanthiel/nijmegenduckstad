@@ -309,5 +309,6 @@ html::-webkit-scrollbar-track{background:var(--bg)}
   100% {transform:translateY(0) rotate(360deg)}
 }
 .egg-duck{display:inline-block}
-/* constante rotatiesnelheid + linear = vloeiend; fill-box centreert ook SVG's netjes */
-.koprol-go{animation:koprol .8s linear;transform-box:fill-box;transform-origin:center}
+/* constante rotatiesnelheid + linear = vloeiend; fill-box centreert ook SVG's netjes.
+   !important overrulet element-eigen animaties (bv. de 'bob' van .bigduck) tijdens de koprol. */
+.koprol-go{animation:koprol .8s linear !important;transform-box:fill-box;transform-origin:center}
