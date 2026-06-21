@@ -178,8 +178,10 @@
     }
     function koprol() {
       wrapDucks();
-      var els = document.querySelectorAll('.footer-duck, .egg-duck');
-      Array.prototype.forEach.call(els, function (el, i) {
+      var els = [];
+      var limg = logo.querySelector('img'); if (limg) els.push(limg); // het eendje in het logo
+      Array.prototype.forEach.call(document.querySelectorAll('.bigduck, .footer-duck, .egg-duck'), function (e) { els.push(e); });
+      els.forEach(function (el, i) {
         el.classList.remove('koprol-go');
         el.getBoundingClientRect();              // forceer reflow -> animatie herstart
         el.style.animationDelay = (i % 14) * 55 + 'ms';

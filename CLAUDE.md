@@ -189,6 +189,11 @@ De site wordt uitgebreid van static-only naar een Worker-met-code + D1:
 
 ## Recente architectuur-besluiten (changelog)
 
+- **2026-06-21** (Code, v1.0.8): easter-egg verfijnd — nu flippen ook het **logo-eendje** (`.nav__logo img`)
+  en de **grote hero-eend** (`.bigduck`) mee, naast de 🦆-emoji's + `.footer-duck`. Animatie vloeiend
+  gemaakt: constante rotatiesnelheid + `linear` (was schokkerig door overshoot-bezier + ongelijke
+  stappen), `transform-box:fill-box` zodat SVG's om hun midden draaien.
+
 - **2026-06-21** (Code, v1.0.7): **easter egg** — 2× klikken op `.nav__logo` (linksboven) laat alle
   eendjes een koprol maken. `main.js` wikkelt elke losse 🦆-emoji eenmalig in `<span class="egg-duck">`
   (TreeWalker) en animeert die + `.footer-duck` met `@keyframes koprol` (style.css). Dubbelklik wordt
