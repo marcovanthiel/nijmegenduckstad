@@ -94,6 +94,24 @@
         </label>
       </div>
 
+      <div class="field" style="margin-top:4px">
+        <label style="display:flex;gap:10px;align-items:flex-start;font-weight:400">
+          <input type="checkbox" id="isGift" style="width:auto;margin-top:4px">
+          <span>Dit is een cadeau voor iemand anders 🎁</span>
+        </label>
+        <input id="giftName" placeholder="Naam van de ontvanger" style="display:none;margin-top:8px;width:100%">
+      </div>
+
+      <div class="field">
+        <label>Extra gift voor het goede doel? <span class="muted">(optioneel)</span></label>
+        <div class="row" id="extras" style="gap:8px">
+          <button type="button" class="extra btn btn--ghost-blue" data-extra="0" style="padding:8px 16px">Geen</button>
+          <button type="button" class="extra btn btn--ghost-blue" data-extra="500" style="padding:8px 16px">+€5</button>
+          <button type="button" class="extra btn btn--ghost-blue" data-extra="1000" style="padding:8px 16px">+€10</button>
+          <button type="button" class="extra btn btn--ghost-blue" data-extra="2500" style="padding:8px 16px">+€25</button>
+        </div>
+      </div>
+
       <div class="card" style="background:#eef3fb;border:0;display:flex;justify-content:space-between;align-items:center;margin:10px 0 18px">
         <span style="font-family:var(--display);font-weight:600;font-size:1.1rem">Totaal</span>
         <span style="font-family:var(--display);font-weight:700;font-size:1.6rem;color:var(--blue)" id="total">€5,00</span>
@@ -127,13 +145,17 @@
   var status = form.querySelector('.form-status');
   var btn = document.getElementById('submitBtn');
   var stockHint = document.getElementById('stockHint');
+  var extraCents = 0;
   function priceCents() { return form.type.value === 'business' ? (C.businessDuckPrice||150)*100 : (C.pricePerDuck||5)*100; }
   function fmt(c){ return '€' + (c/100).toLocaleString('nl-NL',{minimumFractionDigits:2,maximumFractionDigits:2}); }
-  function update(){ var n=Math.max(1,parseInt(qty.value||'1',10)); totalEl.textContent = fmt(priceCents()*n); }
+  function update(){ var n=Math.max(1,parseInt(qty.value||'1',10)); totalEl.textContent = fmt(priceCents()*n + extraCents); }
   document.getElementById('plus').onclick=function(){ qty.value=Math.max(1,(parseInt(qty.value||'1',10))+1); update(); };
   document.getElementById('minus').onclick=function(){ qty.value=Math.max(1,(parseInt(qty.value||'1',10))-1); update(); };
   qty.oninput=update;
   document.querySelectorAll('#bundles .bundle').forEach(function(b){ b.onclick=function(){ qty.value=b.dataset.qty; update(); }; });
+  document.querySelectorAll('#extras .extra').forEach(function(b){ b.onclick=function(){ extraCents=parseInt(b.dataset.extra,10)||0; update(); }; });
+  var isGift=document.getElementById('isGift'), giftName=document.getElementById('giftName');
+  isGift.onchange=function(){ giftName.style.display=isGift.checked?'':'none'; if(!isGift.checked) giftName.value=''; };
   form.querySelectorAll('input[name=type]').forEach(function(r){ r.onchange=update; });
   update();
 
@@ -152,7 +174,8 @@
     var payload = {
       type: form.type.value, quantity: parseInt(qty.value||'1',10),
       name: form.name.value, email: form.email.value, phone: form.phone.value,
-      city: form.city.value, newsletter: form.newsletter.checked, consent: true
+      city: form.city.value, newsletter: form.newsletter.checked, consent: true,
+      extra_cents: extraCents, gift_name: isGift.checked ? giftName.value : ''
     };
     btn.disabled=true; btn.textContent='Bezig…'; show(true,'Je wordt doorgestuurd naar de beveiligde betaalpagina…');
     fetch('/api/order',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)})

@@ -36,6 +36,10 @@ export default {
     if (!response) response = await env.ASSETS.fetch(request); // statische site
     return withSec(response);
   },
+  // Dagelijkse cron: pending opruimen, rate-limits prunen, dagrapport + CSV-backup mailen.
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(runDaily(env));
+  },
 };
 
 /* ---------------- helpers ---------------- */
@@ -153,6 +157,10 @@ async function apiOrder(request, env, url) {
   if (!isEmail(email)) return bad("email_ongeldig");
   if (!b.consent) return bad("toestemming_verplicht");
 
+  const giftName = esc(b.gift_name).trim().slice(0, 120);
+  // Vrijwillige extra gift: nooit negatief (kan de prijs niet verlagen), max €500.
+  const extra = Math.max(0, Math.min(50000, parseInt(b.extra_cents, 10) || 0));
+
   // Voorraadcheck (zacht): betaalde reguliere eendjes mogen max_regular niet overschrijden.
   if (type === "regular") {
     const sold = await soldCount(env, "regular");
@@ -160,20 +168,20 @@ async function apiOrder(request, env, url) {
   }
 
   const price = type === "business" ? s.price_business_cents : s.price_regular_cents;
-  const amount = price * qty;
+  const amount = price * qty + extra;
   const id = crypto.randomUUID();
 
   await env.DB.prepare(
-    `INSERT INTO orders (id,created_at,name,email,phone,city,type,quantity,amount_cents,status,payment_method,newsletter)
-     VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,'pending','mollie',?10)`
-  ).bind(id, now(), name, email, phone, city, type, qty, amount, newsletter).run();
+    `INSERT INTO orders (id,created_at,name,email,phone,city,type,quantity,amount_cents,status,payment_method,newsletter,extra_cents,gift_name)
+     VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,'pending','mollie',?10,?11,?12)`
+  ).bind(id, now(), name, email, phone, city, type, qty, amount, newsletter, extra, giftName || null).run();
 
   const origin = url.origin;
   let payment;
   try {
     payment = await mollieCreate(env, {
       amount: { currency: "EUR", value: (amount / 100).toFixed(2) },
-      description: `Nijmegen Duckstad — ${qty}x ${type === "business" ? "bedrijfseendje" : "eendje"}`,
+      description: `Nijmegen Duckstad — ${qty}x ${type === "business" ? "bedrijfseendje" : "eendje"}${extra ? " + extra gift" : ""}`,
       redirectUrl: `${origin}/bestelling?id=${id}`,
       webhookUrl: `${origin}/api/mollie-webhook`,
       metadata: { order_id: id },
@@ -239,13 +247,97 @@ async function apiWebhook(request, env, ctx) {
       await assignNumbers(env, order);
       await env.DB.prepare("UPDATE orders SET status='paid', paid_at=?2 WHERE id=?1").bind(orderId, now()).run();
       ctx.waitUntil(sendConfirmation(env, orderId));
+      ctx.waitUntil(notifyOrganizer(env, orderId));
     }
   } else if (["expired", "canceled", "failed"].includes(pay.status)) {
     if (order.status === "pending") {
       await env.DB.prepare("UPDATE orders SET status=?2 WHERE id=?1").bind(orderId, pay.status).run();
     }
   }
+  // Terugbetaling: markeer als volledig terugbetaald.
+  if (pay.amountRefunded && order.status === "paid") {
+    const refunded = parseFloat(pay.amountRefunded.value || "0");
+    const total = parseFloat((pay.amount && pay.amount.value) || "0");
+    if (refunded > 0 && total > 0 && refunded >= total) {
+      await env.DB.prepare("UPDATE orders SET status='refunded' WHERE id=?1 AND status='paid'").bind(orderId).run();
+    }
+  }
   return new Response("ok");
+}
+
+// Korte interne melding aan de organisatie bij elke betaalde bestelling.
+async function notifyOrganizer(env, orderId) {
+  if (!env.RESEND_API_KEY) return;
+  const to = env.ORGANIZER_EMAIL || env.MAIL_REPLY_TO || "marco@marcovanthiel.nl";
+  const o = await env.DB.prepare("SELECT * FROM orders WHERE id=?1").bind(orderId).first();
+  if (!o) return;
+  const html = `<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#1d2433;line-height:1.6">
+    <p><strong>Nieuwe betaalde bestelling</strong> 🦆</p>
+    <p>${o.quantity}&times; ${o.type === "business" ? "bedrijfseendje" : "eendje"} — <strong>${euro(o.amount_cents)}</strong>${o.extra_cents ? " (incl. " + euro(o.extra_cents) + " extra gift)" : ""}</p>
+    <p>${escHtml(o.name)} &lt;${escHtml(o.email)}&gt;${o.city ? " · " + escHtml(o.city) : ""}${o.gift_name ? " · 🎁 cadeau voor " + escHtml(o.gift_name) : ""}</p>
+    <p style="color:#5b6679;font-size:13px">${escHtml(o.created_at)}</p>
+  </div>`;
+  try {
+    await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { authorization: "Bearer " + env.RESEND_API_KEY, "content-type": "application/json" },
+      body: JSON.stringify({ from: env.MAIL_FROM || "Nijmegen Duckstad <info@nijmegenduckstad.nl>", to: [to], subject: `🦆 Nieuwe bestelling — ${euro(o.amount_cents)}`, html }),
+    });
+  } catch (e) { console.error("notify_fout", String((e && e.message) || e)); }
+}
+
+/* ---------------- dagelijkse cron (scheduled handler) ---------------- */
+async function runDaily(env) {
+  try {
+    // 1) Achtergebleven pending-orders (ouder dan 6u) als verlopen markeren.
+    const cutoff = new Date(Date.now() - 6 * 3600 * 1000).toISOString();
+    await env.DB.prepare("UPDATE orders SET status='expired' WHERE status='pending' AND created_at < ?1").bind(cutoff).run();
+  } catch (e) { console.error("cron_pending_fout", String((e && e.message) || e)); }
+  try {
+    // 2) Oude rate-limit-tellers opruimen.
+    await env.DB.prepare("DELETE FROM rate_limits WHERE reset_at < ?1").bind(now()).run();
+  } catch (e) { /* tabel kan ontbreken */ }
+  try {
+    // 3) Dagrapport + CSV-backup mailen.
+    await sendDailyReport(env);
+  } catch (e) { console.error("cron_rapport_fout", String((e && e.message) || e)); }
+}
+
+async function sendDailyReport(env) {
+  if (!env.RESEND_API_KEY) return;
+  const to = env.ORGANIZER_EMAIL || env.MAIL_REPLY_TO || "marco@marcovanthiel.nl";
+  const reg = await soldCount(env, "regular");
+  const bus = await soldCount(env, "business");
+  const agg = await env.DB.prepare(
+    `SELECT COUNT(*) FILTER (WHERE status='paid') AS paid,
+            COUNT(*) FILTER (WHERE status='pending') AS pending,
+            COALESCE(SUM(amount_cents) FILTER (WHERE status='paid'),0) AS rev FROM orders`).first();
+  const r = await env.DB.prepare(
+    "SELECT created_at,name,email,phone,city,type,quantity,amount_cents,extra_cents,status,newsletter,gift_name,paid_at FROM orders ORDER BY created_at DESC").all();
+  const rows = [["Datum", "Naam", "E-mail", "Telefoon", "Woonplaats", "Type", "Aantal", "Bedrag(€)", "Extra(€)", "Status", "Nieuwsbrief", "Cadeau voor", "Betaald op"]];
+  (r.results || []).forEach((x) => rows.push([x.created_at, x.name, x.email, x.phone, x.city, x.type, x.quantity, (x.amount_cents / 100).toFixed(2), ((x.extra_cents || 0) / 100).toFixed(2), x.status, x.newsletter ? "ja" : "nee", x.gift_name, x.paid_at]));
+  const csvB64 = btoa(unescape(encodeURIComponent("﻿" + csv(rows))));
+  const datum = now().slice(0, 10);
+  const html = `<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#1d2433;line-height:1.6">
+    <p><strong>Nijmegen Duckstad — dagrapport ${datum}</strong> 🦆</p>
+    <ul>
+      <li>Eendjes verkocht: <strong>${reg}</strong> · bedrijfseendjes: <strong>${bus}</strong></li>
+      <li>Betaalde bestellingen: <strong>${agg.paid}</strong> · in behandeling: ${agg.pending}</li>
+      <li>Totaal opgehaald: <strong>${euro(agg.rev)}</strong></li>
+    </ul>
+    <p style="color:#5b6679;font-size:13px">De CSV-backup van alle bestellingen zit als bijlage.</p>
+  </div>`;
+  try {
+    await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { authorization: "Bearer " + env.RESEND_API_KEY, "content-type": "application/json" },
+      body: JSON.stringify({
+        from: env.MAIL_FROM || "Nijmegen Duckstad <info@nijmegenduckstad.nl>", to: [to],
+        subject: `🦆 Duckstad dagrapport ${datum} — ${euro(agg.rev)}`, html,
+        attachments: [{ filename: `bestellingen-${datum}.csv`, content: csvB64 }],
+      }),
+    });
+  } catch (e) { console.error("dagrapport_mail_fout", String((e && e.message) || e)); }
 }
 
 // Ken de LAAGSTE VRIJE nummers toe (per type). Zo komen nummers die door het
@@ -595,9 +687,9 @@ async function adminApi(path, request, env) {
 
   if (sub === "export-orders") {
     const r = await env.DB.prepare(
-      "SELECT created_at,name,email,phone,city,type,quantity,amount_cents,status,newsletter,paid_at FROM orders ORDER BY created_at DESC").all();
-    const rows = [["Datum", "Naam", "E-mail", "Telefoon", "Woonplaats", "Type", "Aantal", "Bedrag(€)", "Status", "Nieuwsbrief", "Betaald op"]];
-    (r.results || []).forEach((x) => rows.push([x.created_at, x.name, x.email, x.phone, x.city, x.type, x.quantity, (x.amount_cents / 100).toFixed(2), x.status, x.newsletter ? "ja" : "nee", x.paid_at]));
+      "SELECT created_at,name,email,phone,city,type,quantity,amount_cents,extra_cents,status,newsletter,gift_name,paid_at FROM orders ORDER BY created_at DESC").all();
+    const rows = [["Datum", "Naam", "E-mail", "Telefoon", "Woonplaats", "Type", "Aantal", "Bedrag(€)", "Extra(€)", "Status", "Nieuwsbrief", "Cadeau voor", "Betaald op"]];
+    (r.results || []).forEach((x) => rows.push([x.created_at, x.name, x.email, x.phone, x.city, x.type, x.quantity, (x.amount_cents / 100).toFixed(2), ((x.extra_cents || 0) / 100).toFixed(2), x.status, x.newsletter ? "ja" : "nee", x.gift_name, x.paid_at]));
     return new Response("﻿" + csv(rows), { headers: { "content-type": "text/csv; charset=utf-8", "content-disposition": 'attachment; filename="bestellingen.csv"' } });
   }
 

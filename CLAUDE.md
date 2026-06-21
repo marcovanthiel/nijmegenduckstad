@@ -189,6 +189,15 @@ De site wordt uitgebreid van static-only naar een Worker-met-code + D1:
 
 ## Recente architectuur-besluiten (changelog)
 
+- **2026-06-21** (Code, v1.0.15): **conversie/ops batch 2 (backend)**. Migratie `0006_order_extras.sql`
+  (--remote toegepast): `orders.extra_cents` (default 0) + `orders.gift_name`. `apiOrder`: vrijwillige
+  **extra gift** (`extra_cents`, geclampt 0..€500 → kan prijs nooit verlagen) opgeteld bij `amount`, en
+  **cadeau-ontvanger** (`gift_name`). Bestelpagina: cadeau-toggle + extra-gift-knoppen (+€5/10/25).
+  Webhook: **organisator-notificatie** (`notifyOrganizer`, env `ORGANIZER_EMAIL`) bij elke betaalde order
+  + **refund-afhandeling** (`amountRefunded` → status `refunded`). **Cron** (`[triggers] crons=["0 6 * * *"]`
+  + `scheduled()` → `runDaily`): pending>6u → expired, oude `rate_limits` prunen, **dagrapport + CSV-backup**
+  mailen (`sendDailyReport`, Resend-attachment). `export-orders` CSV uitgebreid met extra/cadeau.
+
 - **2026-06-21** (Code, v1.0.14): **conversie + SEO/social, batch 1**. (1) Branding **2026→2027** site-breed
   (meta/og-descriptions, hero-eyebrow, FAQ). (2) **Social share**: OG-afbeelding `assets/img/og.jpg`
   (1200×630, gerenderd via Chrome-headless uit /tmp/og.html) + og:image/og:url/og:site_name/twitter:card

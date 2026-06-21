@@ -19,6 +19,11 @@ binding = "DB"
 database_name = "nijmegenduckstad"
 database_id = "6bb084ee-43a2-4e17-9d11-1966ef6a1c74"
 
+# Dagelijkse cron (06:00 UTC): pending-orders opruimen, rate-limits prunen,
+# dagrapport + CSV-backup mailen (zie scheduled() in src/index.js).
+[triggers]
+crons = ["0 6 * * *"]
+
 # Secrets (NIET hier zetten — via `wrangler secret put` of het dashboard):
 #   MOLLIE_API_KEY     (test_... of live_...)
 #   ADMIN_PASSWORD     (wachtwoord voor /admin)
