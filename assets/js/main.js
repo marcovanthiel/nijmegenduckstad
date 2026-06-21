@@ -203,4 +203,53 @@
       else { timer = setTimeout(function () { timer = null; window.location.href = logo.getAttribute('href') || 'index.html'; }, 280); }
     });
   })();
+
+  /* --- Easter egg 2: 2x op de grote eend klikken -> "Kwaak!" met geluid + animatie --- */
+  (function () {
+    var duck = document.querySelector('.bigduck');
+    if (!duck) return;
+    var audioCtx = null;
+    // Eendenkwaak synthetiseren: buzzy zaagtand-toon die in toonhoogte zakt, met rasp-flutter.
+    function quackSound() {
+      try {
+        var Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return;
+        if (!audioCtx) audioCtx = new Ctx();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        var ctx = audioCtx, t = ctx.currentTime;
+        var osc = ctx.createOscillator(); osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(620, t);
+        osc.frequency.exponentialRampToValueAtTime(300, t + 0.16);
+        osc.frequency.exponentialRampToValueAtTime(180, t + 0.22);
+        var bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 950; bp.Q.value = 5;
+        var gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.0001, t);
+        gain.gain.exponentialRampToValueAtTime(0.5, t + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.24);
+        var lfo = ctx.createOscillator(); lfo.frequency.value = 45;        // rasp -> eend-klank
+        var lfoGain = ctx.createGain(); lfoGain.gain.value = 0.18;
+        lfo.connect(lfoGain); lfoGain.connect(gain.gain);
+        osc.connect(bp); bp.connect(gain); gain.connect(ctx.destination);
+        osc.start(t); lfo.start(t); osc.stop(t + 0.26); lfo.stop(t + 0.26);
+      } catch (e) {}
+    }
+    function showBubble() {
+      var parent = duck.parentNode || duck;
+      if (getComputedStyle(parent).position === 'static') parent.style.position = 'relative';
+      var b = parent.querySelector('.quack-bubble');
+      if (!b) { b = document.createElement('div'); b.className = 'quack-bubble'; b.textContent = 'Kwaak!'; parent.appendChild(b); }
+      b.classList.remove('show'); void b.offsetWidth; b.classList.add('show');
+    }
+    function quack() {
+      quackSound();
+      showBubble();
+      duck.classList.remove('quack-go'); duck.getBoundingClientRect(); duck.classList.add('quack-go');
+    }
+    document.addEventListener('animationend', function (e) {
+      if (!e.target.classList) return;
+      if (e.target.classList.contains('quack-go')) e.target.classList.remove('quack-go');
+      if (e.target.classList.contains('quack-bubble')) e.target.classList.remove('show');
+    });
+    duck.addEventListener('dblclick', function (e) { e.preventDefault(); quack(); });
+  })();
 })();

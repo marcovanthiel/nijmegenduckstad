@@ -189,6 +189,11 @@ De site wordt uitgebreid van static-only naar een Worker-met-code + D1:
 
 ## Recente architectuur-besluiten (changelog)
 
+- **2026-06-21** (Code, v1.0.10): **2e easter egg** — dubbelklik op de grote eend (`.bigduck`) → "Kwaak!"
+  (tekstballon `.quack-bubble` + squash-animatie `@keyframes quack`, !important i.v.m. `bob`) mét
+  **gesynthetiseerd eendengeluid** via Web Audio API (zaagtand-osc die in toonhoogte zakt + bandpass +
+  rasp-LFO; geen audiobestand). AudioContext lazy in de dblclick-gesture (autoplay-policy ok).
+
 - **2026-06-21** (Code, v1.0.8): easter-egg verfijnd — nu flippen ook het **logo-eendje** (`.nav__logo img`)
   en de **grote hero-eend** (`.bigduck`) mee, naast de 🦆-emoji's + `.footer-duck`. Animatie vloeiend
   gemaakt: constante rotatiesnelheid + `linear` (was schokkerig door overshoot-bezier + ongelijke

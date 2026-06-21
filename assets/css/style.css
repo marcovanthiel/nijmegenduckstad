@@ -312,3 +312,22 @@ html::-webkit-scrollbar-track{background:var(--bg)}
 /* constante rotatiesnelheid + linear = vloeiend; fill-box centreert ook SVG's netjes.
    !important overrulet element-eigen animaties (bv. de 'bob' van .bigduck) tijdens de koprol. */
 .koprol-go{animation:koprol .8s linear !important;transform-box:fill-box;transform-origin:center}
+
+/* Easter egg 2: dubbelklik op de grote eend -> "Kwaak!" (squash + tekstballon) */
+@keyframes quack{
+  0%   {transform:scale(1,1)}
+  25%  {transform:scale(1.09,.9)}
+  55%  {transform:scale(.95,1.07)}
+  100% {transform:scale(1,1)}
+}
+.quack-go{animation:quack .45s ease-out !important;transform-box:fill-box;transform-origin:center bottom}
+.quack-bubble{position:absolute;top:3%;left:50%;transform:translateX(-50%) scale(0);background:#fff;color:var(--blue);font-family:var(--display);font-weight:700;font-size:clamp(1.1rem,2.4vw,1.7rem);padding:8px 18px;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.28);white-space:nowrap;z-index:6;pointer-events:none}
+.quack-bubble::after{content:"";position:absolute;left:50%;bottom:-9px;transform:translateX(-50%);border:9px solid transparent;border-top-color:#fff;border-bottom:0}
+.quack-bubble.show{animation:quackbubble 1.2s ease}
+@keyframes quackbubble{
+  0%   {transform:translateX(-50%) scale(0);opacity:0}
+  15%  {transform:translateX(-50%) scale(1.12);opacity:1}
+  32%  {transform:translateX(-50%) scale(1);opacity:1}
+  78%  {transform:translateX(-50%) scale(1);opacity:1}
+  100% {transform:translateX(-50%) scale(.92);opacity:0}
+}
