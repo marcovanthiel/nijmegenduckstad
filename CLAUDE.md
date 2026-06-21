@@ -149,6 +149,17 @@ artifacts (toekomstige `dist/`, `node_modules`, etc.) hier toe.
 Pure HTML + CSS + JS. Geen Vite, geen npm-build. Wat je in de repo
 ziet is wat live wordt geserveerd. Geen pre-processing-magic.
 
+### Cloudflare Web Analytics injecteert NIET op Workers-sites
+"Automatic Setup" van Cloudflare Web Analytics injecteert het beacon
+(`static.cloudflareinsights.com/beacon.min.js`) alleen bij gewone
+origin-responses, **niet** bij Worker-responses. Onze site is
+*Workers Static Assets* → de toggle aanzetten doet niets, het beacon
+blijft afwezig (geverifieerd 2026-06-21: live HTML bevat geen beacon).
+Wil je het tóch, voeg het `<script defer src=… data-cf-beacon='{"token":"…"}'>`
+**handmatig** toe in alle pagina's (de CSP whitelist `static.cloudflareinsights.com`
+staat al klaar sinds v1.0.17). Anders volstaat onze eigen cookieloze
+statistiek (v1.0.16, `/api/track` in `main.js` → admin Statistiek-tab).
+
 ### Token-permissies op Cloudflare
 Het `CLOUDFLARE_API_TOKEN` heeft o.a. nodig:
 - `Account → Workers Scripts → Edit`
@@ -188,6 +199,13 @@ De site wordt uitgebreid van static-only naar een Worker-met-code + D1:
 - `.assetsignore` sluit `src/`, `migrations/`, configs uit de publieke assets.
 
 ## Recente architectuur-besluiten (changelog)
+
+- **2026-06-21** (Code, dashboard-stap): **"Always Use HTTPS" aangezet** in het
+  Cloudflare-dashboard (SSL/TLS → Edge Certificates). Geverifieerd: `http://` →
+  **301** naar `https://` op zowel home als subpagina's. Hiermee is het laatste
+  handmatige security-puntje uit v1.0.5/v1.0.6 afgevinkt. Tevens vastgesteld dat
+  **Cloudflare Web Analytics niet automatisch injecteert op deze Workers-site**
+  (beacon afwezig in live HTML) — zie valkuil hierboven; eigen statistiek blijft de bron.
 
 - **2026-06-21** (Code, v1.0.16): **eigen cookieloze webstatistiek** (Cloudflare Web Analytics kon niet
   via de wrangler-OAuth-token: RUM-API geeft auth-error → zelf gebouwd). Migratie `0007_pageviews.sql`
