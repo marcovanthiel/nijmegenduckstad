@@ -189,6 +189,9 @@ De site wordt uitgebreid van static-only naar een Worker-met-code + D1:
 
 ## Recente architectuur-besluiten (changelog)
 
+- **2026-06-21** (Code, v1.0.11): kwaak-geluid verbeterd — formant-filtering (3 bandpass = nasale "aa"),
+  pitch-contour omhoog→omlaag ("kwAAk"), 2 ontstemde zaagtanden + ruisaanzet ("k") + tremolo-roughness.
+
 - **2026-06-21** (Code, v1.0.10): **2e easter egg** — dubbelklik op de grote eend (`.bigduck`) → "Kwaak!"
   (tekstballon `.quack-bubble` + squash-animatie `@keyframes quack`, !important i.v.m. `bob`) mét
   **gesynthetiseerd eendengeluid** via Web Audio API (zaagtand-osc die in toonhoogte zakt + bandpass +

@@ -209,28 +209,67 @@
     var duck = document.querySelector('.bigduck');
     if (!duck) return;
     var audioCtx = null;
-    // Eendenkwaak synthetiseren: buzzy zaagtand-toon die in toonhoogte zakt, met rasp-flutter.
+    // Eendenkwaak synthetiseren met formant-filtering (nasale "aa"-klank), een pitch-contour
+    // die kort omhoog en dan omlaag gaat ("kwAAk"), 2 ontstemde zaagtanden + ruisaanzet ("k").
     function quackSound() {
       try {
         var Ctx = window.AudioContext || window.webkitAudioContext;
         if (!Ctx) return;
         if (!audioCtx) audioCtx = new Ctx();
         if (audioCtx.state === 'suspended') audioCtx.resume();
-        var ctx = audioCtx, t = ctx.currentTime;
-        var osc = ctx.createOscillator(); osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(620, t);
-        osc.frequency.exponentialRampToValueAtTime(300, t + 0.16);
-        osc.frequency.exponentialRampToValueAtTime(180, t + 0.22);
-        var bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 950; bp.Q.value = 5;
-        var gain = ctx.createGain();
-        gain.gain.setValueAtTime(0.0001, t);
-        gain.gain.exponentialRampToValueAtTime(0.5, t + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.24);
-        var lfo = ctx.createOscillator(); lfo.frequency.value = 45;        // rasp -> eend-klank
-        var lfoGain = ctx.createGain(); lfoGain.gain.value = 0.18;
-        lfo.connect(lfoGain); lfoGain.connect(gain.gain);
-        osc.connect(bp); bp.connect(gain); gain.connect(ctx.destination);
-        osc.start(t); lfo.start(t); osc.stop(t + 0.26); lfo.stop(t + 0.26);
+        var ctx = audioCtx, t = ctx.currentTime, dur = 0.33;
+
+        // Eindtrap + amplitude-envelope (snelle attack, korte decay)
+        var env = ctx.createGain();
+        env.gain.setValueAtTime(0.0001, t);
+        env.gain.exponentialRampToValueAtTime(0.8, t + 0.012);
+        env.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+        var out = ctx.createGain(); out.gain.value = 0.5;
+        env.connect(out); out.connect(ctx.destination);
+
+        // Bron: 2 licht ontstemde zaagtanden met pitch-contour (omhoog -> omlaag)
+        function tone(detune) {
+          var o = ctx.createOscillator(); o.type = 'sawtooth'; o.detune.value = detune;
+          o.frequency.setValueAtTime(320, t);
+          o.frequency.linearRampToValueAtTime(720, t + 0.05);
+          o.frequency.exponentialRampToValueAtTime(400, t + 0.16);
+          o.frequency.exponentialRampToValueAtTime(240, t + dur);
+          return o;
+        }
+        var o1 = tone(0), o2 = tone(-22);
+        var src = ctx.createGain(); src.gain.value = 0.45;
+        o1.connect(src); o2.connect(src);
+
+        // Formanten -> nasale eend-vokaal (3 parallelle bandpass-filters)
+        function formant(freq, q, g) {
+          var f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = q;
+          var fg = ctx.createGain(); fg.gain.value = g;
+          src.connect(f); f.connect(fg); fg.connect(env);
+        }
+        formant(560, 8, 1.0);
+        formant(1100, 9, 0.6);
+        formant(2500, 11, 0.3);
+
+        // Roughness: snelle tremolo op de envelope
+        var lfo = ctx.createOscillator(); lfo.frequency.value = 33;
+        var lfoG = ctx.createGain(); lfoG.gain.value = 0.16;
+        lfo.connect(lfoG); lfoG.connect(env.gain);
+
+        // Korte "k"-aanzet (gefilterde ruisburst)
+        var nb = ctx.createBufferSource();
+        var buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.04), ctx.sampleRate);
+        var chd = buf.getChannelData(0);
+        for (var i = 0; i < chd.length; i++) chd[i] = Math.random() * 2 - 1;
+        nb.buffer = buf;
+        var nf = ctx.createBiquadFilter(); nf.type = 'highpass'; nf.frequency.value = 1400;
+        var ng = ctx.createGain();
+        ng.gain.setValueAtTime(0.22, t);
+        ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
+        nb.connect(nf); nf.connect(ng); ng.connect(out);
+
+        var stop = t + dur + 0.03;
+        o1.start(t); o2.start(t); lfo.start(t); nb.start(t);
+        o1.stop(stop); o2.stop(stop); lfo.stop(stop); nb.stop(t + 0.06);
       } catch (e) {}
     }
     function showBubble() {
