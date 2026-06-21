@@ -146,4 +146,59 @@
       }
     });
   });
+
+  /* --- Easter egg: 2x op het logo (linksboven) klikken -> alle eendjes maken een koprol --- */
+  (function () {
+    var logo = document.querySelector('.nav__logo');
+    if (!logo) return;
+    var wrapped = false;
+    // Wikkel elke losse 🦆-emoji eenmalig in een <span> zodat we 'm los kunnen animeren.
+    function wrapDucks() {
+      if (wrapped) return; wrapped = true;
+      var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+        acceptNode: function (n) {
+          if (!n.nodeValue || n.nodeValue.indexOf('🦆') === -1) return NodeFilter.FILTER_REJECT;
+          var p = n.parentNode, t = p && p.nodeName;
+          if (!p || t === 'SCRIPT' || t === 'STYLE' || (p.classList && p.classList.contains('egg-duck'))) return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      });
+      var nodes = []; while (walker.nextNode()) nodes.push(walker.currentNode);
+      nodes.forEach(function (n) {
+        var parts = n.nodeValue.split('🦆'), frag = document.createDocumentFragment();
+        parts.forEach(function (part, i) {
+          if (part) frag.appendChild(document.createTextNode(part));
+          if (i < parts.length - 1) {
+            var s = document.createElement('span'); s.className = 'egg-duck'; s.textContent = '🦆';
+            frag.appendChild(s);
+          }
+        });
+        n.parentNode.replaceChild(frag, n);
+      });
+    }
+    function koprol() {
+      wrapDucks();
+      var els = document.querySelectorAll('.footer-duck, .egg-duck');
+      Array.prototype.forEach.call(els, function (el, i) {
+        el.classList.remove('koprol-go');
+        el.getBoundingClientRect();              // forceer reflow -> animatie herstart
+        el.style.animationDelay = (i % 14) * 55 + 'ms';
+        el.classList.add('koprol-go');
+      });
+    }
+    document.addEventListener('animationend', function (e) {
+      if (e.target.classList && e.target.classList.contains('koprol-go')) {
+        e.target.classList.remove('koprol-go');
+        e.target.style.animationDelay = '';
+      }
+    });
+    // Dubbelklik detecteren zonder dat de eerste klik al naar home navigeert.
+    var timer = null;
+    logo.addEventListener('click', function (e) {
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return; // modifier-clicks ongemoeid
+      e.preventDefault();
+      if (timer) { clearTimeout(timer); timer = null; koprol(); }
+      else { timer = setTimeout(function () { timer = null; window.location.href = logo.getAttribute('href') || 'index.html'; }, 280); }
+    });
+  })();
 })();

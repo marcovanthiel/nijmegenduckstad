@@ -299,3 +299,14 @@ html::-webkit-scrollbar-track{background:var(--bg)}
 
 /* Versienummer in de footer */
 .footer-version{opacity:.7;white-space:nowrap}
+
+/* Easter egg: dubbelklik op het logo (linksboven) -> alle eendjes maken een koprol */
+@keyframes koprol{
+  0%   {transform:translateY(0) rotate(0deg)}
+  25%  {transform:translateY(-16px) rotate(120deg)}
+  55%  {transform:translateY(-18px) rotate(250deg)}
+  80%  {transform:translateY(-5px) rotate(330deg)}
+  100% {transform:translateY(0) rotate(360deg)}
+}
+.egg-duck{display:inline-block}
+.koprol-go{animation:koprol .9s cubic-bezier(.34,1.4,.5,1)}

@@ -189,6 +189,12 @@ De site wordt uitgebreid van static-only naar een Worker-met-code + D1:
 
 ## Recente architectuur-besluiten (changelog)
 
+- **2026-06-21** (Code, v1.0.7): **easter egg** — 2× klikken op `.nav__logo` (linksboven) laat alle
+  eendjes een koprol maken. `main.js` wikkelt elke losse 🦆-emoji eenmalig in `<span class="egg-duck">`
+  (TreeWalker) en animeert die + `.footer-duck` met `@keyframes koprol` (style.css). Dubbelklik wordt
+  gedetecteerd via een click-timer (280ms) zodat de eerste klik niet meteen naar home navigeert;
+  modifier-clicks (cmd/ctrl/shift) blijven normaal werken. Alleen publieke site (admin laadt main.js niet).
+
 - **2026-06-19** (Code, v1.0.6): security-headers ook in **`_headers`** (volledige set incl. HSTS+CSP,
   X-Frame-Options DENY). Reden: Cloudflare serveert **gecachte statische pagina's rechtstreeks via de
   static-pipeline** (Worker draait dan niet) → die kregen alleen de `_headers`-headers en geen
