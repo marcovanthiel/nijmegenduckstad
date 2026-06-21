@@ -279,8 +279,20 @@
       if (!b) { b = document.createElement('div'); b.className = 'quack-bubble'; b.textContent = 'Kwaak!'; parent.appendChild(b); }
       b.classList.remove('show'); void b.offsetWidth; b.classList.add('show');
     }
+    // Speel de echte eendenopname (kwaak.mp3, CC BY-SA — Jonathon Jongsma, xeno-canto XC62258);
+    // val terug op de gesynthetiseerde kwaak als het bestand niet laadt of mag afspelen.
+    var snd = null, sndBroken = false;
+    function playQuack() {
+      if (sndBroken) { quackSound(); return; }
+      try {
+        if (!snd) { snd = new Audio('assets/audio/kwaak.mp3'); snd.addEventListener('error', function () { sndBroken = true; }); }
+        snd.currentTime = 0;
+        var p = snd.play();
+        if (p && p.catch) p.catch(function () { quackSound(); });
+      } catch (e) { quackSound(); }
+    }
     function quack() {
-      quackSound();
+      playQuack();
       showBubble();
       duck.classList.remove('quack-go'); duck.getBoundingClientRect(); duck.classList.add('quack-go');
     }

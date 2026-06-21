@@ -1,0 +1,12 @@
+Geluidsfragment: kwaak.mp3 (easter egg — dubbelklik op de grote eend)
+
+Bron      : Mallard / Wilde eend (Anas platyrhynchos) — xeno-canto XC62258
+Opname    : Jonathon Jongsma
+Licentie  : CC BY-SA 3.0  (https://creativecommons.org/licenses/by-sa/3.0/)
+Herkomst  : https://commons.wikimedia.org/wiki/File:Anas_platyrhynchos_-_Mallard_-_XC62258.ogg
+            (oorspronkelijk: https://www.xeno-canto.org/62258)
+Bewerking : bijgesneden (begin-/eindstilte verwijderd), mono, loudness-genormaliseerd,
+            omgezet van OGG naar MP3.
+
+CC BY-SA 3.0 vereist naamsvermelding + dezelfde licentie voor afgeleiden;
+dit bewerkte fragment valt eveneens onder CC BY-SA 3.0.

@@ -189,6 +189,12 @@ De site wordt uitgebreid van static-only naar een Worker-met-code + D1:
 
 ## Recente architectuur-besluiten (changelog)
 
+- **2026-06-21** (Code, v1.0.12): **echte eendenopname** i.p.v. synth — `assets/audio/kwaak.mp3`
+  (mallard, xeno-canto XC62258, opname Jonathon Jongsma, **CC BY-SA 3.0** → attributie in
+  `assets/audio/CREDITS.txt`; bijgesneden+mono+genormaliseerd via ffmpeg, 24 KB). `main.js` speelt 'm
+  via `new Audio()`; de gesynthetiseerde kwaak (`quackSound`) blijft als **fallback** als het bestand
+  niet laadt/mag. CSP `media-src` valt terug op `default-src 'self'` → same-origin audio toegestaan.
+
 - **2026-06-21** (Code, v1.0.11): kwaak-geluid verbeterd — formant-filtering (3 bandpass = nasale "aa"),
   pitch-contour omhoog→omlaag ("kwAAk"), 2 ontstemde zaagtanden + ruisaanzet ("k") + tremolo-roughness.
 
