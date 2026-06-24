@@ -198,6 +198,14 @@ De site wordt uitgebreid van static-only naar een Worker-met-code + D1:
 - **Niet naar main mergen** voordat D1 + secrets bestaan, anders faalt de deploy.
 - `.assetsignore` sluit `src/`, `migrations/`, configs uit de publieke assets.
 
+## Verbeterpunten (backlog)
+
+- **Mails aan aanbrengers van prijzen ook in CC naar de accountmanager.** Wanneer een
+  aanbrenger van een prijs een e-mail krijgt (bevestiging/communicatie rond de ingebrachte
+  prijs), moet de bijbehorende accountmanager standaard in de CC staan. Te implementeren in
+  de mailflow van het bestelsysteem (zie sectie hierboven) zodra die flow voor
+  prijzen-aanbrengers gebouwd/uitgebreid wordt.
+
 ## Recente architectuur-besluiten (changelog)
 
 - **2026-06-21** (Code, dashboard-stap): **"Always Use HTTPS" aangezet** in het
