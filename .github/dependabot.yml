@@ -1,0 +1,18 @@
+# Dependabot — controleert wekelijks (maandagochtend) op updates en opent PRs.
+# Minor + patch worden gegroepeerd in één PR per ecosysteem; majors apart
+# zodat ze opvallen en losse review krijgen. PR's reviewt/merget Marco zelf.
+version: 2
+updates:
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '06:00'
+      timezone: 'Europe/Amsterdam'
+    open-pull-requests-limit: 3
+    labels:
+      - 'dependencies'
+      - 'ci'
+    commit-message:
+      prefix: 'deps(ci)'
