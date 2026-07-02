@@ -208,6 +208,26 @@ De site wordt uitgebreid van static-only naar een Worker-met-code + D1:
 
 ## Recente architectuur-besluiten (changelog)
 
+- **2026-07-02** (Code, v1.0.18): **UX-verbeterronde (3 doelgroepen) o.b.v. gebruiksvriendelijkheidsscan.**
+  *Klant*: bestelflow toont nu de geselecteerde bundel/type/extra (`.is-selected`+`aria-pressed`);
+  keuze uit `adopteren.html` gaat mee (`?qty`/`?type`); ingevulde velden blijven bewaard na een
+  mislukte betaling (sessionStorage); goede-doel-cijfers verhelderd; **privacyverklaring** toegevoegd
+  (`privacy.html` + footer/sitemap); nav/CTA/vocabulaire gelijkgetrokken; site-brede `:focus-visible`
+  + skip-links + fieldset/legend + veldgekoppelde fouten. **Contact-/sponsor-/vrijwilligerformulier
+  van `mailto` naar echte verzending** via nieuw `POST /api/contact` (honeypot + rate-limit, mailt naar
+  `ORGANIZER_EMAIL` met reply_to=indiener). *Accountmanager*: prijzentabel met zoeken + filters
+  (nog-te-bevestigen / mijn prijzen); bevestigingsmail ondertekent met de **ingelogde** gebruiker
+  (waarschuwing bij mismatch met gekoppelde AM), **voorbeeld-knop**, waarschuwing bij opnieuw sturen,
+  **CC naar de accountmanager** (`sendPrizeConfirmation`); labels i.p.v. placeholders in de modal;
+  foutcodes vertaald + opslaan-bevestiging. *Beheerder*: **bestellingen** met zoek/statusfilter +
+  klik-detail (startnummers/telefoon) + "markeer als betaald"/"bevestiging opnieuw" (nieuwe endpoints
+  `mark-paid`/`resend-confirmation`); **trekking** met per-rij verwijderen (`draw-delete`) + ontkoppelde
+  reset + waarschuwing bij dubbel startnummer/prijs; dashboard-KPI's (verkoop open/gesloten, prijzen te
+  bevestigen, % van doel); **prijs-per-eendje** in Instellingen + bevestiging bij sluiten + max-waarschuwing;
+  rol-wijziging met bevestiging; `.catch` + knop-disable overal (dubbelklik-preventie) + consistente
+  toasts; a11y: `role=tab`/`aria-selected`, aria-labels op icoonknoppen, touch-scrollbar.
+
+
 - **2026-06-21** (Code, dashboard-stap): **"Always Use HTTPS" aangezet** in het
   Cloudflare-dashboard (SSL/TLS → Edge Certificates). Geverifieerd: `http://` →
   **301** naar `https://` op zowel home als subpagina's. Hiermee is het laatste

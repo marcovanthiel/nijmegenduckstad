@@ -138,19 +138,29 @@
   setSocial('[data-instagram]', C.instagram);
   setSocial('[data-facebook]', C.facebook);
 
-  /* --- Contact-/aanmeldformulieren (Web3Forms of mailto-fallback) --- */
+  /* --- Contact-/aanmeldformulieren: echte verzending via /api/contact --- */
   document.querySelectorAll('form[data-mailform]').forEach(function (form) {
     var status = form.querySelector('.form-status');
+    var btn = form.querySelector('[type=submit]');
+    function show(ok, msg) { if (!status) { alert(msg); return; } status.textContent = msg; status.className = 'form-status show ' + (ok ? 'ok' : 'err'); }
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       var data = new FormData(form);
-      function show(ok, msg) { if (!status) { alert(msg); return; } status.textContent = msg; status.className = 'form-status show ' + (ok ? 'ok' : 'err'); }
-      // Formulieren gaan via de mailto-flow (web3forms is nooit geconfigureerd en verwijderd).
-      var lines = []; data.forEach(function (v, k) { if (v) lines.push(k + ': ' + v); });
-      var subject = encodeURIComponent('Nijmegen Duckstad — ' + (form.dataset.mailform || 'formulier'));
-      var body = encodeURIComponent(lines.join('\n'));
-      window.location.href = 'mailto:' + (C.contactEmail || '') + '?subject=' + subject + '&body=' + body;
-      show(true, 'Je e-mailprogramma opent met je bericht. Verstuur de mail om af te ronden.');
+      var honey = (data.get('website') || '').toString(); // honeypot
+      var fields = {};
+      data.forEach(function (v, k) { if (k !== 'website' && String(v).trim() !== '') fields[k] = v; });
+      var origLbl = btn ? btn.textContent : '';
+      if (btn) { btn.disabled = true; btn.textContent = 'Versturen…'; }
+      show(true, 'Bezig met versturen…');
+      fetch('/api/contact', { method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ form: form.dataset.mailform || 'contact', website: honey, fields: fields }) })
+        .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+        .then(function (res) {
+          if (res.ok && res.j.ok) { form.reset(); show(true, 'Bedankt! Je bericht is verstuurd — we nemen snel contact op.'); }
+          else { var m = { te_veel_verzoeken: 'Even geduld — je hebt net al een bericht gestuurd. Probeer het zo nog eens.', mail_niet_geconfigureerd: 'Verzenden lukt nu niet. Mail ons direct via ' + (C.contactEmail || 'info@nijmegenduckstad.nl') + '.' }; show(false, m[res.j.error] || ('Er ging iets mis. Mail ons gerust direct via ' + (C.contactEmail || 'info@nijmegenduckstad.nl') + '.')); }
+        })
+        .catch(function () { show(false, 'Geen verbinding. Mail ons gerust direct via ' + (C.contactEmail || 'info@nijmegenduckstad.nl') + '.'); })
+        .then(function () { if (btn) { btn.disabled = false; btn.textContent = origLbl; } });
     });
   });
 

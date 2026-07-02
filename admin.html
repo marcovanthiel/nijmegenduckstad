@@ -48,6 +48,19 @@
   .modal::backdrop{background:rgba(14,45,99,.5)}
   .modal__body{padding:22px 24px}
   .modal__body h3{margin:0}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:#0e2d63;color:#fff;padding:12px 20px;border-radius:12px;box-shadow:0 12px 30px rgba(14,45,99,.35);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:60;font-size:.92rem;max-width:90vw}
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+  .toast.err{background:#b3261e}
+  .filterbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 12px}
+  .filterbar input[type=search]{flex:1;min-width:180px;padding:8px 12px;border:1px solid var(--line);border-radius:10px}
+  .chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 12px;font-size:.85rem;cursor:pointer;color:var(--muted)}
+  .chip.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+  tr.clickable{cursor:pointer}
+  tr.clickable:hover{background:#f4f8ff}
+  .detailrow td{background:#f7fafe;font-size:.86rem}
+  .danger-zone{margin-top:14px;padding-top:12px;border-top:1px dashed #e6b3ae}
+  .btn--danger{background:#fdecec;color:#b3261e;border-color:#f3c7c2}
+  .btn--danger:hover{background:#b3261e;color:#fff}
 </style>
 </head>
 <body style="background:var(--bg)">
@@ -76,14 +89,14 @@
   <div id="app" style="display:none">
     <div class="kpis" id="kpis"></div>
 
-    <nav class="tabs" id="tabs">
-      <button class="tab active" data-tab="bestellingen" type="button">📋 Bestellingen</button>
-      <button class="tab" data-tab="prijzen" type="button">🎁 Prijzen</button>
-      <button class="tab" data-tab="exporteren" type="button">📤 Exporteren</button>
-      <button class="tab" data-tab="statistiek" type="button">📈 Statistiek</button>
-      <button class="tab admin-only" data-tab="verkoop" type="button">🧾 Verkoop</button>
-      <button class="tab admin-only" data-tab="race" type="button">🏁 Race</button>
-      <button class="tab admin-only" data-tab="gebruikers" type="button">👥 Gebruikers</button>
+    <nav class="tabs" id="tabs" role="tablist" aria-label="Adminsecties">
+      <button class="tab active" role="tab" aria-selected="true" data-tab="bestellingen" type="button">📋 Bestellingen</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="prijzen" type="button">🎁 Prijzen</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="exporteren" type="button">📤 Exporteren</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="statistiek" type="button">📈 Statistiek</button>
+      <button class="tab admin-only" role="tab" aria-selected="false" data-tab="verkoop" type="button">🧾 Verkoop</button>
+      <button class="tab admin-only" role="tab" aria-selected="false" data-tab="race" type="button">🏁 Race</button>
+      <button class="tab admin-only" role="tab" aria-selected="false" data-tab="gebruikers" type="button">👥 Gebruikers</button>
     </nav>
 
     <section class="tabpane" data-pane="exporteren">
@@ -128,16 +141,25 @@
         <button class="btn btn--primary prize-manage" id="pzNew" type="button" style="padding:10px 18px">➕ Nieuwe prijs</button>
       </div>
       <p class="form__note">Houd bij welke prijzen zijn ingebracht, door wie en onder welke voorwaarden. Stuur de inbrenger een bevestigingsmail &mdash; de tekst kun je eerst aanpassen.</p>
+      <div class="filterbar" style="margin-top:12px">
+        <input type="search" id="prizeSearch" placeholder="Zoek op prijs, inbrenger of bedrijf…" aria-label="Zoek prijs">
+        <button class="chip on" data-pfilter="" type="button">Alle</button>
+        <button class="chip" data-pfilter="unconfirmed" type="button">Nog te bevestigen</button>
+        <button class="chip prize-manage" data-pfilter="mine" type="button">Mijn prijzen</button>
+        <span class="muted" id="prizeCount" style="margin-left:auto"></span>
+      </div>
 
-      <div class="scroll" style="margin-top:16px;max-height:74vh"><table id="prizesTable"><thead><tr><th>Prijs</th><th>Waarde</th><th>Inbrenger</th><th>Accountmanager</th><th>Voorwaarden</th><th>Bevestiging</th><th class="admin-col"></th></tr></thead><tbody></tbody></table></div>
+      <div class="scroll" style="margin-top:8px;max-height:74vh"><table id="prizesTable"><thead><tr><th>Prijs</th><th>Waarde</th><th>Inbrenger</th><th>Accountmanager</th><th>Voorwaarden</th><th>Bevestiging</th><th class="admin-col"></th></tr></thead><tbody></tbody></table></div>
 
       <div class="prize-manage" id="confirmBox" style="display:none;margin-top:18px;border-top:1px solid var(--line);padding-top:16px">
         <h4 style="margin:0 0 4px">✉️ Bevestigingsmail aan <span id="confirmTo"></span></h4>
-        <p class="form__note">Pas onderwerp en tekst gerust aan voordat je verzendt. De regel <code>{{prijs}}</code> wordt vervangen door een kader met de prijs, de omschrijving en de voorwaarden — verplaats die regel om het kader elders in de mail te zetten.</p>
+        <div id="confirmWarn"></div>
+        <p class="form__note">Pas onderwerp en tekst gerust aan voordat je verzendt. De regel <code>{{prijs}}</code> wordt vervangen door een kader met de prijs, de omschrijving en de voorwaarden — verplaats die regel om het kader elders in de mail te zetten. Een kopie gaat automatisch naar de gekoppelde accountmanager.</p>
         <div class="field"><label for="confirmSubject">Onderwerp</label><input id="confirmSubject"></div>
         <div class="field"><label for="confirmMessage">Bericht</label><textarea id="confirmMessage" rows="14"></textarea></div>
         <div class="row">
           <button class="btn btn--primary" id="confirmSend" style="padding:10px 18px">Verzenden</button>
+          <button class="btn btn--ghost-blue" id="confirmPreview" type="button" style="padding:10px 18px">👁 Voorbeeld</button>
           <button class="btn btn--ghost-blue" id="confirmCancel" style="padding:10px 18px">Annuleren</button>
           <span id="confirmResult" class="muted"></span>
         </div>
@@ -154,22 +176,27 @@
         <select id="wType"><option value="regular">Eendje</option><option value="business">Bedrijfseendje</option></select>
         <input id="wNum" type="number" min="1" placeholder="startnummer" style="width:130px">
         <button class="btn btn--primary" id="winBtn" style="padding:10px 18px">Winnaar vastleggen</button>
-        <button class="btn btn--ghost-blue" id="winReset" style="padding:10px 18px">Reset winnaars</button>
       </div>
       <div id="winResult" style="margin-top:12px"></div>
-      <div class="scroll" style="margin-top:12px"><table id="drawsTable"><thead><tr><th>#</th><th>Prijs</th><th>Startnummer</th><th>Winnaar</th><th>E-mail</th></tr></thead><tbody></tbody></table></div>
+      <div class="scroll" style="margin-top:12px"><table id="drawsTable"><thead><tr><th>#</th><th>Prijs</th><th>Startnummer</th><th>Winnaar</th><th>E-mail</th><th></th></tr></thead><tbody></tbody></table></div>
+      <div class="danger-zone">
+        <p class="form__note" style="margin:0 0 8px">Een verkeerde winnaar? Verwijder 'm per rij met 🗑. Alles opnieuw beginnen kan hieronder — dat wist <strong>alle</strong> vastgelegde winnaars.</p>
+        <button class="btn btn--danger" id="winReset" style="padding:8px 16px">Alle winnaars wissen</button>
+      </div>
     </div>
     </section>
 
     <section class="tabpane" data-pane="verkoop">
     <div class="panel admin-only">
       <h3>⚙️ Instellingen</h3>
-      <div class="row">
+      <div class="row" style="gap:18px;align-items:flex-end">
         <label class="row" style="gap:6px"><input type="checkbox" id="salesOpen" style="width:auto"> online verkoop open</label>
-        <span class="muted">|</span>
-        <label>Max. reguliere eendjes <input id="maxReg" type="number" style="width:110px"></label>
-        <button class="btn btn--ghost-blue" id="saveSettings" style="padding:8px 16px">Opslaan</button>
+        <label>Max. reguliere eendjes<br><input id="maxReg" type="number" min="0" style="width:120px"></label>
+        <label>Prijs eendje (€)<br><input id="priceReg" type="number" min="0" step="0.5" style="width:110px"></label>
+        <label>Prijs bedrijfseendje (€)<br><input id="priceBus" type="number" min="0" step="1" style="width:130px"></label>
+        <button class="btn btn--primary" id="saveSettings" style="padding:8px 16px">Opslaan</button>
       </div>
+      <p class="form__note">Zet je de max. onder het al verkochte aantal, dan waarschuwt het systeem. Prijswijzigingen gelden alleen voor nieuwe bestellingen.</p>
     </div>
 
     <div class="panel admin-only">
@@ -205,6 +232,14 @@
     <section class="tabpane active" data-pane="bestellingen">
     <div class="panel">
       <h3>Bestellingen</h3>
+      <div class="filterbar">
+        <input type="search" id="orderSearch" placeholder="Zoek op naam, e-mail, plaats of startnummer…" aria-label="Zoek bestelling">
+        <button class="chip on" data-ostatus="" type="button">Alle</button>
+        <button class="chip" data-ostatus="paid" type="button">Betaald</button>
+        <button class="chip" data-ostatus="pending" type="button">In behandeling</button>
+        <button class="chip" data-ostatus="refunded" type="button">Terugbetaald</button>
+        <span class="muted" id="orderCount" style="margin-left:auto"></span>
+      </div>
       <div class="scroll"><table id="ordersTable"><thead><tr><th>Datum</th><th>Naam</th><th>E-mail</th><th>Type</th><th>Aantal</th><th>Bedrag</th><th>Status</th><th>Plaats</th><th class="admin-col"></th></tr></thead><tbody></tbody></table></div>
     </div>
     </section>
@@ -217,20 +252,20 @@
         </div>
         <input type="hidden" id="pzId">
         <div class="row">
-          <input id="pzTitle" placeholder="Prijs (bv. Ballonvaart voor 2)" style="flex:2;min-width:200px">
-          <input id="pzValue" placeholder="Waarde (bv. t.w.v. € 250)" style="flex:1;min-width:140px">
+          <label style="flex:2;min-width:200px">Prijs *<input id="pzTitle" placeholder="bv. Ballonvaart voor 2" style="width:100%"></label>
+          <label style="flex:1;min-width:140px">Waarde<input id="pzValue" placeholder="bv. t.w.v. € 250" style="width:100%"></label>
         </div>
         <div class="field" style="margin-top:12px">
           <label for="pzDescription">Omschrijving <span class="muted">(zoals op de website — komt in een apart kader in de bevestigingsmail)</span></label>
           <textarea id="pzDescription" rows="2" placeholder="Korte wervende omschrijving van de prijs."></textarea>
         </div>
         <div class="row" style="margin-top:8px">
-          <input id="pzDonor" placeholder="Inbrenger (naam)" style="flex:1;min-width:160px">
-          <input id="pzCompany" placeholder="Bedrijf / organisatie (optioneel)" style="flex:1;min-width:160px">
+          <label style="flex:1;min-width:160px">Inbrenger (naam) *<input id="pzDonor" placeholder="naam van de inbrenger" style="width:100%"></label>
+          <label style="flex:1;min-width:160px">Bedrijf / organisatie<input id="pzCompany" placeholder="optioneel" style="width:100%"></label>
         </div>
         <div class="row" style="margin-top:8px">
-          <input id="pzEmail" type="email" placeholder="E-mail inbrenger" style="flex:1;min-width:160px">
-          <input id="pzPhone" placeholder="Telefoon (optioneel)" style="flex:1;min-width:140px">
+          <label style="flex:1;min-width:160px">E-mail inbrenger<input id="pzEmail" type="email" placeholder="voor de bevestigingsmail" style="width:100%"></label>
+          <label style="flex:1;min-width:140px">Telefoon<input id="pzPhone" placeholder="optioneel" style="width:100%"></label>
         </div>
         <div class="field" style="margin-top:12px">
           <label for="pzConditions">Voorwaarden waaronder ingebracht</label>
@@ -262,6 +297,27 @@
   function euro(c){ return '€'+(c/100).toLocaleString('nl-NL',{minimumFractionDigits:2,maximumFractionDigits:2}); }
   function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
   function status(msg, ok){ loginStatus.className='form-status show '+(ok?'ok':'err'); loginStatus.textContent=msg; }
+  var lastStats=null;
+  // Korte toast-melding (consistente feedback i.p.v. losse alert()/inline)
+  var toastEl=null, toastT=null;
+  function toast(msg, ok){
+    if(!toastEl){ toastEl=document.createElement('div'); toastEl.id='toast'; document.body.appendChild(toastEl); }
+    toastEl.textContent=msg; toastEl.className='toast show '+(ok===false?'err':'ok');
+    clearTimeout(toastT); toastT=setTimeout(function(){ toastEl.className='toast'; }, 3200);
+  }
+  // Knop tijdelijk uitschakelen tijdens een async-actie (dubbelklik-preventie)
+  function busy(btn, on, label){ if(!btn) return; if(on){ btn.dataset.lbl=btn.textContent; btn.disabled=true; if(label) btn.textContent=label; } else { btn.disabled=false; if(btn.dataset.lbl!=null){ btn.textContent=btn.dataset.lbl; delete btn.dataset.lbl; } } }
+  // Nederlandse teksten voor backend-foutcodes
+  function errText(code){ return ({
+    email_ongeldig:'E-mailadres ongeldig.', inbrenger_verplicht:'Vul de naam van de inbrenger in.',
+    prijs_verplicht:'Vul de prijs in.', accountmanager_onbekend:'Gekoppelde accountmanager niet gevonden.',
+    niet_gevonden:'Niet gevonden.', bestaat_al:'Dit e-mailadres bestaat al.',
+    laatste_admin:'Er moet minstens één admin blijven.', geen_inbrenger_email:'Deze inbrenger heeft geen e-mailadres.',
+    mail_niet_geconfigureerd:'Mailservice niet geconfigureerd (RESEND_API_KEY ontbreekt).',
+    startnummer_niet_gevonden:'Geen verkocht eendje met dat startnummer.', niet_betaald:'Deze bestelling is niet als betaald gemarkeerd.',
+    invoer_ongeldig:'Controleer de ingevoerde gegevens.', waarde_ongeldig:'Ongeldige waarde.',
+    te_veel_verzoeken:'Even wachten — te veel verzoeken.'
+  })[code] || (code||'Er ging iets mis.'); }
 
   // ----- login / sessie -----
   document.getElementById('loginBtn').onclick=function(){
@@ -280,34 +336,44 @@
     postJSON('request-reset',{email:email}).then(function(){ status('Als dit account bestaat, is er een reset-link gemaild.',true); });
   };
 
+  var myLoginEmail='', myName='', myPhone='';
   function start(email, role){
     isAdmin = role==='admin';
     canPrizes = role==='admin' || role==='accountmanager';
+    myLoginEmail=email;
     document.body.classList.toggle('is-admin', isAdmin);
     document.body.classList.toggle('can-prizes', canPrizes);
     login.style.display='none'; app.style.display='block';
     document.getElementById('logout').style.display='';
     var roleLabel = role==='admin'?'admin':(role==='accountmanager'?'accountmanager':'read-only');
     var who=document.getElementById('whoami'); who.style.display=''; who.textContent='Ingelogd als '+email+' · '+roleLabel;
+    // Eigen naam/telefoon voor de mail-ondertekening
+    api('me').then(function(r){return r.json();}).then(function(m){ myName=m.name||''; myPhone=m.phone||''; }).catch(function(){});
     loadStats(); loadOrders(); loadDraws(); loadPrizes(); loadAnalytics(); if(canPrizes) loadManagers(); if(isAdmin) loadUsers();
     refreshScrollHints();
   }
 
   // ----- data laden -----
   function loadStats(){
-    api('stats').then(function(r){return r.json();}).then(function(s){
+    return api('stats').then(function(r){return r.json();}).then(function(s){
+      lastStats=s;
+      var pct = s.goal_net_cents ? Math.round(100*s.revenue_cents/s.goal_net_cents) : null;
+      var salesBadge = s.sales_open ? '<span style="color:#13754f">● open</span>' : '<span style="color:#b3261e">● gesloten</span>';
       document.getElementById('kpis').innerHTML=[
+        ['Verkoop', salesBadge],
         ['Eendjes verkocht', s.regular_sold+' / '+s.max_regular],
         ['Bedrijfseendjes', s.business_sold],
-        ['Opbrengst', euro(s.revenue_cents)],
+        ['Opbrengst', euro(s.revenue_cents)+(pct!=null?' <span class="muted" style="font-size:.8rem;font-weight:400">('+pct+'% van doel)</span>':'')],
         ['Betaalde bestellingen', s.paid_orders],
         ['In behandeling', s.pending_orders],
-        ['Nieuwsbrief-aanmeldingen', s.newsletter_count],
-        ['Prijzen ingebracht', s.prizes]
+        ['Prijzen te bevestigen', (s.prizes_unconfirmed||0)+' / '+s.prizes],
+        ['Nieuwsbrief', s.newsletter_count]
       ].map(function(k){return '<div class="kpi"><b>'+k[1]+'</b><span>'+k[0]+'</span></div>';}).join('');
       var so=document.getElementById('salesOpen'); if(so) so.checked=!!s.sales_open;
       var mr=document.getElementById('maxReg'); if(mr) mr.value=s.max_regular;
-    });
+      var pr=document.getElementById('priceReg'); if(pr) pr.value=(s.price_regular_cents/100);
+      var pb=document.getElementById('priceBus'); if(pb) pb.value=(s.price_business_cents/100);
+    }).catch(function(){ toast('Kon statistieken niet laden.', false); });
   }
   function loadAnalytics(){
     api('analytics').then(function(r){return r.json();}).then(function(d){
@@ -326,22 +392,66 @@
       document.querySelector('#anaRefs tbody').innerHTML=(d.by_ref||[]).map(function(x){return '<tr><td>'+esc(x.ref)+'</td><td style="text-align:right">'+x.n+'</td></tr>';}).join('')||'<tr><td colspan="2" class="muted">Nog geen externe bronnen</td></tr>';
     });
   }
+  var ordersCache=[], orderStatusFilter='', orderQuery='';
   function loadOrders(){
-    api('orders').then(function(r){return r.json();}).then(function(d){
-      var tb=document.querySelector('#ordersTable tbody');
-      tb.innerHTML=(d.orders||[]).map(function(o){
-        var cls=o.status==='paid'?'paid':(o.status==='pending'?'pending':'other');
-        var act=isAdmin?'<td class="admin-col"><button class="btn btn--ghost-blue mini" data-delorder="'+esc(o.id)+'">🗑</button></td>':'<td class="admin-col"></td>';
-        return '<tr><td>'+esc((o.created_at||'').slice(0,16).replace('T',' '))+'</td><td>'+esc(o.name)+'</td><td>'+esc(o.email)+'</td><td>'+esc(o.type)+'</td><td>'+o.quantity+'</td><td>'+euro(o.amount_cents)+'</td><td><span class="tag '+cls+'">'+esc(o.status)+'</span></td><td>'+esc(o.city)+'</td>'+act+'</tr>';
-      }).join('');
-    });
+    return api('orders').then(function(r){return r.json();}).then(function(d){
+      ordersCache=d.orders||[]; renderOrders();
+    }).catch(function(){ toast('Kon bestellingen niet laden.',false); });
   }
-  function loadDraws(){
-    api('draws').then(function(r){return r.json();}).then(function(d){
-      document.querySelector('#drawsTable tbody').innerHTML=(d.draws||[]).map(function(w){
-        return '<tr><td>'+w.id+'</td><td>'+esc(w.prize)+'</td><td>'+esc(w.duck_type)+' #'+w.duck_number+'</td><td>'+esc(w.winner_name)+'</td><td>'+esc(w.winner_email)+'</td></tr>';
-      }).join('');
+  function statusLabel(s){ return {paid:'betaald',pending:'in behandeling',refunded:'terugbetaald',expired:'verlopen',canceled:'geannuleerd'}[s]||s; }
+  function renderOrders(){
+    var tb=document.querySelector('#ordersTable tbody');
+    var q=orderQuery.trim().toLowerCase();
+    var list=ordersCache.filter(function(o){
+      if(orderStatusFilter && o.status!==orderStatusFilter) return false;
+      if(!q) return true;
+      return ((o.name||'')+' '+(o.email||'')+' '+(o.city||'')+' '+(o.numbers||'')).toLowerCase().indexOf(q)>=0;
     });
+    document.getElementById('orderCount').textContent=list.length+' van '+ordersCache.length;
+    if(!list.length){ tb.innerHTML='<tr><td colspan="9" class="muted" style="text-align:center;padding:22px">'+(ordersCache.length?'Geen bestellingen die aan de filter voldoen.':'Nog geen bestellingen.')+'</td></tr>'; return; }
+    tb.innerHTML=list.map(function(o){
+      var cls=o.status==='paid'?'paid':(o.status==='pending'?'pending':'other');
+      var act=isAdmin?'<td class="admin-col"><button class="btn btn--ghost-blue mini" data-delorder="'+esc(o.id)+'" aria-label="Bestelling verwijderen" title="Verwijderen">🗑</button></td>':'<td class="admin-col"></td>';
+      return '<tr class="clickable" data-oid="'+esc(o.id)+'"><td>'+esc((o.created_at||'').slice(0,16).replace('T',' '))+'</td><td>'+esc(o.name)+'</td><td>'+esc(o.email)+'</td><td>'+esc(o.type)+'</td><td>'+o.quantity+'</td><td>'+euro(o.amount_cents)+'</td><td><span class="tag '+cls+'">'+esc(statusLabel(o.status))+'</span></td><td>'+esc(o.city)+'</td>'+act+'</tr>';
+    }).join('');
+  }
+  // Detailregel onder een bestelling: startnummers, telefoon + acties (markeer betaald / bevestiging opnieuw)
+  function toggleOrderDetail(tr, o){
+    var next=tr.nextElementSibling;
+    if(next && next.classList.contains('detailrow')){ next.remove(); return; }
+    document.querySelectorAll('.detailrow').forEach(function(x){x.remove();});
+    var nums=(o.numbers||'').split(',').filter(Boolean).map(function(n){return '#'+n;}).join(' ') || '<span class="muted">nog geen nummers</span>';
+    var actions='';
+    if(isAdmin){
+      if(o.status!=='paid') actions+='<button class="btn btn--ghost-blue mini" data-markpaid="'+esc(o.id)+'">✓ Markeer als betaald</button> ';
+      if(o.status==='paid') actions+='<button class="btn btn--ghost-blue mini" data-resend="'+esc(o.id)+'">✉️ Bevestiging opnieuw</button> ';
+    }
+    var det=document.createElement('tr'); det.className='detailrow';
+    det.innerHTML='<td colspan="9"><strong>Startnummers:</strong> '+nums+' &nbsp;·&nbsp; <strong>Telefoon:</strong> '+(esc(o.phone)||'<span class="muted">—</span>')+' &nbsp;·&nbsp; <strong>Status:</strong> '+esc(statusLabel(o.status))+'<div style="margin-top:8px">'+actions+'</div></td>';
+    tr.parentNode.insertBefore(det, tr.nextSibling);
+  }
+  function doMarkPaid(id){ if(!confirm('Deze bestelling als BETAALD markeren? Er worden startnummers toegekend en een bevestigingsmail gestuurd.')) return; postJSON('mark-paid',{id:id}).then(function(r){return r.json();}).then(function(d){ if(d.ok){ toast('Gemarkeerd als betaald ✓',true); loadOrders(); loadStats(); } else toast(errText(d.error),false); }).catch(function(){toast('Mislukt.',false);}); }
+  function doResend(id){ postJSON('resend-confirmation',{id:id}).then(function(r){return r.json();}).then(function(d){ if(d.ok) toast('Bevestigingsmail opnieuw verstuurd ✓',true); else toast(errText(d.error),false); }).catch(function(){toast('Mislukt.',false);}); }
+  // Zoeken + statusfilter + rij-detail (delegatie op de tbody blijft na re-render bestaan)
+  document.getElementById('orderSearch').addEventListener('input',function(){ orderQuery=this.value; renderOrders(); });
+  document.querySelectorAll('.chip[data-ostatus]').forEach(function(c){ c.addEventListener('click',function(){ orderStatusFilter=c.dataset.ostatus; document.querySelectorAll('.chip[data-ostatus]').forEach(function(x){x.classList.toggle('on',x===c);}); renderOrders(); }); });
+  document.querySelector('#ordersTable tbody').addEventListener('click',function(e){
+    var t=e.target;
+    var mp=t.closest('[data-markpaid]'); if(mp){ doMarkPaid(mp.dataset.markpaid); return; }
+    var rs=t.closest('[data-resend]'); if(rs){ doResend(rs.dataset.resend); return; }
+    if(t.closest('[data-delorder]')) return; // verwijderen loopt via de body-handler
+    var tr=t.closest('tr.clickable'); if(!tr) return;
+    var o=ordersCache.filter(function(x){return x.id===tr.dataset.oid;})[0]; if(o) toggleOrderDetail(tr,o);
+  });
+  var drawsCount=0;
+  function loadDraws(){
+    return api('draws').then(function(r){return r.json();}).then(function(d){
+      drawsCount=(d.draws||[]).length;
+      document.querySelector('#drawsTable tbody').innerHTML=(d.draws||[]).map(function(w){
+        var del=isAdmin?'<td><button class="btn btn--ghost-blue mini" data-drawdel="'+w.id+'" aria-label="Deze winnaar verwijderen" title="Verwijderen">🗑</button></td>':'<td></td>';
+        return '<tr><td>'+w.id+'</td><td>'+esc(w.prize)+'</td><td>'+esc(w.duck_type)+' #'+w.duck_number+'</td><td>'+esc(w.winner_name)+'</td><td>'+esc(w.winner_email)+'</td>'+del+'</tr>';
+      }).join('')||'<tr><td colspan="6" class="muted" style="text-align:center;padding:16px">Nog geen winnaars vastgelegd.</td></tr>';
+    }).catch(function(){ toast('Kon winnaars niet laden.',false); });
   }
   var myEmail='';
   function loadUsers(){
@@ -357,7 +467,7 @@
         var act='<button class="btn btn--ghost-blue mini" data-ureset="'+u.id+'">Reset-link</button>'+(mine?'':' <button class="btn btn--ghost-blue mini" data-udel="'+u.id+'">🗑</button>');
         return '<tr><td>'+esc(u.email)+(mine?' <span class="muted">(jij)</span>':'')+'</td><td>'+nameInp+'</td><td>'+phoneInp+'</td><td>'+roleSel+'</td><td>'+st+'</td><td class="row" style="gap:6px">'+act+'</td></tr>';
       }).join('');
-    });
+    }).catch(function(){ toast('Kon gebruikers niet laden.',false); });
   }
 
   // ----- prijzen & inbrengers -----
@@ -371,25 +481,42 @@
         return '<option value="'+esc(m.id)+'">'+esc((m.name||m.email)+(m.role==='admin'?' (admin)':''))+'</option>';
       }).join('');
       sel.value=cur;
-    });
+    }).catch(function(){});
   }
+  var prizeQuery='', prizeFilter='';
   function loadPrizes(){
-    api('prizes').then(function(r){return r.json();}).then(function(d){
-      prizesCache=d.prizes||[];
-      document.querySelector('#prizesTable tbody').innerHTML=prizesCache.map(function(p){
+    return api('prizes').then(function(r){return r.json();}).then(function(d){
+      prizesCache=d.prizes||[]; renderPrizes();
+    }).catch(function(){ toast('Kon prijzen niet laden.',false); });
+  }
+  function renderPrizes(){
+      var q=prizeQuery.trim().toLowerCase();
+      var list=prizesCache.filter(function(p){
+        if(prizeFilter==='unconfirmed' && p.confirmation_sent_at) return false;
+        if(prizeFilter==='mine' && (p.am_email||'')!==myLoginEmail) return false;
+        if(!q) return true;
+        return ((p.title||'')+' '+(p.donor_name||'')+' '+(p.donor_company||'')+' '+(p.am_name||'')).toLowerCase().indexOf(q)>=0;
+      });
+      var pc=document.getElementById('prizeCount'); if(pc) pc.textContent=list.length+' van '+prizesCache.length;
+      document.querySelector('#prizesTable tbody').innerHTML=list.map(function(p){
         var donor=esc(p.donor_name)+(p.donor_company?' <span class="muted">('+esc(p.donor_company)+')</span>':'')+(p.donor_email?'<br><span class="muted">'+esc(p.donor_email)+'</span>':'');
         var am=p.am_name?esc(p.am_name)+(p.am_phone?'<br><span class="muted">'+esc(p.am_phone)+'</span>':''):'<span class="muted">—</span>';
         var cond=p.conditions?esc(p.conditions):'<span class="muted">—</span>';
         var conf=p.confirmation_sent_at?'<span class="tag paid">verstuurd '+esc(p.confirmation_sent_at.slice(0,10))+'</span>':'<span class="tag pending">nog niet</span>';
         var act='<td class="admin-col"></td>';
         if(canPrizes){
-          var mailBtn=p.donor_email?'<button class="btn btn--ghost-blue mini" data-pzmail="'+esc(p.id)+'">✉️</button>':'<span class="muted" title="geen e-mail van inbrenger">—</span>';
-          act='<td class="admin-col"><div class="row" style="gap:6px;flex-wrap:nowrap">'+mailBtn+'<button class="btn btn--ghost-blue mini" data-pzedit="'+esc(p.id)+'">✏️</button><button class="btn btn--ghost-blue mini" data-pzdel="'+esc(p.id)+'">🗑</button></div></td>';
+          var mailBtn=p.donor_email?'<button class="btn btn--ghost-blue mini" data-pzmail="'+esc(p.id)+'" aria-label="Bevestigingsmail sturen" title="Bevestigingsmail">✉️</button>':'<span class="muted" title="geen e-mail van inbrenger">—</span>';
+          act='<td class="admin-col"><div class="row" style="gap:6px;flex-wrap:nowrap">'+mailBtn+'<button class="btn btn--ghost-blue mini" data-pzedit="'+esc(p.id)+'" aria-label="Prijs bewerken" title="Bewerken">✏️</button><button class="btn btn--ghost-blue mini" data-pzdel="'+esc(p.id)+'" aria-label="Prijs verwijderen" title="Verwijderen">🗑</button></div></td>';
         }
         return '<tr><td><strong>'+esc(p.title)+'</strong></td><td>'+esc(p.value||'')+'</td><td>'+donor+'</td><td>'+am+'</td><td style="max-width:260px">'+cond+'</td><td>'+conf+'</td>'+act+'</tr>';
       }).join('')||'<tr><td colspan="7" class="muted">Nog geen prijzen ingevoerd.</td></tr>';
-    });
   }
+  // Zoeken/filteren prijzen (client-side)
+  (function(){
+    var ps=document.getElementById('prizeSearch');
+    if(ps) ps.addEventListener('input',function(){ prizeQuery=this.value; renderPrizes(); });
+    document.querySelectorAll('.chip[data-pfilter]').forEach(function(c){ c.addEventListener('click',function(){ prizeFilter=c.dataset.pfilter; document.querySelectorAll('.chip[data-pfilter]').forEach(function(x){x.classList.toggle('on',x===c);}); renderPrizes(); }); });
+  })();
   var pzFields=['pzId','pzTitle','pzValue','pzDescription','pzDonor','pzCompany','pzEmail','pzPhone','pzConditions','pzManager'];
   var prizeDialog=document.getElementById('prizeDialog');
   function openPrizeDialog(){ document.getElementById('pzResult').textContent=''; if(prizeDialog.showModal) prizeDialog.showModal(); else prizeDialog.setAttribute('open',''); }
@@ -411,12 +538,14 @@
   prizeDialog.addEventListener('close', resetPrizeForm);
   document.getElementById('pzSave').onclick=function(){
     var p={id:document.getElementById('pzId').value||undefined,title:document.getElementById('pzTitle').value.trim(),value:document.getElementById('pzValue').value.trim(),description:document.getElementById('pzDescription').value.trim(),donor_name:document.getElementById('pzDonor').value.trim(),donor_company:document.getElementById('pzCompany').value.trim(),donor_email:document.getElementById('pzEmail').value.trim(),donor_phone:document.getElementById('pzPhone').value.trim(),conditions:document.getElementById('pzConditions').value.trim(),account_manager_id:document.getElementById('pzManager').value};
-    if(!p.title||!p.donor_name){ alert('Prijs en inbrenger (naam) zijn verplicht.'); return; }
-    var res=document.getElementById('pzResult');
+    if(!p.title||!p.donor_name){ document.getElementById('pzResult').textContent='Prijs en inbrenger (naam) zijn verplicht.'; return; }
+    var res=document.getElementById('pzResult'); var btn=document.getElementById('pzSave'); busy(btn,true,'Opslaan…');
     postJSON('prize',p).then(function(r){return r.json();}).then(function(d){
-      if(d.ok){ resetPrizeForm(); closePrizeDialog(); loadPrizes(); loadStats(); }
-      else { res.textContent=d.error==='email_ongeldig'?'E-mailadres ongeldig.':(d.error||'fout'); }
-    });
+      if(d.ok){ resetPrizeForm(); closePrizeDialog(); loadPrizes(); loadStats();
+        var hint = !p.donor_email ? ' (geen e-mail van inbrenger — bevestiging kan pas na aanvullen)' : (!p.account_manager_id ? ' (geen accountmanager gekoppeld — mail wordt generiek ondertekend)' : '');
+        toast('Prijs opgeslagen ✓'+hint, true); }
+      else { res.textContent=errText(d.error); }
+    }).catch(function(){ toast('Opslaan mislukt.',false); }).then(function(){ busy(btn,false); });
   };
   document.getElementById('pzCancel').onclick=function(){ resetPrizeForm(); closePrizeDialog(); };
 
@@ -429,9 +558,12 @@
     l.push('{{prijs}}','');
     l.push('Klopt er iets niet of wil je nog iets aanpassen? Stuur dan gerust een reply op deze mail.','');
     l.push('Nogmaals hartelijk dank voor je bijdrage — dankzij inbrengers als jij maken we er een prachtige badeendjesrace van, met de opbrengst voor de goede doelen van Rotary Nijmegen Stad en Land.','');
-    if(p.am_name){
-      l.push('Met vriendelijke groet,', p.am_name, 'Accountmanager · Rotary Nijmegen Stad en Land');
-      if((p.am_phone||'').trim()) l.push('Tel. '+p.am_phone.trim());
+    // Onderteken met de ingelogde gebruiker (de daadwerkelijke afzender); val terug op
+    // de gekoppelde accountmanager en anders generiek.
+    var sigName = myName || p.am_name, sigPhone = myPhone || p.am_phone;
+    if(sigName){
+      l.push('Met vriendelijke groet,', sigName, 'Accountmanager · Rotary Nijmegen Stad en Land');
+      if((sigPhone||'').trim()) l.push('Tel. '+String(sigPhone).trim());
     } else {
       l.push('Met vriendelijke groet,','Rotary Nijmegen Stad en Land');
     }
@@ -440,11 +572,26 @@
   function openConfirm(p){
     confirmPrizeId=p.id;
     document.getElementById('confirmTo').textContent=p.donor_name+(p.donor_email?' <'+p.donor_email+'>':'');
+    // Waarschuw als deze prijs aan een ándere accountmanager gekoppeld is dan de ingelogde
+    var warn=document.getElementById('confirmWarn'); warn.innerHTML='';
+    if(p.am_email && myLoginEmail && p.am_email!==myLoginEmail){
+      warn.innerHTML='<div class="card" style="background:#fff5dd;border:0;color:#7a5200;margin:6px 0">⚠ Deze prijs is gekoppeld aan <strong>'+esc(p.am_name||p.am_email)+'</strong>, maar jij ondertekent als <strong>'+esc(myName||myLoginEmail)+'</strong>. Pas de ondertekening zo nodig aan.</div>';
+    }
     document.getElementById('confirmSubject').value='Bevestiging van je prijs — Nijmegen Duckstad badeendjesrace';
     document.getElementById('confirmMessage').value=defaultPrizeMessage(p);
     document.getElementById('confirmResult').textContent='';
     var box=document.getElementById('confirmBox'); box.style.display='block'; box.scrollIntoView({behavior:'smooth',block:'center'});
   }
+  // Voorbeeld van de mail (bij benadering) in een nieuw venster
+  document.getElementById('confirmPreview').onclick=function(){
+    var p=prizesCache.filter(function(x){return x.id===confirmPrizeId;})[0]; if(!p) return;
+    var msg=document.getElementById('confirmMessage').value;
+    var box='<table role="presentation" width="100%"><tr><td style="background:#fff8e9;border:2px dashed #f7a81b;border-radius:14px;padding:16px 20px"><div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#9a7b22;font-weight:bold">Ingebrachte prijs</div><div style="font-family:Georgia,serif;font-size:20px;font-weight:bold;color:#17458f">🎁 '+esc(p.title)+(p.value?' <span style="font-size:13px;color:#9a7b22">'+esc(p.value)+'</span>':'')+'</div>'+(p.description?'<div style="font-size:14px;color:#3a3320;margin-top:8px">'+esc(p.description).replace(/\n/g,'<br>')+'</div>':'')+(p.conditions?'<div style="border-top:1px solid #f1d79a;margin-top:12px;padding-top:10px;font-size:14px;color:#3a3320">'+esc(p.conditions).replace(/\n/g,'<br>')+'</div>':'')+'</td></tr></table>';
+    var bodyHtml=msg.split(/\{\{\s*prijs\s*\}\}/i).map(function(part){return part.trim()?'<p>'+esc(part).replace(/\n{2,}/g,'</p><p>').replace(/\n/g,'<br>')+'</p>':'';}).join(box);
+    var w=window.open('','_blank');
+    w.document.write('<title>Voorbeeld bevestigingsmail</title><div style="max-width:600px;margin:20px auto;font-family:Arial,sans-serif;color:#1d2433;line-height:1.6"><div style="background:linear-gradient(135deg,#17458f,#0e2d63);padding:24px;text-align:center;border-radius:14px 14px 0 0"><div style="color:#ffd60a;font-size:12px;letter-spacing:.18em;text-transform:uppercase;font-weight:bold">Rotary Badeendjesrace</div><div style="color:#fff;font-size:26px;font-weight:bold">Nijmegen Duckstad 🦆</div></div><div style="padding:24px;border:1px solid #e6ecf5;border-top:0;border-radius:0 0 14px 14px">'+bodyHtml+'<p style="color:#8aa;font-size:12px;margin-top:20px">— voorbeeld bij benadering —</p></div></div>');
+    w.document.close();
+  };
   document.getElementById('confirmCancel').onclick=function(){ document.getElementById('confirmBox').style.display='none'; confirmPrizeId=''; };
   document.getElementById('confirmSend').onclick=function(){
     if(!confirmPrizeId) return;
@@ -453,8 +600,8 @@
     var btn=this; btn.disabled=true; res.textContent='Versturen…';
     postJSON('prize-confirm',{id:confirmPrizeId,subject:subject,message:message}).then(function(r){return r.json();}).then(function(d){
       btn.disabled=false;
-      if(d.ok){ res.textContent=''; document.getElementById('confirmBox').style.display='none'; confirmPrizeId=''; loadPrizes(); alert('Bevestigingsmail verstuurd ✓'); }
-      else { res.textContent=({geen_inbrenger_email:'Deze inbrenger heeft geen e-mailadres.',mail_niet_geconfigureerd:'Mailservice niet geconfigureerd (RESEND_API_KEY ontbreekt).'}[d.error])||(d.error||'verzenden mislukt'); }
+      if(d.ok){ res.textContent=''; document.getElementById('confirmBox').style.display='none'; confirmPrizeId=''; loadPrizes(); loadStats(); toast('Bevestigingsmail verstuurd ✓',true); }
+      else { res.textContent=errText(d.error); }
     }).catch(function(){ btn.disabled=false; res.textContent='Geen verbinding.'; });
   };
 
@@ -478,69 +625,90 @@
 
   // ----- winnaar invoeren (admin) -----
   document.getElementById('winBtn').onclick=function(){
+    var btn=this;
     var prize=document.getElementById('prize').value.trim();
     var type=document.getElementById('wType').value;
     var num=parseInt(document.getElementById('wNum').value,10);
-    if(!prize){ alert('Vul een prijs in.'); return; }
-    if(!num){ alert('Vul een startnummer in.'); return; }
+    if(!prize){ toast('Vul een prijs in.',false); return; }
+    if(!num){ toast('Vul een startnummer in.',false); return; }
+    busy(btn,true,'Vastleggen…');
     postJSON('winner',{prize:prize,duck_type:type,duck_number:num}).then(function(r){return r.json();}).then(function(d){
       var el=document.getElementById('winResult');
-      if(d.winner){ el.innerHTML='<div class="card" style="background:#fff5dd;border:0">🏆 <strong>'+esc(d.winner.prize)+'</strong> → startnummer '+esc(d.winner.type)+' <strong>#'+d.winner.number+'</strong> — '+esc(d.winner.name)+' ('+esc(d.winner.email)+')</div>'; document.getElementById('prize').value=''; document.getElementById('wNum').value=''; loadDraws(); }
-      else { el.innerHTML='<span class="muted">'+esc(d.error==='startnummer_niet_gevonden'?'Geen verkocht eendje met dat startnummer.':(d.error||'fout'))+'</span>'; }
-    });
+      if(d.winner){
+        var warn=d.warning?'<div class="card" style="background:#fdecec;border:0;color:#b3261e;margin-bottom:8px">⚠ '+esc(d.warning)+'</div>':'';
+        el.innerHTML=warn+'<div class="card" style="background:#fff5dd;border:0">🏆 <strong>'+esc(d.winner.prize)+'</strong> → startnummer '+esc(d.winner.type)+' <strong>#'+d.winner.number+'</strong> — '+esc(d.winner.name)+' ('+esc(d.winner.email)+')</div>';
+        document.getElementById('prize').value=''; document.getElementById('wNum').value=''; loadDraws();
+      } else { el.innerHTML='<span class="muted">'+esc(errText(d.error))+'</span>'; }
+    }).catch(function(){ toast('Vastleggen mislukt.',false); }).then(function(){ busy(btn,false); });
   };
-  document.getElementById('winReset').onclick=function(){ if(!confirm('Alle ingevoerde winnaars wissen?'))return; postJSON('draw-reset').then(function(){loadDraws();document.getElementById('winResult').innerHTML='';}); };
+  document.getElementById('winReset').onclick=function(){ if(!confirm('Alle '+drawsCount+' vastgelegde winnaars wissen? Dit kan niet ongedaan gemaakt worden.'))return; postJSON('draw-reset').then(function(){loadDraws();document.getElementById('winResult').innerHTML=''; toast('Alle winnaars gewist.',true);}); };
 
   // ----- instellingen (admin) -----
   document.getElementById('saveSettings').onclick=function(){
-    var open=document.getElementById('salesOpen').checked?'1':'0';
-    var max=document.getElementById('maxReg').value;
-    Promise.all([
-      postJSON('setting',{key:'sales_open',value:open}),
-      postJSON('setting',{key:'max_regular',value:max})
-    ]).then(function(){ loadStats(); alert('Opgeslagen.'); });
+    var btn=this;
+    var openChecked=document.getElementById('salesOpen').checked;
+    var open=openChecked?'1':'0';
+    var max=parseInt(document.getElementById('maxReg').value,10);
+    var priceReg=Math.round(parseFloat(document.getElementById('priceReg').value)*100);
+    var priceBus=Math.round(parseFloat(document.getElementById('priceBus').value)*100);
+    // Bevestig het dichtzetten van de online verkoop (was open)
+    if(lastStats && lastStats.sales_open && !openChecked){ if(!confirm('De online verkoop wordt GESLOTEN — bezoekers kunnen dan geen eendjes meer kopen. Doorgaan?')){ document.getElementById('salesOpen').checked=true; return; } }
+    // Waarschuw als de max onder het al verkochte aantal komt
+    if(lastStats && Number.isFinite(max) && max < lastStats.regular_sold){ if(!confirm('De nieuwe max ('+max+') ligt onder het al verkochte aantal ('+lastStats.regular_sold+'). Toch opslaan?')) return; }
+    var calls=[ postJSON('setting',{key:'sales_open',value:open}) ];
+    if(Number.isFinite(max)) calls.push(postJSON('setting',{key:'max_regular',value:String(max)}));
+    if(Number.isFinite(priceReg)) calls.push(postJSON('setting',{key:'price_regular_cents',value:String(priceReg)}));
+    if(Number.isFinite(priceBus)) calls.push(postJSON('setting',{key:'price_business_cents',value:String(priceBus)}));
+    busy(btn,true,'Opslaan…');
+    Promise.all(calls).then(function(){ return loadStats(); }).then(function(){ toast('Instellingen opgeslagen ✓',true); }).catch(function(){ toast('Opslaan mislukt.',false); }).then(function(){ busy(btn,false); });
   };
 
   // ----- handmatige verkoop (admin) -----
   document.getElementById('mAdd').onclick=function(){
+    var btn=this;
     var p={type:document.getElementById('mType').value,quantity:parseInt(document.getElementById('mQty').value,10),name:document.getElementById('mName').value,email:document.getElementById('mEmail').value,city:document.getElementById('mCity').value};
-    if(!p.name||!p.quantity){alert('Naam en aantal verplicht.');return;}
+    if(!p.name||!p.quantity){ toast('Naam en aantal zijn verplicht.',false); return; }
+    busy(btn,true,'Toevoegen…');
     postJSON('manual-order',p).then(function(r){return r.json();}).then(function(d){
-      if(d.ok){ document.getElementById('mResult').innerHTML='Toegevoegd. Nummers: <strong>'+d.numbers.map(function(n){return '#'+n;}).join(', ')+'</strong>'; document.getElementById('mName').value='';document.getElementById('mEmail').value='';document.getElementById('mCity').value='';document.getElementById('mQty').value='1'; loadStats(); loadOrders(); }
-      else { document.getElementById('mResult').textContent=d.error||'fout'; }
-    });
+      if(d.ok){ document.getElementById('mResult').innerHTML='Toegevoegd. Nummers: <strong>'+d.numbers.map(function(n){return '#'+n;}).join(', ')+'</strong>'; document.getElementById('mName').value='';document.getElementById('mEmail').value='';document.getElementById('mCity').value='';document.getElementById('mQty').value='1'; loadStats(); loadOrders(); toast('Handmatige verkoop toegevoegd ✓',true); }
+      else { document.getElementById('mResult').textContent=errText(d.error); toast(errText(d.error),false); }
+    }).catch(function(){ toast('Toevoegen mislukt.',false); }).then(function(){ busy(btn,false); });
   };
 
   // ----- gebruikersbeheer (admin) -----
   document.getElementById('uAdd').onclick=function(){
     var email=document.getElementById('uEmail').value.trim(), role=document.getElementById('uRole').value;
     var name=document.getElementById('uName').value.trim(), phone=document.getElementById('uPhone').value.trim();
-    if(!email){ alert('Vul een e-mailadres in.'); return; }
+    if(!email){ toast('Vul een e-mailadres in.',false); return; }
+    var btn=this; busy(btn,true,'Toevoegen…');
     postJSON('users',{email:email,role:role,name:name,phone:phone}).then(function(r){return r.json();}).then(function(d){
       var el=document.getElementById('uResult');
-      if(d.ok){ el.innerHTML='<span class="muted">Toegevoegd'+(d.mailed?' — er is een mail gestuurd om het wachtwoord in te stellen.':' (let op: geen mail verstuurd).')+'</span>'; document.getElementById('uEmail').value='';document.getElementById('uName').value='';document.getElementById('uPhone').value=''; loadUsers(); if(canPrizes) loadManagers(); }
-      else { el.textContent=d.error==='bestaat_al'?'Dit e-mailadres bestaat al.':(d.error||'fout'); }
-    });
+      if(d.ok){ el.innerHTML='<span class="muted">Toegevoegd'+(d.mailed?' — er is een mail gestuurd om het wachtwoord in te stellen.':' (let op: geen mail verstuurd).')+'</span>'; document.getElementById('uEmail').value='';document.getElementById('uName').value='';document.getElementById('uPhone').value=''; loadUsers(); if(canPrizes) loadManagers(); toast('Gebruiker toegevoegd ✓',true); }
+      else { el.textContent=errText(d.error); toast(errText(d.error),false); }
+    }).catch(function(){ toast('Toevoegen mislukt.',false); }).then(function(){ busy(btn,false); });
   };
   // event-delegatie voor gebruikers- en order-acties
   document.body.addEventListener('click',function(e){
-    var t=e.target;
-    if(t.dataset && t.dataset.delorder){ if(confirm('Bestelling verwijderen? De eendnummers komen weer vrij.')){ postJSON('delete-order',{id:t.dataset.delorder}).then(function(){ loadOrders(); loadStats(); }); } }
-    if(t.dataset && t.dataset.ureset){ postJSON('user-reset',{id:t.dataset.ureset}).then(function(r){return r.json();}).then(function(d){ alert(d.ok?'Reset-link gemaild.':(d.error||'fout')); }); }
-    if(t.dataset && t.dataset.udel){ if(confirm('Gebruiker verwijderen?')){ postJSON('user-delete',{id:t.dataset.udel}).then(function(r){return r.json();}).then(function(d){ if(!d.ok) alert(d.error==='laatste_admin'?'Kan de laatste admin niet verwijderen.':(d.error||'fout')); loadUsers(); }); } }
-    if(t.dataset && t.dataset.pzedit){ var pe=prizesCache.filter(function(x){return x.id===t.dataset.pzedit;})[0]; if(pe) fillPrizeForm(pe); }
-    if(t.dataset && t.dataset.pzdel){ if(confirm('Deze prijs verwijderen?')){ postJSON('prize-delete',{id:t.dataset.pzdel}).then(function(){ loadPrizes(); loadStats(); }); } }
-    if(t.dataset && t.dataset.pzmail){ var pm=prizesCache.filter(function(x){return x.id===t.dataset.pzmail;})[0]; if(pm) openConfirm(pm); }
+    var t=e.target.closest('[data-delorder],[data-drawdel],[data-ureset],[data-udel],[data-pzedit],[data-pzdel],[data-pzmail]'); if(!t) return;
+    if(t.dataset.delorder){ if(confirm('Bestelling verwijderen? De eendnummers komen weer vrij.')){ postJSON('delete-order',{id:t.dataset.delorder}).then(function(){ loadOrders(); loadStats(); toast('Bestelling verwijderd.',true); }); } }
+    if(t.dataset.drawdel){ if(confirm('Deze winnaar verwijderen?')){ postJSON('draw-delete',{id:t.dataset.drawdel}).then(function(){ loadDraws(); toast('Winnaar verwijderd.',true); }); } }
+    if(t.dataset.ureset){ postJSON('user-reset',{id:t.dataset.ureset}).then(function(r){return r.json();}).then(function(d){ toast(d.ok?'Reset-link gemaild ✓':errText(d.error), d.ok!==false); }); }
+    if(t.dataset.udel){ if(confirm('Gebruiker verwijderen?')){ postJSON('user-delete',{id:t.dataset.udel}).then(function(r){return r.json();}).then(function(d){ if(!d.ok) toast(errText(d.error),false); else toast('Gebruiker verwijderd.',true); loadUsers(); }); } }
+    if(t.dataset.pzedit){ var pe=prizesCache.filter(function(x){return x.id===t.dataset.pzedit;})[0]; if(pe) fillPrizeForm(pe); }
+    if(t.dataset.pzdel){ if(confirm('Deze prijs verwijderen?')){ postJSON('prize-delete',{id:t.dataset.pzdel}).then(function(){ loadPrizes(); loadStats(); toast('Prijs verwijderd.',true); }); } }
+    if(t.dataset.pzmail){ var pm=prizesCache.filter(function(x){return x.id===t.dataset.pzmail;})[0]; if(pm){ if(pm.confirmation_sent_at && !confirm('De bevestiging is al verstuurd op '+pm.confirmation_sent_at.slice(0,10)+'. Opnieuw sturen?')) return; openConfirm(pm); } }
   });
   document.body.addEventListener('change',function(e){
     var t=e.target; if(!t.classList) return;
     if(t.classList.contains('uroleSel')){
-      postJSON('user-role',{id:t.dataset.uid,role:t.value}).then(function(r){return r.json();}).then(function(d){ if(!d.ok){ alert(d.error==='laatste_admin'?'Er moet minstens één admin blijven.':(d.error||'fout')); loadUsers(); } else { if(canPrizes) loadManagers(); loadPrizes(); } });
+      var newRole=t.value, prev=t.dataset.prev||t.querySelector('option[selected]')&&t.querySelector('option[selected]').value;
+      if(!confirm('Rol wijzigen naar "'+newRole+'"? De gebruiker moet daarna opnieuw inloggen.')){ loadUsers(); return; }
+      postJSON('user-role',{id:t.dataset.uid,role:newRole}).then(function(r){return r.json();}).then(function(d){ if(!d.ok){ toast(errText(d.error),false); loadUsers(); } else { toast('Rol gewijzigd ✓',true); if(canPrizes) loadManagers(); loadPrizes(); } });
     }
     if(t.classList.contains('uname')||t.classList.contains('uphone')){
       var uid=t.dataset.uid;
       var nameInp=document.querySelector('.uname[data-uid="'+uid+'"]'), phoneInp=document.querySelector('.uphone[data-uid="'+uid+'"]');
-      postJSON('user-update',{id:uid,name:nameInp?nameInp.value.trim():'',phone:phoneInp?phoneInp.value.trim():''}).then(function(r){return r.json();}).then(function(d){ if(d.ok){ if(canPrizes) loadManagers(); loadPrizes(); } });
+      postJSON('user-update',{id:uid,name:nameInp?nameInp.value.trim():'',phone:phoneInp?phoneInp.value.trim():''}).then(function(r){return r.json();}).then(function(d){ if(d.ok){ toast('Opgeslagen ✓',true); if(canPrizes) loadManagers(); loadPrizes(); } });
     }
   });
 
@@ -548,7 +716,7 @@
   document.getElementById('tabs').addEventListener('click',function(e){
     var t=e.target.closest('.tab'); if(!t) return;
     var name=t.dataset.tab;
-    var tabs=document.querySelectorAll('.tab'); for(var i=0;i<tabs.length;i++) tabs[i].classList.toggle('active', tabs[i]===t);
+    var tabs=document.querySelectorAll('.tab'); for(var i=0;i<tabs.length;i++){ var on=tabs[i]===t; tabs[i].classList.toggle('active', on); tabs[i].setAttribute('aria-selected', on?'true':'false'); }
     var panes=document.querySelectorAll('.tabpane'); for(var j=0;j<panes.length;j++) panes[j].classList.toggle('active', panes[j].dataset.pane===name);
     refreshScrollHints();
   });
@@ -576,9 +744,15 @@
     el.addEventListener('scroll', update, {passive:true});
     try{ new MutationObserver(update).observe(el,{childList:true,subtree:true}); }catch(e){}
     var drag=false, sy=0, sst=0;
-    thumb.addEventListener('mousedown', function(e){ drag=true; sy=e.clientY; sst=el.scrollTop; document.body.style.userSelect='none'; e.preventDefault(); });
-    window.addEventListener('mousemove', function(e){ if(!drag) return; var sh=el.scrollHeight, ch=el.clientHeight, trackH=bar.clientHeight, th=Math.max(32,Math.round(trackH*ch/sh)), maxTop=trackH-th; el.scrollTop=sst+(e.clientY-sy)*(sh-ch)/(maxTop||1); });
-    window.addEventListener('mouseup', function(){ if(drag){ drag=false; document.body.style.userSelect=''; } });
+    function dstart(y){ drag=true; sy=y; sst=el.scrollTop; document.body.style.userSelect='none'; }
+    function dmove(y){ if(!drag) return; var sh=el.scrollHeight, ch=el.clientHeight, trackH=bar.clientHeight, th=Math.max(32,Math.round(trackH*ch/sh)), maxTop=trackH-th; el.scrollTop=sst+(y-sy)*(sh-ch)/(maxTop||1); }
+    function dend(){ if(drag){ drag=false; document.body.style.userSelect=''; } }
+    thumb.addEventListener('mousedown', function(e){ dstart(e.clientY); e.preventDefault(); });
+    window.addEventListener('mousemove', function(e){ dmove(e.clientY); });
+    window.addEventListener('mouseup', dend);
+    thumb.addEventListener('touchstart', function(e){ dstart(e.touches[0].clientY); }, {passive:true});
+    window.addEventListener('touchmove', function(e){ if(drag){ dmove(e.touches[0].clientY); e.preventDefault(); } }, {passive:false});
+    window.addEventListener('touchend', dend);
     bar.addEventListener('mousedown', function(e){ if(e.target===thumb) return; el.scrollTop += ((e.clientY-bar.getBoundingClientRect().top) < (parseFloat(thumb.style.top)||0) ? -1 : 1)*el.clientHeight*0.9; });
     update();
   }

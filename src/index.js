@@ -28,6 +28,7 @@ export default {
       else if (p === "/api/order" && request.method === "POST") response = await apiOrder(request, env, url);
       else if (p === "/api/order-status" && request.method === "GET") response = await apiOrderStatus(url, env);
       else if (p === "/api/mollie-webhook" && request.method === "POST") response = await apiWebhook(request, env, ctx);
+      else if (p === "/api/contact" && request.method === "POST") response = await apiContact(request, env);
       else if (p.startsWith("/api/admin/")) response = await adminApi(p, request, env);
       // /admin -> /admin.html wordt door html_handling als statische asset geserveerd.
     } catch (e) {
@@ -200,6 +201,38 @@ async function apiOrder(request, env, url) {
 }
 
 // Cookieloze pageview-telling (first-party). Geen PII: alleen pad + referrer-host, geaggregeerd per dag.
+// Contact-/aanmeldformulieren (contact, sponsor, vrijwilliger): mailt de inzending
+// naar de organisatie met reply_to = de indiener. Honeypot + rate-limit tegen spam.
+async function apiContact(request, env) {
+  if (!(await rateLimit(env, request, "contact", 6, 600))) return bad("te_veel_verzoeken", 429);
+  let body; try { body = await request.json(); } catch { return bad("ongeldig"); }
+  if (body.website) return json({ ok: true }); // honeypot ingevuld -> bot; doe alsof het lukte
+  const formType = String(body.form || "contact").slice(0, 40);
+  const fields = (body.fields && typeof body.fields === "object") ? body.fields : {};
+  const entries = Object.entries(fields).filter(([, v]) => String(v == null ? "" : v).trim() !== "").slice(0, 30);
+  if (!entries.length) return bad("leeg");
+  let replyTo = "";
+  for (const [k, v] of entries) { if (/mail/i.test(k) && isEmail(v)) { replyTo = v; break; } }
+  const to = env.ORGANIZER_EMAIL || env.MAIL_REPLY_TO || "marco@marcovanthiel.nl";
+  if (!env.RESEND_API_KEY) { console.error("contact_mail_geen_key"); return bad("mail_niet_geconfigureerd", 503); }
+  const rows = entries.map(([k, v]) =>
+    `<tr><td style="padding:4px 12px 4px 0;color:#5b6679;font-size:13px;vertical-align:top;white-space:nowrap"><strong>${escHtml(k)}</strong></td><td style="padding:4px 0;font-size:14px;color:#1d2433">${escHtml(v).replace(/\n/g, "<br>")}</td></tr>`).join("");
+  const html = `<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px"><h2 style="color:#17458f;font-size:18px">🦆 Nieuw bericht via ${escHtml(formType)}</h2><table role="presentation" cellpadding="0" cellspacing="0" border="0">${rows}</table><p style="color:#5b6679;font-size:12px;margin-top:16px">Verzonden via het formulier op nijmegenduckstad.nl · ${escHtml(now())}</p></div>`;
+  try {
+    const r = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { authorization: "Bearer " + env.RESEND_API_KEY, "content-type": "application/json" },
+      body: JSON.stringify({
+        from: env.MAIL_FROM || "Nijmegen Duckstad <info@nijmegenduckstad.nl>",
+        to: [to], reply_to: replyTo || env.MAIL_REPLY_TO || "marco@marcovanthiel.nl",
+        subject: `Formulier — ${formType}`, html,
+      }),
+    });
+    if (!r.ok) { console.error("contact_mail_fout", r.status, (await r.text().catch(() => "")).slice(0, 200)); return bad("mail_mislukt", 502); }
+  } catch (e) { console.error("contact_mail_ex", String(e && e.message || e)); return bad("mail_mislukt", 502); }
+  return json({ ok: true });
+}
+
 async function apiTrack(request, env) {
   try {
     if (!(await rateLimit(env, request, "track", 300, 60))) return new Response(null, { status: 204 });
@@ -632,7 +665,10 @@ async function sendPrizeConfirmation(env, prize, subject, message) {
       body: JSON.stringify({
         from: env.MAIL_FROM || "Nijmegen Duckstad <info@nijmegenduckstad.nl>",
         reply_to: env.MAIL_REPLY_TO || "marco@marcovanthiel.nl",
-        to: [prize.donor_email], subject, html,
+        to: [prize.donor_email],
+        // De gekoppelde accountmanager krijgt standaard een kopie (eigen dossier).
+        ...(prize.am_email && prize.am_email !== prize.donor_email ? { cc: [prize.am_email] } : {}),
+        subject, html,
       }),
     });
     if (!r.ok) {
@@ -656,12 +692,15 @@ async function adminApi(path, request, env) {
   // Vanaf hier: geldige sessie vereist
   const session = await resolveSession(request, env);
   if (!session) return json({ error: "unauthorized" }, 401);
-  if (sub === "me") return json({ email: session.email, role: session.role });
+  if (sub === "me") {
+    const u = await env.DB.prepare("SELECT name, phone FROM users WHERE email=?1").bind(session.email).first();
+    return json({ email: session.email, role: session.role, name: (u && u.name) || "", phone: (u && u.phone) || "" });
+  }
 
   // Rechten: 'admin' mag alles. 'accountmanager' mag ingebrachte prijzen beheren
   // (toevoegen/bewerken/verwijderen/mailen) en de rest inzien. 'readonly' mag alleen bekijken + exports.
   const PRIZE_MANAGE = new Set(["prize", "prize-delete", "prize-confirm"]);
-  const ADMIN_ONLY = new Set(["delete-order", "setting", "manual-order", "winner", "draw-reset", "users", "user-role", "user-reset", "user-delete", "user-update"]);
+  const ADMIN_ONLY = new Set(["delete-order", "setting", "manual-order", "winner", "draw-reset", "draw-delete", "mark-paid", "resend-confirmation", "users", "user-role", "user-reset", "user-delete", "user-update"]);
   if (PRIZE_MANAGE.has(sub) && session.role !== "admin" && session.role !== "accountmanager") return json({ error: "forbidden" }, 403);
   if (ADMIN_ONLY.has(sub) && session.role !== "admin") return json({ error: "forbidden" }, 403);
 
@@ -677,19 +716,22 @@ async function adminApi(path, request, env) {
          COUNT(*) FILTER (WHERE newsletter=1 AND status='paid') AS newsletter_count
        FROM orders`).first();
     const draws = await env.DB.prepare("SELECT COUNT(*) AS n FROM draws").first();
-    const prizes = await env.DB.prepare("SELECT COUNT(*) AS n FROM prizes").first();
+    const prizes = await env.DB.prepare("SELECT COUNT(*) AS n, COUNT(*) FILTER (WHERE confirmation_sent_at IS NULL) AS unconfirmed FROM prizes").first();
     return json({
       regular_sold: reg, business_sold: bus, max_regular: s.max_regular,
       paid_orders: agg.paid_orders, pending_orders: agg.pending_orders,
       revenue_cents: agg.revenue_cents, newsletter_count: agg.newsletter_count,
-      draws: draws.n, prizes: prizes.n, sales_open: s.sales_open,
+      draws: draws.n, prizes: prizes.n, prizes_unconfirmed: prizes.unconfirmed, sales_open: s.sales_open,
+      goal_net_cents: 3170100,
       price_regular_cents: s.price_regular_cents, price_business_cents: s.price_business_cents,
     });
   }
 
   if (sub === "orders") {
     const r = await env.DB.prepare(
-      "SELECT id,created_at,name,email,phone,city,type,quantity,amount_cents,status,newsletter,paid_at FROM orders ORDER BY created_at DESC LIMIT 1000").all();
+      `SELECT o.id,o.created_at,o.name,o.email,o.phone,o.city,o.type,o.quantity,o.amount_cents,o.status,o.newsletter,o.paid_at,
+              (SELECT GROUP_CONCAT(number) FROM ducks WHERE order_id=o.id) AS numbers
+       FROM orders o ORDER BY o.created_at DESC LIMIT 1000`).all();
     return json({ orders: r.results || [] });
   }
 
@@ -750,14 +792,29 @@ async function adminApi(path, request, env) {
       `SELECT d.type AS type, d.number AS number, o.id AS order_id, o.name AS name, o.email AS email
        FROM ducks d JOIN orders o ON o.id=d.order_id WHERE d.type=?1 AND d.number=?2`).bind(type, number).first();
     if (!duck) return bad("startnummer_niet_gevonden", 404);
+    // Niet-blokkerende waarschuwing als dit startnummer al won of deze prijs al vergeven is.
+    const chk = await env.DB.prepare(
+      "SELECT (SELECT COUNT(*) FROM draws WHERE duck_type=?1 AND duck_number=?2) AS num_used, (SELECT COUNT(*) FROM draws WHERE prize=?3) AS prize_used")
+      .bind(type, number, prize).first();
+    let warning = "";
+    if (chk && chk.num_used) warning = "Let op: startnummer " + number + " won al eerder een prijs.";
+    else if (chk && chk.prize_used) warning = "Let op: er is al een winnaar vastgelegd voor \"" + prize + "\".";
     await env.DB.prepare(
       "INSERT INTO draws (created_at,prize,duck_type,duck_number,order_id,winner_name,winner_email) VALUES (?1,?2,?3,?4,?5,?6,?7)")
       .bind(now(), prize, duck.type, duck.number, duck.order_id, duck.name, duck.email).run();
-    return json({ winner: { prize, type: duck.type, number: duck.number, name: duck.name, email: duck.email } });
+    return json({ winner: { prize, type: duck.type, number: duck.number, name: duck.name, email: duck.email }, warning });
   }
 
   if (sub === "draw-reset" && request.method === "POST") {
     await env.DB.prepare("DELETE FROM draws").run();
+    return json({ ok: true });
+  }
+  // Eén winnaar terugdraaien (bv. verkeerd startnummer) zonder alles te resetten.
+  if (sub === "draw-delete" && request.method === "POST") {
+    const b = await request.json().catch(() => ({}));
+    const id = parseInt(b.id, 10);
+    if (!Number.isFinite(id)) return bad("id_verplicht");
+    await env.DB.prepare("DELETE FROM draws WHERE id=?1").bind(id).run();
     return json({ ok: true });
   }
 
@@ -779,6 +836,7 @@ async function adminApi(path, request, env) {
     const type = b.type === "business" ? "business" : "regular";
     const qty = parseInt(b.quantity, 10);
     if (!b.name || !Number.isFinite(qty) || qty < 1) return bad("invoer_ongeldig");
+    if (b.email && !isEmail(String(b.email))) return bad("email_ongeldig");
     const s = await settings(env);
     const price = type === "business" ? s.price_business_cents : s.price_regular_cents;
     const id = crypto.randomUUID();
@@ -803,6 +861,32 @@ async function adminApi(path, request, env) {
       env.DB.prepare("DELETE FROM draws WHERE order_id=?1").bind(id),
       env.DB.prepare("DELETE FROM orders WHERE id=?1").bind(id),
     ]);
+    return json({ ok: true });
+  }
+
+  // Een openstaande (pending) bestelling handmatig op betaald zetten: nummers toekennen
+  // (als die er nog niet zijn) + bevestigingsmail sturen. Voor contant/Tikkie of vastgelopen orders.
+  if (sub === "mark-paid" && request.method === "POST") {
+    const b = await request.json().catch(() => ({}));
+    const id = String(b.id || "");
+    const o = await env.DB.prepare("SELECT id,status,quantity,type FROM orders WHERE id=?1").bind(id).first();
+    if (!o) return bad("niet_gevonden", 404);
+    if (o.status === "paid") return json({ ok: true, already: true });
+    await env.DB.prepare("UPDATE orders SET status='paid', paid_at=?2 WHERE id=?1").bind(id, now()).run();
+    const have = await env.DB.prepare("SELECT COUNT(*) AS n FROM ducks WHERE order_id=?1").bind(id).first();
+    if (!have.n) await assignNumbers(env, { id, quantity: o.quantity, type: o.type });
+    await sendConfirmation(env, id).catch(() => {});
+    return json({ ok: true });
+  }
+  // Bevestigingsmail opnieuw sturen voor een betaalde bestelling.
+  if (sub === "resend-confirmation" && request.method === "POST") {
+    const b = await request.json().catch(() => ({}));
+    const id = String(b.id || "");
+    const o = await env.DB.prepare("SELECT id,status FROM orders WHERE id=?1").bind(id).first();
+    if (!o) return bad("niet_gevonden", 404);
+    if (o.status !== "paid") return bad("niet_betaald");
+    if (!env.RESEND_API_KEY) return bad("mail_niet_geconfigureerd", 503);
+    await sendConfirmation(env, id);
     return json({ ok: true });
   }
 
@@ -872,7 +956,8 @@ async function adminApi(path, request, env) {
     if (!id) return bad("id_verplicht");
     if (!subject) return bad("onderwerp_verplicht");
     if (!message.trim()) return bad("bericht_verplicht");
-    const prize = await env.DB.prepare("SELECT * FROM prizes WHERE id=?1").bind(id).first();
+    const prize = await env.DB.prepare(
+      "SELECT p.*, u.email AS am_email FROM prizes p LEFT JOIN users u ON u.id=p.account_manager_id WHERE p.id=?1").bind(id).first();
     if (!prize) return bad("niet_gevonden", 404);
     if (!prize.donor_email) return bad("geen_inbrenger_email");
     if (!env.RESEND_API_KEY) return bad("mail_niet_geconfigureerd", 503);
