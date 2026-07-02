@@ -11,6 +11,11 @@ directory = "."
 binding = "ASSETS"
 html_handling = "auto-trailing-slash"
 not_found_handling = "404-page"
+# Worker vóór de assets: zo wrapt withSec() (CSP + security-headers) élke response,
+# ook statische pagina's. Anders serveert Cloudflare assets direct en mist de
+# statische site z'n CSP (het _headers-bestand wordt door de deploy-wrangler niet
+# betrouwbaar toegepast).
+run_worker_first = true
 
 # D1-database voor bestellingen, eendnummers en trekkingen.
 # >>> Vul database_id in na: wrangler d1 create nijmegenduckstad <<<
