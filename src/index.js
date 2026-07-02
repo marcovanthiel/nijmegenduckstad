@@ -228,7 +228,7 @@ async function apiContact(request, env) {
         subject: `Formulier — ${formType}`, html,
       }),
     });
-    if (!r.ok) { const body = (await r.text().catch(() => "")).slice(0, 200); console.error("contact_mail_fout", r.status, body); return json({ error: "mail_mislukt", detail: r.status + " " + body }, 502); }
+    if (!r.ok) { console.error("contact_mail_fout", r.status, (await r.text().catch(() => "")).slice(0, 200)); return bad("mail_mislukt", 502); }
   } catch (e) { console.error("contact_mail_ex", String(e && e.message || e)); return bad("mail_mislukt", 502); }
   return json({ ok: true });
 }
