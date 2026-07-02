@@ -13,7 +13,6 @@ window.DUCKSTAD = {
   ducksTotal: 5000,        // verkoopdoel reguliere eendjes
   pricePerDuck: 5,         // prijs per regulier eendje (€)
   businessDuckPrice: 150,  // prijs bedrijfseendje (€)
-  businessDucksTotal: 50,  // doel bedrijfseendjes
 
   // --- Evenement ---
   eventDateISO: "2027-04-17T15:00:00+02:00",
@@ -24,7 +23,6 @@ window.DUCKSTAD = {
   // Interne bestelpagina (eigen systeem met iDEAL). Zet op een externe URL
   // als je weer naar een ander verkoopsysteem wilt linken.
   salesUrl: "/bestellen",
-  formAccessKey: "",
   contactEmail: "info@nijmegenduckstad.nl",
   phone: "",
 

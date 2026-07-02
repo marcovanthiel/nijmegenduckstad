@@ -66,9 +66,9 @@ function csv(rows) { return rows.map((r) => r.map(csvCell).join(";")).join("\r\n
 
 /* ---------------- security helpers ---------------- */
 const CSP = "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; " +
-  "img-src 'self' data: https:; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com; " +
+  "img-src 'self' data:; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com; " +
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; " +
-  "connect-src 'self' https://api.web3forms.com https://cloudflareinsights.com; form-action 'self'";
+  "connect-src 'self' https://cloudflareinsights.com; form-action 'self'";
 // Security-headers op elke response (in code, want _headers wordt in deze Worker+Assets-opzet niet toegepast).
 function withSec(resp) {
   const h = new Headers(resp.headers);

@@ -139,23 +139,12 @@
       e.preventDefault();
       var data = new FormData(form);
       function show(ok, msg) { if (!status) { alert(msg); return; } status.textContent = msg; status.className = 'form-status show ' + (ok ? 'ok' : 'err'); }
-      if (C.formAccessKey) {
-        data.append('access_key', C.formAccessKey);
-        data.append('subject', 'Nijmegen Duckstad — ' + (form.dataset.mailform || 'formulier'));
-        var btn = form.querySelector('[type=submit]');
-        if (btn) { btn.disabled = true; btn.dataset.lbl = btn.textContent; btn.textContent = 'Versturen…'; }
-        fetch('https://api.web3forms.com/submit', { method: 'POST', body: data })
-          .then(function (r) { return r.json(); })
-          .then(function (j) { if (j.success) { form.reset(); show(true, 'Bedankt! Je bericht is verstuurd. We nemen snel contact op.'); } else { show(false, 'Er ging iets mis. Probeer het later opnieuw of mail ons direct.'); } })
-          .catch(function () { show(false, 'Geen verbinding. Mail ons gerust direct via ' + (C.contactEmail || '')); })
-          .finally(function () { if (btn) { btn.disabled = false; btn.textContent = btn.dataset.lbl; } });
-      } else {
-        var lines = []; data.forEach(function (v, k) { if (v) lines.push(k + ': ' + v); });
-        var subject = encodeURIComponent('Nijmegen Duckstad — ' + (form.dataset.mailform || 'formulier'));
-        var body = encodeURIComponent(lines.join('\n'));
-        window.location.href = 'mailto:' + (C.contactEmail || '') + '?subject=' + subject + '&body=' + body;
-        show(true, 'Je e-mailprogramma opent met je bericht. Verstuur de mail om af te ronden.');
-      }
+      // Formulieren gaan via de mailto-flow (web3forms is nooit geconfigureerd en verwijderd).
+      var lines = []; data.forEach(function (v, k) { if (v) lines.push(k + ': ' + v); });
+      var subject = encodeURIComponent('Nijmegen Duckstad — ' + (form.dataset.mailform || 'formulier'));
+      var body = encodeURIComponent(lines.join('\n'));
+      window.location.href = 'mailto:' + (C.contactEmail || '') + '?subject=' + subject + '&body=' + body;
+      show(true, 'Je e-mailprogramma opent met je bericht. Verstuur de mail om af te ronden.');
     });
   });
 

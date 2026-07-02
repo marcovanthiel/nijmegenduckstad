@@ -1,6 +1,6 @@
 # Nijmegen Duckstad — website
 
-Statische website voor de Rotary Badeendjesrace 2026, klaar voor **Cloudflare Pages**.
+Website voor de Rotary Badeendjesrace, draait als **Cloudflare Worker + Static Assets + D1** (bestelsysteem met Mollie iDEAL).
 Domein: **nijmegenduckstad.nl** (al actief op Cloudflare).
 
 ---
