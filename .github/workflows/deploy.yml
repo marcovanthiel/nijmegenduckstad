@@ -31,3 +31,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          # Pin wrangler: de action-default kan een oudere wrangler bundelen die
+          # public/_headers voor Workers-assets niet toepast (geen CSP/immutable
+          # op de statische site). Deze versie past _headers wél toe.
+          wranglerVersion: '4.103.0'
