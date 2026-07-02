@@ -94,7 +94,13 @@
   /* --- Dynamische links / teksten --- */
   document.querySelectorAll('[data-sales-link]').forEach(function (a) {
     if (C.salesUrl) {
-      a.href = C.salesUrl;
+      var url = C.salesUrl;
+      // Optioneel het gekozen aantal/type meegeven naar de bestelpagina.
+      var qs = [];
+      if (a.dataset.salesQty) qs.push('qty=' + encodeURIComponent(a.dataset.salesQty));
+      if (a.dataset.salesType) qs.push('type=' + encodeURIComponent(a.dataset.salesType));
+      if (qs.length && !/^https?:/i.test(url)) url += (url.indexOf('?') >= 0 ? '&' : '?') + qs.join('&');
+      a.href = url;
       if (/^https?:/i.test(C.salesUrl)) { a.target = '_blank'; a.rel = 'noopener'; }
     }
   });

@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
+<a class="skip-link" href="#bestelform">Direct naar het bestelformulier</a>
 <header class="site-header">
   <nav class="nav" aria-label="Hoofdmenu">
     <a class="nav__logo" href="index.html" aria-label="Nijmegen Duckstad home"><img src="assets/img/logo.svg" alt="Nijmegen Duckstad" width="220" height="50"></a>
@@ -24,44 +25,45 @@
       <li><a href="prijzen.html">Prijzen</a></li>
       <li><a href="sponsoren.html">Sponsoren</a></li>
       <li><a href="goede-doel.html">Goede doel</a></li>
+      <li><a href="vrijwilligers.html">Meedoen</a></li>
       <li><a href="contact.html">Contact</a></li>
-      <li class="nav__cta"><a class="btn btn--primary" href="bestellen.html">Bestel nu 🦆</a></li>
+      <li class="nav__cta"><a class="btn btn--primary" data-sales-link href="bestellen.html">Adopteer nu 🦆</a></li>
     </ul>
   </nav>
 </header>
 
 <section class="page-hero">
   <div class="wrap">
-    <div class="crumbs"><a href="index.html">Home</a> › Bestellen</div>
-    <h1>Bestel je badeendje 🦆</h1>
+    <div class="crumbs"><a href="index.html">Home</a> › Adopteren</div>
+    <h1>Adopteer je badeendje 🦆</h1>
     <p>Adopteer één of meer eendjes. Je betaalt veilig met iDEAL en krijgt direct je unieke startnummer(s) — voor de badeendjesrace.</p>
   </div>
 </section>
 
 <section class="section">
   <div class="wrap" style="max-width:720px">
-    <form class="form" id="orderForm" novalidate>
-      <div class="field">
-        <label>Wat wil je adopteren?</label>
+    <form class="form" id="bestelform" novalidate>
+      <fieldset class="field" style="border:0;padding:0;margin:0 0 var(--gap,18px)">
+        <legend style="padding:0;font-weight:600">Wat wil je adopteren?</legend>
         <div class="grid grid-2" style="gap:12px">
-          <label class="card" style="padding:16px;cursor:pointer;display:flex;gap:10px;align-items:flex-start">
+          <label class="card type-card" style="padding:16px;cursor:pointer;display:flex;gap:10px;align-items:flex-start">
             <input type="radio" name="type" value="regular" checked style="width:auto;margin-top:4px">
             <span><strong>Eendje</strong> · <span data-price>€5</span><br><span class="muted" style="font-size:.9rem">Doet mee in de hoofdrace</span></span>
           </label>
-          <label class="card" style="padding:16px;cursor:pointer;display:flex;gap:10px;align-items:flex-start">
+          <label class="card type-card" style="padding:16px;cursor:pointer;display:flex;gap:10px;align-items:flex-start">
             <input type="radio" name="type" value="business" style="width:auto;margin-top:4px">
             <span><strong>Bedrijfseendje</strong> · <span data-business-price>€150</span><br><span class="muted" style="font-size:.9rem">Aparte bedrijvenrace + vermelding</span></span>
           </label>
         </div>
-      </div>
+      </fieldset>
 
       <div class="field">
         <label for="qty">Aantal eendjes</label>
-        <div class="row" id="bundles" style="gap:8px;margin-bottom:10px">
-          <button type="button" class="bundle btn btn--ghost-blue" data-qty="1" style="padding:8px 18px">1</button>
-          <button type="button" class="bundle btn btn--ghost-blue" data-qty="5" style="padding:8px 18px">5</button>
-          <button type="button" class="bundle btn btn--ghost-blue" data-qty="10" style="padding:8px 18px">10 🦆</button>
-          <button type="button" class="bundle btn btn--ghost-blue" data-qty="25" style="padding:8px 18px">25</button>
+        <div class="row" id="bundles" role="group" aria-label="Snelkeuze aantal" style="gap:8px;margin-bottom:10px">
+          <button type="button" class="bundle btn btn--ghost-blue" data-qty="1" aria-pressed="false" style="padding:8px 18px">1</button>
+          <button type="button" class="bundle btn btn--ghost-blue" data-qty="5" aria-pressed="false" style="padding:8px 18px">5</button>
+          <button type="button" class="bundle btn btn--ghost-blue" data-qty="10" aria-pressed="false" style="padding:8px 18px">10 🦆</button>
+          <button type="button" class="bundle btn btn--ghost-blue" data-qty="25" aria-pressed="false" style="padding:8px 18px">25</button>
         </div>
         <div style="display:flex;align-items:center;gap:12px">
           <button type="button" class="btn btn--ghost-blue" id="minus" aria-label="Minder" style="padding:8px 16px">−</button>
@@ -104,11 +106,11 @@
 
       <div class="field">
         <label>Extra gift voor het goede doel? <span class="muted">(optioneel)</span></label>
-        <div class="row" id="extras" style="gap:8px">
-          <button type="button" class="extra btn btn--ghost-blue" data-extra="0" style="padding:8px 16px">Geen</button>
-          <button type="button" class="extra btn btn--ghost-blue" data-extra="500" style="padding:8px 16px">+€5</button>
-          <button type="button" class="extra btn btn--ghost-blue" data-extra="1000" style="padding:8px 16px">+€10</button>
-          <button type="button" class="extra btn btn--ghost-blue" data-extra="2500" style="padding:8px 16px">+€25</button>
+        <div class="row" id="extras" role="group" aria-label="Extra gift" style="gap:8px">
+          <button type="button" class="extra btn btn--ghost-blue" data-extra="0" aria-pressed="true" style="padding:8px 16px">Geen</button>
+          <button type="button" class="extra btn btn--ghost-blue" data-extra="500" aria-pressed="false" style="padding:8px 16px">+€5</button>
+          <button type="button" class="extra btn btn--ghost-blue" data-extra="1000" aria-pressed="false" style="padding:8px 16px">+€10</button>
+          <button type="button" class="extra btn btn--ghost-blue" data-extra="2500" aria-pressed="false" style="padding:8px 16px">+€25</button>
         </div>
       </div>
 
@@ -120,7 +122,7 @@
       <button class="btn btn--primary btn--lg" type="submit" id="submitBtn" style="width:100%;justify-content:center">Veilig betalen →</button>
       <p class="form__note center" style="margin-top:10px">🔒 Beveiligde betaling via Mollie · iDEAL, creditcard &amp; meer · je startnummer(s) direct per e-mail</p>
       <div class="form-status" role="status"></div>
-      <p class="form__note" style="margin-top:14px">Je gegevens gebruiken we alleen voor je bestelling en de badeendjesrace — zie ook onze <a href="contact.html">contactpagina</a>. Liever op een verkoopweekend kopen? Dat kan ook (zie <a href="evenement.html">Het evenement</a>).</p>
+      <p class="form__note" style="margin-top:14px">Je gegevens gebruiken we alleen voor je bestelling en de badeendjesrace — zie onze <a href="privacy.html">privacyverklaring</a>. Liever op een verkoopweekend kopen? Dat kan ook (zie <a href="evenement.html">Het evenement</a>).</p>
     </form>
   </div>
 </section>
@@ -129,7 +131,7 @@
   <div class="wrap">
     <div class="footer-bottom" style="border:0">
       <span>© <span data-year>2026</span> <a href="https://www.rotary.nl/nijmegenstadenland/" target="_blank" rel="noopener">Rotary club - Nijmegen Stad en Land</a> · Rotary Badeendjesrace</span>
-      <span><a href="index.html">Home</a> · <a href="contact.html">Contact</a></span>
+      <span><a href="index.html">Home</a> · <a href="contact.html">Contact</a> · <a href="privacy.html">Privacy</a></span>
     </div>
   </div>
 </footer>
@@ -139,16 +141,29 @@
 <script>
 (function () {
   var C = window.DUCKSTAD || {};
-  var form = document.getElementById('orderForm');
+  var form = document.getElementById('bestelform');
   var qty = document.getElementById('qty');
   var totalEl = document.getElementById('total');
   var status = form.querySelector('.form-status');
   var btn = document.getElementById('submitBtn');
   var stockHint = document.getElementById('stockHint');
   var extraCents = 0;
+  var PREFILL_KEY = 'duckstad_bestel';
   function priceCents() { return form.type.value === 'business' ? (C.businessDuckPrice||150)*100 : (C.pricePerDuck||5)*100; }
   function fmt(c){ return '€' + (c/100).toLocaleString('nl-NL',{minimumFractionDigits:2,maximumFractionDigits:2}); }
-  function update(){ var n=Math.max(1,parseInt(qty.value||'1',10)); totalEl.textContent = fmt(priceCents()*n + extraCents); }
+
+  // Actieve knop in een groep markeren (visueel + aria-pressed) op basis van data-attribuut
+  function mark(sel, attr, val){ document.querySelectorAll(sel).forEach(function(b){ var on=b.getAttribute(attr)===String(val); b.classList.toggle('is-selected',on); b.setAttribute('aria-pressed',on?'true':'false'); }); }
+  function markType(){ document.querySelectorAll('.type-card').forEach(function(l){ l.classList.toggle('is-selected', l.querySelector('input').checked); }); }
+  function currentBundle(){ var n=parseInt(qty.value||'1',10); return [1,5,10,25].indexOf(n)>=0 ? n : ''; }
+
+  function update(){
+    var n=Math.max(1,parseInt(qty.value||'1',10));
+    totalEl.textContent = fmt(priceCents()*n + extraCents);
+    mark('#bundles .bundle','data-qty',currentBundle());
+    mark('#extras .extra','data-extra',extraCents);
+    markType();
+  }
   document.getElementById('plus').onclick=function(){ qty.value=Math.max(1,(parseInt(qty.value||'1',10))+1); update(); };
   document.getElementById('minus').onclick=function(){ qty.value=Math.max(1,(parseInt(qty.value||'1',10))-1); update(); };
   qty.oninput=update;
@@ -157,26 +172,43 @@
   var isGift=document.getElementById('isGift'), giftName=document.getElementById('giftName');
   isGift.onchange=function(){ giftName.style.display=isGift.checked?'':'none'; if(!isGift.checked) giftName.value=''; };
   form.querySelectorAll('input[name=type]').forEach(function(r){ r.onchange=update; });
+
+  // Keuze uit de tarievenpagina (?qty=5&type=business) en prefill na een mislukte betaling
+  var params = new URLSearchParams(location.search);
+  if (params.get('type')==='business') { form.type.value='business'; }
+  var pq = parseInt(params.get('qty')||'',10); if (pq>=1) qty.value=pq;
+  try {
+    var saved = JSON.parse(sessionStorage.getItem(PREFILL_KEY)||'null');
+    if (saved) {
+      ['name','email','phone','city'].forEach(function(k){ if(saved[k]&&form[k]) form[k].value=saved[k]; });
+      if (saved.type) form.type.value=saved.type;
+      if (saved.quantity) qty.value=saved.quantity;
+      if (typeof saved.extra_cents==='number') extraCents=saved.extra_cents;
+    }
+  } catch(e){}
   update();
 
   // Live voorraad tonen
   fetch('/api/status').then(function(r){return r.json();}).then(function(s){
     if (s && typeof s.sold==='number'){ var left=s.total-s.sold; stockHint.textContent = left>0 ? ('nog ~'+left.toLocaleString('nl-NL')+' eendjes') : 'bijna uitverkocht'; if(!s.sales_open){ btn.disabled=true; show(false,'De online verkoop is op dit moment gesloten.'); } }
-  }).catch(function(){});
+  }).catch(function(){ stockHint.textContent='verkoopstatus onbekend'; });
 
   function show(ok,msg){ status.textContent=msg; status.className='form-status show '+(ok?'ok':'err'); }
+  function fieldError(el,msg){ show(false,msg); if(el){ el.setAttribute('aria-invalid','true'); el.focus(); } }
+  ['name','email'].forEach(function(k){ if(form[k]) form[k].addEventListener('input',function(){ form[k].removeAttribute('aria-invalid'); }); });
 
   form.addEventListener('submit', function(e){
     e.preventDefault();
-    if (!form.consent.checked){ show(false,'Vink even aan dat je akkoord gaat.'); return; }
-    if (!form.name.value.trim()){ show(false,'Vul je naam in.'); return; }
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email.value)){ show(false,'Vul een geldig e-mailadres in.'); return; }
+    if (!form.consent.checked){ show(false,'Vink even aan dat je akkoord gaat.'); form.consent.focus(); return; }
+    if (!form.name.value.trim()){ fieldError(form.name,'Vul je naam in.'); return; }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email.value)){ fieldError(form.email,'Vul een geldig e-mailadres in.'); return; }
     var payload = {
       type: form.type.value, quantity: parseInt(qty.value||'1',10),
       name: form.name.value, email: form.email.value, phone: form.phone.value,
       city: form.city.value, newsletter: form.newsletter.checked, consent: true,
       extra_cents: extraCents, gift_name: isGift.checked ? giftName.value : ''
     };
+    try { sessionStorage.setItem(PREFILL_KEY, JSON.stringify(payload)); } catch(e){}
     btn.disabled=true; btn.textContent='Bezig…'; show(true,'Je wordt doorgestuurd naar de beveiligde betaalpagina…');
     fetch('/api/order',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)})
       .then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j};});})

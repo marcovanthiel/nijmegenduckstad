@@ -331,3 +331,16 @@ html::-webkit-scrollbar-track{background:var(--bg)}
   78%  {transform:translateX(-50%) scale(1);opacity:1}
   100% {transform:translateX(-50%) scale(.92);opacity:0}
 }
+
+/* --- UX-verbeteringen (klantzijde) --- */
+/* Skip-to-content */
+.skip-link{position:absolute;left:8px;top:-48px;z-index:1000;background:var(--blue);color:#fff;padding:10px 16px;border-radius:8px;transition:top .15s}
+.skip-link:focus{top:8px}
+/* Zichtbare focus voor toetsenbord (naast inputs, die hadden 'm al) */
+a:focus-visible,button:focus-visible,.btn:focus-visible,[role=tab]:focus-visible,summary:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+/* Geselecteerde snelkeuze-knoppen (aantal / extra gift) */
+.bundle.is-selected,.extra.is-selected{background:var(--blue);color:#fff;box-shadow:0 4px 12px rgba(23,69,143,.35)}
+/* Geselecteerde type-kaart (eendje / bedrijfseendje) */
+.type-card.is-selected{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue) inset,0 8px 20px rgba(23,69,143,.15)}
+/* Ongeldig veld */
+input[aria-invalid=true],textarea[aria-invalid=true]{border-color:#c0362c;box-shadow:0 0 0 2px rgba(192,54,44,.18)}
