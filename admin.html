@@ -291,7 +291,13 @@
   var login=document.getElementById('login'), app=document.getElementById('app');
   var loginStatus=document.getElementById('loginStatus');
   var isAdmin=false, canPrizes=false;
-  (function(){ var av=document.getElementById('adminVersion'); if(av && window.DUCKSTAD) av.textContent='v'+(window.DUCKSTAD.version||''); })();
+  (function(){
+    var av=document.getElementById('adminVersion'); if(!av) return;
+    function show(ver,commit){ av.innerHTML='v'+ver+(commit?' · '+commit:'')+' · <a href="/updates" target="_blank" rel="noopener" style="color:var(--muted)">updates</a>'; }
+    fetch('/version.json',{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).then(function(d){
+      if(d&&d.version) show(d.version,d.commit); else if(window.DUCKSTAD) show(window.DUCKSTAD.version||'','');
+    }).catch(function(){ if(window.DUCKSTAD) show(window.DUCKSTAD.version||'',''); });
+  })();
   function api(path, opts){ opts=opts||{}; opts.credentials='same-origin'; return fetch('/api/admin/'+path,opts); }
   function postJSON(path, obj){ return api(path,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(obj||{})}); }
   function euro(c){ return '€'+(c/100).toLocaleString('nl-NL',{minimumFractionDigits:2,maximumFractionDigits:2}); }

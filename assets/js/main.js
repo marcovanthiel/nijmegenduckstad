@@ -114,20 +114,27 @@
   document.querySelectorAll('[data-goal-net]').forEach(function (el) { el.textContent = euro(C.goalNet); });
   var year = document.querySelector('[data-year]'); if (year) year.textContent = new Date().getFullYear();
 
-  /* --- Versienummer in de footer --- */
+  /* --- Versienummer in de footer (deploy-versie uit /version.json) --- */
   (function () {
-    if (!C.version) return;
-    var label = 'v' + C.version;
-    var explicit = document.querySelectorAll('[data-version]');
-    if (explicit.length) { explicit.forEach(function (el) { el.textContent = label; }); return; }
-    var fb = document.querySelector('.footer-bottom');
-    if (!fb) return;
-    var spans = fb.querySelectorAll('span');
-    var host = spans.length ? spans[spans.length - 1] : fb;
-    var v = document.createElement('span');
-    v.className = 'footer-version';
-    v.textContent = ' · ' + label;
-    host.appendChild(v);
+    function render(ver, commit) {
+      var label = 'v' + ver + (commit ? ' · ' + commit : '');
+      var explicit = document.querySelectorAll('[data-version]');
+      if (explicit.length) { explicit.forEach(function (el) { el.textContent = label; }); return; }
+      var fb = document.querySelector('.footer-bottom');
+      if (!fb) return;
+      var spans = fb.querySelectorAll('span');
+      var host = spans.length ? spans[spans.length - 1] : fb;
+      var link = document.createElement('a');
+      link.className = 'footer-version';
+      link.href = '/updates';
+      link.textContent = ' · ' + label;
+      link.title = 'Bekijk de laatste updates';
+      host.appendChild(link);
+    }
+    // Deploy-versie (versie + git-commit) uit /version.json; val terug op config.js.
+    fetch('/version.json', { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) { if (d && d.version) render(d.version, d.commit); else if (C.version) render(C.version, ''); })
+      .catch(function () { if (C.version) render(C.version, ''); });
   })();
 
   function setSocial(sel, url) {

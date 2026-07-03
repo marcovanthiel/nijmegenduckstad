@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Updates · Nijmegen Duckstad</title>
+<meta name="description" content="Wat er recent is veranderd aan de Nijmegen Duckstad-website.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<a class="skip-link" href="#hoofd">Direct naar de inhoud</a>
+<header class="site-header">
+  <nav class="nav" aria-label="Hoofdmenu">
+    <a class="nav__logo" href="index.html" aria-label="Nijmegen Duckstad home"><img src="assets/img/logo.svg" alt="Nijmegen Duckstad" width="220" height="50"></a>
+    <button class="nav__toggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+    <ul class="nav__links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="adopteren.html">Adopteren</a></li>
+      <li><a href="evenement.html">Evenement</a></li>
+      <li><a href="prijzen.html">Prijzen</a></li>
+      <li><a href="sponsoren.html">Sponsoren</a></li>
+      <li><a href="goede-doel.html">Goede doel</a></li>
+      <li><a href="vrijwilligers.html">Meedoen</a></li>
+      <li><a href="contact.html">Contact</a></li>
+      <li class="nav__cta"><a class="btn btn--primary" data-sales-link href="adopteren.html">Adopteer nu 🦆</a></li>
+    </ul>
+  </nav>
+</header>
+
+<section class="page-hero" id="hoofd">
+  <div class="wrap">
+    <div class="crumbs"><a href="index.html">Home</a> › Updates</div>
+    <h1>Updates 🛠️</h1>
+    <p>Wat er recent is verbeterd aan de website. Huidige versie: <strong id="curVersion">…</strong>.</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap" style="max-width:760px">
+    <div id="updatesList"><p class="muted">Updates laden…</p></div>
+    <p class="form__note" style="margin-top:24px">De site wordt continu onderhouden; kleine verbeteringen worden automatisch uitgerold. Afhankelijkheden worden <strong>wekelijks</strong> automatisch gecontroleerd en bijgewerkt.</p>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-bottom" style="border:0">
+      <span>© <span data-year>2026</span> <a href="https://www.rotary.nl/nijmegenstadenland/" target="_blank" rel="noopener">Rotary club - Nijmegen Stad en Land</a> · Rotary Badeendjesrace</span>
+      <span><a href="index.html">Home</a> · <a href="contact.html">Contact</a> · <a href="privacy.html">Privacy</a></span>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/js/config.js?v=1"></script>
+<script src="assets/js/main.js?v=1"></script>
+<script>
+(function(){
+  function fmt(iso){ try{ return new Date(iso).toLocaleDateString('nl-NL',{day:'numeric',month:'long',year:'numeric'}); }catch(e){ return (iso||'').slice(0,10); } }
+  function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+  // Verberg puur technische/opruim-commits voor een leesbare lijst
+  var HIDE=/^(chore|ci|build|deps|docs|merge|wip|typo|fmt|lint|revert)\b|^(bump|update dependencies|dependabot)/i;
+  fetch('/version.json',{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).then(function(v){
+    if(v&&v.version){ document.getElementById('curVersion').textContent='v'+v.version+(v.commit?' · '+v.commit:''); }
+    else { document.getElementById('curVersion').textContent='—'; }
+  }).catch(function(){ document.getElementById('curVersion').textContent='—'; });
+  fetch('/updates.json',{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).then(function(d){
+    var box=document.getElementById('updatesList');
+    var items=(d&&d.entries||[]).filter(function(e){ return !HIDE.test(e.subject||''); });
+    if(!items.length){ box.innerHTML='<p class="muted">Nog geen updates om te tonen.</p>'; return; }
+    var html='<ul class="updates-list" style="list-style:none;padding:0;margin:0">';
+    items.forEach(function(e){
+      var subj=esc(e.subject); subj=subj.charAt(0).toUpperCase()+subj.slice(1);
+      html+='<li style="padding:12px 0;border-bottom:1px solid var(--line)"><div style="font-family:var(--display);color:var(--blue-dark)">'+subj+'</div><div class="muted" style="font-size:.85rem">'+fmt(e.date)+' · '+esc(e.sha)+'</div></li>';
+    });
+    html+='</ul>';
+    box.innerHTML=html;
+  }).catch(function(){ document.getElementById('updatesList').innerHTML='<p class="muted">Kon updates niet laden.</p>'; });
+})();
+</script>
+</body>
+</html>

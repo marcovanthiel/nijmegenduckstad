@@ -21,10 +21,28 @@ jobs:
       deployments: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # volledige historie nodig voor de updates-lijst
 
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+
+      - name: Genereer versie-info (version.json + updates.json)
+        run: |
+          VER=$(grep -oE 'version:[[:space:]]*"[^"]+"' assets/js/config.js | head -1 | sed -E 's/.*"([^"]+)".*/\1/')
+          printf '{"version":"%s","commit":"%s","date":"%s"}' "${VER:-0.0.0}" "${GITHUB_SHA::7}" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > version.json
+          python3 - <<'PY'
+          import subprocess, json
+          out = subprocess.run(['git','log','-40','--no-merges','--pretty=format:%h%x1f%cI%x1f%s'],
+                               capture_output=True, text=True).stdout
+          entries=[]
+          for line in out.splitlines():
+              p=line.split('\x1f')
+              if len(p)==3: entries.append({'sha':p[0],'date':p[1],'subject':p[2]})
+          json.dump({'entries':entries}, open('updates.json','w'), ensure_ascii=False)
+          PY
+          echo "version.json: $(cat version.json)"
 
       - name: Deploy met wrangler
         uses: cloudflare/wrangler-action@v3
