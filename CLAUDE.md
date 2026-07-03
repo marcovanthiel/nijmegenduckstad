@@ -206,7 +206,39 @@ De site wordt uitgebreid van static-only naar een Worker-met-code + D1:
   de mailflow van het bestelsysteem (zie sectie hierboven) zodra die flow voor
   prijzen-aanbrengers gebouwd/uitgebreid wordt.
 
+## Hulp-sectie & handleidingen (sinds 2026-07-03)
+
+- **`hulp.html`** = overzichtspagina (link in de footer van alle pagina's);
+  **`hulp-accountmanagers.html`** = volledige handleiding voor accountmanagers
+  met echte schermafbeeldingen (`assets/img/hulp/*.png`) en een **printknop**
+  (`window.print()` + `@media print`-CSS → nette PDF). Beide **noindex**, niet
+  in de sitemap. De admin-footer linkt naar de handleiding.
+- **Onderhoudsregel: wijzigt er iets aan de admin-UI of een flow die in een
+  handleiding staat (admin.html, src/index.js-endpoints, bestel-/mailflow),
+  werk dan in dezelfde sessie de betreffende hulp-pagina bij** (tekst én zo
+  nodig screenshots). Een Claude-Code-hook herinnert hieraan; voor Cowork
+  geldt deze regel via dit document.
+- **Screenshots reproduceren**: lokaal `npx wrangler@latest dev --port 8788`
+  (migraties + demodata in lokale D1; localhost is uitgezonderd van de
+  https-redirect in `src/index.js`), inloggen als demo-accountmanager en
+  screenshotten via puppeteer-core + systeem-Chrome (viewport 1280×840,
+  deviceScaleFactor 2), daarna verkleinen naar 1440px breed (sharp). De
+  demodata-seed en het screenshotscript zijn eenvoudig opnieuw te maken;
+  gebruik dezelfde bestandsnamen in `assets/img/hulp/` (immutable-cache:
+  bij een gewijzigde screenshot een `?v=`-query aan de img-src toevoegen
+  of de bestandsnaam wijzigen).
+
 ## Recente architectuur-besluiten (changelog)
+
+- **2026-07-03** (Code): **Hulp-sectie + handleiding voor accountmanagers.**
+  `hulp.html` + `hulp-accountmanagers.html` (10 hoofdstukken: inloggen,
+  overzicht, prijzen beheren, bevestigingsmail met `{{prijs}}`/CC/voorbeeld,
+  bestellingen/statistiek/exporteren, FAQ) met 9 schermafbeeldingen op basis
+  van een lokale demo-omgeving, printbaar via printknop + print-CSS. Footer
+  van alle pagina's kreeg een **Hulp**-link; admin-footer linkt naar de
+  handleiding. `src/index.js`: **localhost uitgezonderd van de
+  https-redirect** zodat `wrangler dev` lokaal werkt (productie ongewijzigd).
+  Zie de sectie "Hulp-sectie & handleidingen" voor de onderhoudsregel.
 
 - **2026-07-03** (Code): **Software-tab + versie volgt de historie.** Nieuwe **"Software"-tab**
   in de admin (`admin.html` + endpoint `GET /api/admin/software`, alle rollen, read-only):

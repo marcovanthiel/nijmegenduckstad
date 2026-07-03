@@ -16,7 +16,9 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     // Forceer HTTPS (achter Cloudflare: oorspronkelijke scheme uit cf-visitor; anders url.protocol).
-    if ((request.headers.get("cf-visitor") || "").includes('"scheme":"http"') || url.protocol === "http:") {
+    // Uitzondering: localhost (wrangler dev heeft geen https — anders is lokaal testen onmogelijk).
+    const isLocalDev = url.hostname === "localhost" || url.hostname === "127.0.0.1";
+    if (!isLocalDev && ((request.headers.get("cf-visitor") || "").includes('"scheme":"http"') || url.protocol === "http:")) {
       url.protocol = "https:";
       return Response.redirect(url.href, 301);
     }

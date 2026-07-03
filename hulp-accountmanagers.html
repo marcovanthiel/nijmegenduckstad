@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Handleiding voor accountmanagers · Hulp · Nijmegen Duckstad</title>
+<meta name="description" content="Stap-voor-stap handleiding voor accountmanagers van de Rotary Badeendjesrace: inloggen, prijzen beheren en bevestigingsmails sturen.">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#17458f">
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+<style>
+  /* Handleiding-specifiek */
+  .manual { max-width: 880px; }
+  .manual .card { margin-bottom: 22px; }
+  .manual h2 { margin-top: 0; }
+  .manual figure { margin: 18px 0 6px; }
+  .manual figure img {
+    width: 100%; height: auto; display: block;
+    border: 1px solid #dbe6f5; border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(23, 69, 143, .08);
+  }
+  .manual figcaption { font-size: .85rem; color: #5a6b85; margin-top: 8px; }
+  .manual .tip {
+    background: #eef7ee; border-left: 4px solid #2e7d32; border-radius: 8px;
+    padding: 12px 16px; margin: 14px 0;
+  }
+  .manual .letop {
+    background: #fff5dd; border-left: 4px solid #b98a00; border-radius: 8px;
+    padding: 12px 16px; margin: 14px 0;
+  }
+  .manual .toc { columns: 2; column-gap: 32px; }
+  .manual .toc li { break-inside: avoid; margin-bottom: 6px; }
+  @media (max-width: 640px) { .manual .toc { columns: 1; } }
+  .manual code {
+    background: #eef3fb; border-radius: 6px; padding: 1px 7px;
+    font-size: .92em; color: #17458f;
+  }
+  .print-bar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 4px 0 18px; }
+
+  /* Printbaar formaat: navigatie/knoppen weg, rustige zwart-op-wit-opmaak,
+     nette pagina-afbrekingen. "Afdrukken" in de browser = ook opslaan als PDF. */
+  @media print {
+    .site-header, .site-footer, .print-bar, .skip-link, .page-hero .crumbs, .no-print { display: none !important; }
+    body { background: #fff; }
+    .page-hero { background: none; padding: 0 0 10px; }
+    .page-hero h1 { color: #000; }
+    .page-hero p { color: #333; }
+    .section { padding: 0; }
+    .manual .card { border: 0; box-shadow: none; padding: 0 0 14px; margin-bottom: 10px; }
+    .manual figure { break-inside: avoid; }
+    .manual figure img { border: 1px solid #bbb; box-shadow: none; }
+    .manual .tip, .manual .letop { border: 1px solid #bbb; background: #fff; break-inside: avoid; }
+    h2 { break-after: avoid; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#inhoud">Direct naar de inhoud</a>
+<header class="site-header">
+  <nav class="nav" aria-label="Hoofdmenu">
+    <a class="nav__logo" href="index.html" aria-label="Nijmegen Duckstad home">
+      <img src="assets/img/logo.svg" alt="Nijmegen Duckstad" width="220" height="50">
+    </a>
+    <button class="nav__toggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+    <ul class="nav__links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="adopteren.html">Adopteren</a></li>
+      <li><a href="evenement.html">Evenement</a></li>
+      <li><a href="prijzen.html">Prijzen</a></li>
+      <li><a href="sponsoren.html">Sponsoren</a></li>
+      <li><a href="goede-doel.html">Goede doel</a></li>
+      <li><a href="vrijwilligers.html">Meedoen</a></li>
+      <li><a href="contact.html">Contact</a></li>
+      <li class="nav__cta"><a class="btn btn--primary" data-sales-link href="adopteren.html">Adopteer nu 🦆</a></li>
+    </ul>
+  </nav>
+</header>
+
+<section class="page-hero">
+  <div class="wrap">
+    <div class="crumbs"><a href="index.html">Home</a> › <a href="hulp.html">Hulp</a> › Handleiding accountmanagers</div>
+    <h1>Handleiding voor accountmanagers 🎁</h1>
+    <p>Alles wat je als accountmanager van de Rotary Badeendjesrace nodig hebt: inloggen, prijzen beheren en bevestigingsmails sturen.</p>
+  </div>
+</section>
+
+<section class="section" id="inhoud">
+  <div class="wrap manual">
+
+    <div class="print-bar">
+      <button class="btn btn--primary" type="button" onclick="window.print()">🖨️ Handleiding afdrukken / opslaan als PDF</button>
+      <span class="muted">Tip: kies in het printvenster "Bewaar als PDF" voor een digitale kopie.</span>
+    </div>
+
+    <div class="card">
+      <h2>Inhoud</h2>
+      <ol class="toc">
+        <li><a href="#rol">Wat doet een accountmanager?</a></li>
+        <li><a href="#inloggen">Inloggen (en wachtwoord instellen)</a></li>
+        <li><a href="#overzicht">Het overzicht: cijfers en tabbladen</a></li>
+        <li><a href="#prijzen">Prijzen bekijken, zoeken en filteren</a></li>
+        <li><a href="#nieuwe-prijs">Een nieuwe prijs toevoegen</a></li>
+        <li><a href="#bevestigingsmail">De bevestigingsmail sturen</a></li>
+        <li><a href="#bestellingen">Bestellingen inzien</a></li>
+        <li><a href="#statistiek">Statistiek bekijken</a></li>
+        <li><a href="#exporteren">Lijsten exporteren</a></li>
+        <li><a href="#vragen">Veelgestelde vragen</a></li>
+      </ol>
+      <p class="muted">De schermafbeeldingen in deze handleiding tonen voorbeeldgegevens.</p>
+    </div>
+
+    <div class="card" id="rol">
+      <h2>1. Wat doet een accountmanager?</h2>
+      <p>Als accountmanager benader je bedrijven en particulieren die een <strong>prijs inbrengen</strong> voor de badeendjesrace. In het beheersysteem ("Duckstad admin") kun je:</p>
+      <ul>
+        <li>ingebrachte <strong>prijzen registreren en bewerken</strong>, met de gegevens van de inbrenger en de voorwaarden;</li>
+        <li>de inbrenger een <strong>bevestigingsmail</strong> sturen, ondertekend met jouw naam en telefoonnummer;</li>
+        <li>de <strong>bestellingen, statistiek en exports inzien</strong> (alleen-lezen, handig voor de stand van zaken).</li>
+      </ul>
+      <p>Verkoopinstellingen, de race-uitslag en het gebruikersbeheer zijn voorbehouden aan de beheerder; die tabbladen zie je niet.</p>
+    </div>
+
+    <div class="card" id="inloggen">
+      <h2>2. Inloggen (en wachtwoord instellen)</h2>
+      <ol>
+        <li>Ga naar <strong>nijmegenduckstad.nl/admin</strong>.</li>
+        <li>Vul je <strong>e-mailadres</strong> en <strong>wachtwoord</strong> in en klik op <strong>Inloggen</strong>.</li>
+      </ol>
+      <figure>
+        <img src="assets/img/hulp/login.png" alt="Het inlogscherm van Duckstad admin met velden voor e-mailadres en wachtwoord" width="1440" height="945">
+        <figcaption>Afbeelding 1: Het inlogscherm op nijmegenduckstad.nl/admin.</figcaption>
+      </figure>
+      <p><strong>Eerste keer?</strong> De beheerder maakt je account aan; je ontvangt dan automatisch een e-mail met een link om zelf een wachtwoord in te stellen. De link is 72 uur geldig.</p>
+      <p><strong>Wachtwoord vergeten?</strong> Klik op het inlogscherm op <em>Wachtwoord vergeten?</em>, vul je e-mailadres in en je krijgt een nieuwe instel-link per mail.</p>
+      <div class="letop">⚠️ Geen mail ontvangen? Kijk in je spammap. Nog niets? Vraag de beheerder om de reset-mail opnieuw te sturen.</div>
+    </div>
+
+    <div class="card" id="overzicht">
+      <h2>3. Het overzicht: cijfers en tabbladen</h2>
+      <p>Na het inloggen zie je bovenaan de <strong>actuele cijfers</strong>: of de verkoop open is, hoeveel eendjes er zijn verkocht, de opbrengst en, voor jou het belangrijkst, <strong>"Prijzen te bevestigen"</strong>: hoeveel ingebrachte prijzen nog geen bevestigingsmail hebben gehad.</p>
+      <figure>
+        <img src="assets/img/hulp/overzicht.png" alt="Het adminoverzicht met cijferkaarten bovenaan en de tabbladen Bestellingen, Prijzen, Exporteren, Statistiek en Software" width="1440" height="945">
+        <figcaption>Afbeelding 2: Het overzicht direct na het inloggen, met de cijfers bovenaan en daaronder de tabbladen.</figcaption>
+      </figure>
+      <p>Daaronder staan de tabbladen waar jij bij kunt:</p>
+      <ul>
+        <li><strong>📋 Bestellingen</strong>: alle eendjes-bestellingen (alleen-lezen);</li>
+        <li><strong>🎁 Prijzen</strong>: jouw werkplek: prijzen en inbrengers beheren;</li>
+        <li><strong>📤 Exporteren</strong>: lijsten downloaden als CSV of print;</li>
+        <li><strong>📈 Statistiek</strong>: websitebezoek en conversie;</li>
+        <li><strong>🧩 Software</strong>: technisch systeemoverzicht (ter info).</li>
+      </ul>
+    </div>
+
+    <div class="card" id="prijzen">
+      <h2>4. Prijzen bekijken, zoeken en filteren</h2>
+      <p>Open het tabblad <strong>🎁 Prijzen</strong>. Je ziet alle ingebrachte prijzen met waarde, inbrenger, gekoppelde accountmanager, voorwaarden en of de bevestiging al is verstuurd.</p>
+      <figure>
+        <img src="assets/img/hulp/prijzen.png" alt="Het tabblad Prijzen met zoekveld, filterknoppen en de prijzentabel" width="1440" height="945">
+        <figcaption>Afbeelding 3: Het tabblad Prijzen met zoekveld, filters en per prijs de knoppen ✉️ (mail), ✏️ (bewerken) en 🗑 (verwijderen).</figcaption>
+      </figure>
+      <ul>
+        <li><strong>Zoeken</strong>: typ in het zoekveld een deel van de prijs, de inbrenger of het bedrijf.</li>
+        <li><strong>Nog te bevestigen</strong>: toont alleen prijzen zonder verstuurde bevestigingsmail.</li>
+        <li><strong>Mijn prijzen</strong>: toont alleen de prijzen die aan jou gekoppeld zijn.</li>
+      </ul>
+      <p>In de kolom <strong>Bevestiging</strong> zie je <em>verstuurd</em> met de datum (groen) of <em>nog niet</em> (geel).</p>
+    </div>
+
+    <div class="card" id="nieuwe-prijs">
+      <h2>5. Een nieuwe prijs toevoegen</h2>
+      <ol>
+        <li>Klik rechtsboven op <strong>➕ Nieuwe prijs</strong>.</li>
+        <li>Vul de velden in (zie hieronder) en klik op <strong>Prijs opslaan</strong>.</li>
+      </ol>
+      <figure>
+        <img src="assets/img/hulp/prijs-dialog.png" alt="Het invulvenster Nieuwe prijs met velden voor prijs, waarde, omschrijving, inbrenger, bedrijf, e-mail, telefoon, voorwaarden en accountmanager" width="1440" height="945">
+        <figcaption>Afbeelding 4: Het invulvenster voor een nieuwe prijs (hier al deels ingevuld als voorbeeld).</figcaption>
+      </figure>
+      <ul>
+        <li><strong>Prijs</strong> (verplicht): de naam van de prijs, bijvoorbeeld "Ballonvaart voor 2 personen".</li>
+        <li><strong>Waarde</strong>: vrije tekst, bijvoorbeeld "t.w.v. € 250".</li>
+        <li><strong>Omschrijving</strong>: wervende tekst zoals die op de website komt; deze verschijnt ook in het prijskader van de bevestigingsmail.</li>
+        <li><strong>Inbrenger (naam)</strong> (verplicht), <strong>Bedrijf / organisatie</strong>, <strong>E-mail</strong> en <strong>Telefoon</strong>: de gegevens van degene die de prijs beschikbaar stelt. <em>Zonder e-mailadres kan er geen bevestigingsmail worden gestuurd.</em></li>
+        <li><strong>Voorwaarden</strong>: afspraken zoals geldigheidsduur of beschikbaarheid; deze komen ook in de bevestigingsmail.</li>
+        <li><strong>Accountmanager</strong>: koppel jezelf (of een collega). De gekoppelde accountmanager ondertekent standaard de bevestigingsmail en krijgt daarvan een kopie.</li>
+      </ul>
+      <p><strong>Bewerken of verwijderen</strong> doe je in de prijzentabel met de knoppen ✏️ (opent hetzelfde venster, vooraf ingevuld) en 🗑.</p>
+      <div class="tip">💡 Koppel bij het invoeren meteen de juiste accountmanager. Dan kloppen de ondertekening van de mail en het filter "Mijn prijzen" vanzelf.</div>
+    </div>
+
+    <div class="card" id="bevestigingsmail">
+      <h2>6. De bevestigingsmail sturen</h2>
+      <p>Elke inbrenger hoort een nette bevestiging te krijgen van de prijs die hij of zij heeft toegezegd. Dat gaat zo:</p>
+      <ol>
+        <li>Klik in de prijzentabel op de <strong>✉️-knop</strong> bij de prijs.</li>
+        <li>Onderaan opent het paneel <strong>"Bevestigingsmail aan …"</strong>. Het onderwerp en het bericht staan al voor je klaar; pas ze gerust aan.</li>
+        <li>Klik op <strong>👁 Voorbeeld</strong> om te zien hoe de mail eruit komt te zien.</li>
+        <li>Klik op <strong>Verzenden</strong>. De tabel toont daarna "verstuurd" met de datum.</li>
+      </ol>
+      <figure>
+        <img src="assets/img/hulp/bevestiging.png" alt="Het bevestigingsmail-paneel met onderwerp, berichttekst en de knoppen Verzenden, Voorbeeld en Annuleren" width="1440" height="945">
+        <figcaption>Afbeelding 5: Het mailpaneel: de tekst is vooraf ingevuld en volledig aanpasbaar voordat je verzendt.</figcaption>
+      </figure>
+      <p>Goed om te weten:</p>
+      <ul>
+        <li>De regel <code>{{prijs}}</code> in het bericht wordt automatisch vervangen door een <strong>kader met de prijs, de omschrijving en de voorwaarden</strong>. Verplaats die regel als je het kader ergens anders in de mail wilt.</li>
+        <li>De mail wordt <strong>ondertekend met jouw naam en telefoonnummer</strong> (zoals bekend bij je account).</li>
+        <li>De <strong>gekoppelde accountmanager krijgt automatisch een kopie (CC)</strong> van de mail.</li>
+        <li>Is de prijs aan een <strong>andere accountmanager</strong> gekoppeld dan jijzelf, dan krijg je een waarschuwing; pas dan zo nodig de ondertekening aan.</li>
+        <li>Antwoorden van de inbrenger komen binnen op het centrale adres van Nijmegen Duckstad.</li>
+      </ul>
+      <figure>
+        <img src="assets/img/hulp/mail-voorbeeld.png" alt="Voorbeeldweergave van de bevestigingsmail met het gele prijskader en de ondertekening van de accountmanager" width="1440" height="1706">
+        <figcaption>Afbeelding 6: Het voorbeeld van de mail: bovenin de Duckstad-kop, in het midden het prijskader, onderaan jouw ondertekening.</figcaption>
+      </figure>
+      <div class="tip">💡 Al eerder een bevestiging gestuurd? Dan waarschuwt het systeem voordat je opnieuw verstuurt, zodat je niet per ongeluk dubbel mailt.</div>
+    </div>
+
+    <div class="card" id="bestellingen">
+      <h2>7. Bestellingen inzien</h2>
+      <p>Op het tabblad <strong>📋 Bestellingen</strong> zie je alle bestellingen van eendjes-adoptanten. Je kunt <strong>zoeken</strong> (naam, e-mail, plaats of startnummer) en <strong>filteren op status</strong> (Alle / Betaald / In behandeling / Terugbetaald). Klik op een regel om de details te openen, inclusief de toegekende <strong>startnummers</strong> en het telefoonnummer.</p>
+      <figure>
+        <img src="assets/img/hulp/bestellingen-detail.png" alt="De bestellingentabel met een opengeklikte regel die startnummers, telefoon en status toont" width="1440" height="945">
+        <figcaption>Afbeelding 7: Klik op een bestelling voor de details. Als accountmanager kun je alles bekijken, maar niets wijzigen.</figcaption>
+      </figure>
+    </div>
+
+    <div class="card" id="statistiek">
+      <h2>8. Statistiek bekijken</h2>
+      <p>Het tabblad <strong>📈 Statistiek</strong> toont het websitebezoek van de afgelopen 30 dagen: paginaweergaven, bezoeken aan de bestelpagina, betaalde bestellingen en de <strong>conversie</strong> (welk deel van de bezoekers van de bestelpagina daadwerkelijk bestelt). Handig om het effect van een actie of social-media-bericht te volgen. De telling is volledig anoniem en cookieloos.</p>
+      <figure>
+        <img src="assets/img/hulp/statistiek.png" alt="Het tabblad Statistiek met kerncijfers, een staafgrafiek per dag, populairste pagina's en verkeersbronnen" width="1440" height="945">
+        <figcaption>Afbeelding 8: Webstatistiek met bezoeken per dag, populairste pagina's en verkeersbronnen.</figcaption>
+      </figure>
+    </div>
+
+    <div class="card" id="exporteren">
+      <h2>9. Lijsten exporteren</h2>
+      <p>Op het tabblad <strong>📤 Exporteren</strong> download je met één klik:</p>
+      <ul>
+        <li><strong>Eendjeslijst (CSV)</strong>: alle verkochte eendjes met startnummer en koper;</li>
+        <li><strong>Bestellingen (CSV)</strong>: alle bestellingen met status en bedrag;</li>
+        <li><strong>Nieuwsbrief (CSV)</strong>: e-mailadressen van kopers die updates willen ontvangen;</li>
+        <li><strong>Eendjeslijst printen/PDF</strong>: een printvriendelijke lijst; kies in het printvenster "Bewaar als PDF".</li>
+      </ul>
+      <figure>
+        <img src="assets/img/hulp/exporteren.png" alt="Het tabblad Exporteren met vier exportknoppen" width="1440" height="945">
+        <figcaption>Afbeelding 9: De exportknoppen. CSV-bestanden openen direct in Excel of Numbers.</figcaption>
+      </figure>
+    </div>
+
+    <div class="card" id="vragen">
+      <h2>10. Veelgestelde vragen</h2>
+      <p><strong>Ik zie geen ✉️-knop bij een prijs.</strong><br>
+      Dan is er geen e-mailadres van de inbrenger ingevuld. Klik op ✏️, vul het e-mailadres aan en sla op; de mailknop verschijnt dan vanzelf.</p>
+      <p><strong>Kan ik een verstuurde bevestiging opnieuw sturen?</strong><br>
+      Ja. Klik opnieuw op ✉️; het systeem waarschuwt dat er al eerder een bevestiging is verstuurd, en jij beslist of je opnieuw verzendt.</p>
+      <p><strong>Ik wil een prijs verwijderen, maar twijfel.</strong><br>
+      Verwijderen kan niet ongedaan worden gemaakt. Twijfel je? Overleg dan even met de beheerder.</p>
+      <p><strong>Ik kan iets niet aanpassen (verkoop, race, gebruikers).</strong><br>
+      Dat klopt: die onderdelen zijn alleen voor de beheerder. Zie je iets dat aangepast moet worden, geef het dan door.</p>
+      <p><strong>Mijn naam of telefoonnummer in de ondertekening klopt niet.</strong><br>
+      De beheerder kan je naam en telefoonnummer aanpassen in het gebruikersbeheer; daarna staat het meteen goed in nieuwe mails.</p>
+      <p><strong>Andere vragen?</strong><br>
+      Mail <a data-email="text" href="#">info@nijmegenduckstad.nl</a>.</p>
+    </div>
+
+    <p class="no-print" style="margin-top:24px"><a class="btn btn--ghost-blue" href="hulp.html">← Terug naar Hulp</a></p>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-bottom" style="border:0">
+      <span>© <span data-year>2026</span> <a href="https://www.rotary.nl/nijmegenstadenland/" target="_blank" rel="noopener">Rotary club - Nijmegen Stad en Land</a> · Rotary Badeendjesrace</span>
+      <span><a href="hulp.html">Hulp</a> · <a href="contact.html">Contact</a> · <a href="privacy.html">Privacy</a></span>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/js/config.js?v=1"></script>
+<script src="assets/js/main.js?v=1"></script>
+</body>
+</html>
