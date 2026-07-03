@@ -208,6 +208,17 @@ De site wordt uitgebreid van static-only naar een Worker-met-code + D1:
 
 ## Recente architectuur-besluiten (changelog)
 
+- **2026-07-03** (Code): **Software-tab + versie volgt de historie.** Nieuwe **"Software"-tab**
+  in de admin (`admin.html` + endpoint `GET /api/admin/software`, alle rollen, read-only):
+  app-versie/commit, runtime, deploy-tool (wrangler gepind vs. npm-laatste + status) en
+  integraties (D1/Mollie/Resend). Duckstad heeft géén npm-runtime-dependencies (bewust puur
+  HTML/CSS/JS) → dit is een systeemoverzicht, geen pakketlijst. **Versiebeleid gewijzigd:** de
+  deploy-versie (`version.json`) wordt nu **automatisch afgeleid uit de git-historie** —
+  `VER="1.$((N/10)).$((N%10))"` met `N = git rev-list --count HEAD` (fetch-depth:0). Dus géén
+  handmatige `config.js`-bump meer nodig; het versienummer weerspiegelt het aantal updates en
+  groeit vanzelf mee. (Vervangt de eerdere afspraak "bump `version` in `config.js` bij elke
+  update".) Zelfde schema op alle beheerde sites; `/updates` blijft de changelog.
+
 - **2026-07-03** (Code): **Mail hersteld — Resend-key was ongeldig (401 "API key is invalid").**
   Alle uitgaande mail (bestelbevestigingen, organisator-notificaties, wachtwoord-resets,
   prijsbevestigingen, dagrapport) faalde stil. Nieuwe Resend-key gezet (`wrangler secret put
