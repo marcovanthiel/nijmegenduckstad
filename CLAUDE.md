@@ -230,6 +230,18 @@ De site wordt uitgebreid van static-only naar een Worker-met-code + D1:
 
 ## Recente architectuur-besluiten (changelog)
 
+- **2026-07-03** (Code): **Mobiele optimalisatie: fonts self-hosted + responsive prijzenfoto's.**
+  Fredoka + Inter staan nu als variabele woff2 in `assets/fonts/` (latin +
+  latin-ext, `@font-face` bovenin `style.css`, `font-display:swap`); alle
+  Google-Fonts-`<link>`s en preconnects zijn uit de HTML's verwijderd en de
+  **CSP is aangescherpt** (fonts.googleapis.com/fonts.gstatic.com weg uit
+  `style-src`/`font-src`, in `_headers` ÉN `src/index.js` — hou die twee
+  gelijk). `_headers`: `/assets/fonts/*` cachet immutable. Prijzenfoto's
+  hebben nu een 640px-variant (`*-m.webp`, sharp q78) + `srcset/sizes` in
+  `prijzen.html` → mobiel laadt ~60% minder fotobytes. Nieuwe fonts of
+  foto's? Zelfde patroon volgen (woff2 in assets/fonts + @font-face;
+  -m.webp + srcset).
+
 - **2026-07-03** (Code): **Hulp-sectie + handleiding voor accountmanagers.**
   `hulp.html` + `hulp-accountmanagers.html` (10 hoofdstukken: inloggen,
   overzicht, prijzen beheren, bevestigingsmail met `{{prijs}}`/CC/voorbeeld,
