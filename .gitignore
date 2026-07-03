@@ -3,6 +3,3 @@
 node_modules/
 .wrangler/
 
-# deploy-artefacten (door CI gegenereerd)
-version.json
-updates.json
