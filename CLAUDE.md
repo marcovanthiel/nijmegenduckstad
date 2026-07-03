@@ -208,6 +208,18 @@ De site wordt uitgebreid van static-only naar een Worker-met-code + D1:
 
 ## Recente architectuur-besluiten (changelog)
 
+- **2026-07-03** (Code): **Mail hersteld — Resend-key was ongeldig (401 "API key is invalid").**
+  Alle uitgaande mail (bestelbevestigingen, organisator-notificaties, wachtwoord-resets,
+  prijsbevestigingen, dagrapport) faalde stil. Nieuwe Resend-key gezet (`wrangler secret put
+  RESEND_API_KEY`), **scoped op sending via `rotarynijmegenstadenland.nl`** — het domein
+  `nijmegenduckstad.nl` is NIET in Resend geverifieerd, dus de afzender moet een geverifieerd
+  domein zijn. Daarom nu: **`MAIL_FROM` = `Nijmegen Duckstad <noreply@rotarynijmegenstadenland.nl>`**
+  (geverifieerd + on-brand: de Rotary-club organiseert de race) en **`MAIL_REPLY_TO` =
+  `info@nijmegenduckstad.nl`** (antwoorden komen in de Duckstad-inbox). Geverifieerd: `POST
+  /api/contact` geeft weer `{"ok":true}`. Wil je afzender `@nijmegenduckstad.nl`? Dan eerst dat
+  domein in Resend verifiëren (+ SPF/DKIM-DNS in Cloudflare). NB: `wrangler secret put` is een
+  secret-operatie (geen code-deploy) en mag dus buiten de GitHub-flow.
+
 - **2026-07-02** (Code, v1.0.18): **UX-verbeterronde (3 doelgroepen) o.b.v. gebruiksvriendelijkheidsscan.**
   *Klant*: bestelflow toont nu de geselecteerde bundel/type/extra (`.is-selected`+`aria-pressed`);
   keuze uit `adopteren.html` gaat mee (`?qty`/`?type`); ingevulde velden blijven bewaard na een
