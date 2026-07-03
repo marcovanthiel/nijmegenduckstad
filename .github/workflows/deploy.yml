@@ -30,8 +30,9 @@ jobs:
 
       - name: Genereer versie-info (version.json + updates.json)
         run: |
-          VER=$(grep -oE 'version:[[:space:]]*"[^"]+"' assets/js/config.js | head -1 | sed -E 's/.*"([^"]+)".*/\1/')
-          printf '{"version":"%s","commit":"%s","date":"%s"}' "${VER:-0.0.0}" "${GITHUB_SHA::7}" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > version.json
+          N=$(git rev-list --count HEAD)
+          VER="1.$((N/10)).$((N%10))"   # versie volgt de historie (aantal updates)
+          printf '{"version":"%s","commit":"%s","date":"%s"}' "$VER" "${GITHUB_SHA::7}" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > version.json
           python3 - <<'PY'
           import subprocess, json
           out = subprocess.run(['git','log','-40','--no-merges','--pretty=format:%h%x1f%cI%x1f%s'],

@@ -94,6 +94,7 @@
       <button class="tab" role="tab" aria-selected="false" data-tab="prijzen" type="button">🎁 Prijzen</button>
       <button class="tab" role="tab" aria-selected="false" data-tab="exporteren" type="button">📤 Exporteren</button>
       <button class="tab" role="tab" aria-selected="false" data-tab="statistiek" type="button">📈 Statistiek</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="software" type="button">🧩 Software</button>
       <button class="tab admin-only" role="tab" aria-selected="false" data-tab="verkoop" type="button">🧾 Verkoop</button>
       <button class="tab admin-only" role="tab" aria-selected="false" data-tab="race" type="button">🏁 Race</button>
       <button class="tab admin-only" role="tab" aria-selected="false" data-tab="gebruikers" type="button">👥 Gebruikers</button>
@@ -111,6 +112,17 @@
         </div>
       </div>
       <p class="form__note">CSV opent in Excel/Numbers. "Printen/PDF" opent een printbare lijst — kies in het printvenster "Bewaar als PDF".</p>
+    </div>
+    </section>
+
+    <section class="tabpane" data-pane="software">
+    <div class="panel">
+      <div class="row" style="justify-content:space-between">
+        <h3 style="margin:0">Software &amp; versies</h3>
+        <div class="row"><a class="btn btn--ghost-blue" href="/updates" target="_blank" rel="noopener" style="padding:8px 16px">🕑 Versiegeschiedenis</a><button class="btn btn--ghost-blue" id="swRefresh" style="padding:8px 16px">⟳ Vernieuwen</button></div>
+      </div>
+      <p class="form__note">Overzicht van de gebruikte software en of we op de meest recente versie zitten. Afhankelijkheden worden wekelijks automatisch gecontroleerd (Dependabot).</p>
+      <div id="softwareBox"><p class="form__note">Laden…</p></div>
     </div>
     </section>
 
@@ -334,6 +346,7 @@
       .catch(function(){ status('Geen verbinding.'); });
   };
   document.getElementById('pw').addEventListener('keydown',function(e){ if(e.key==='Enter') document.getElementById('loginBtn').click(); });
+  (function(){ var b=document.getElementById('swRefresh'); if(b) b.addEventListener('click',function(){ var box=document.getElementById('softwareBox'); if(box) box.innerHTML='<p class="form__note">Laden…</p>'; loadSoftware(); }); })();
   document.getElementById('logout').onclick=function(){ postJSON('logout').then(function(){ location.reload(); }); };
   document.getElementById('forgotLink').onclick=function(){ document.getElementById('loginForm').style.display='none'; document.getElementById('forgotForm').style.display='block'; document.getElementById('loginTitle').textContent='Wachtwoord vergeten'; loginStatus.className='form-status'; };
   document.getElementById('backToLogin').onclick=function(){ document.getElementById('forgotForm').style.display='none'; document.getElementById('loginForm').style.display='block'; document.getElementById('loginTitle').textContent='Inloggen'; loginStatus.className='form-status'; };
@@ -355,7 +368,7 @@
     var who=document.getElementById('whoami'); who.style.display=''; who.textContent='Ingelogd als '+email+' · '+roleLabel;
     // Eigen naam/telefoon voor de mail-ondertekening
     api('me').then(function(r){return r.json();}).then(function(m){ myName=m.name||''; myPhone=m.phone||''; }).catch(function(){});
-    loadStats(); loadOrders(); loadDraws(); loadPrizes(); loadAnalytics(); if(canPrizes) loadManagers(); if(isAdmin) loadUsers();
+    loadStats(); loadOrders(); loadDraws(); loadPrizes(); loadAnalytics(); loadSoftware(); if(canPrizes) loadManagers(); if(isAdmin) loadUsers();
     refreshScrollHints();
   }
 
@@ -380,6 +393,25 @@
       var pr=document.getElementById('priceReg'); if(pr) pr.value=(s.price_regular_cents/100);
       var pb=document.getElementById('priceBus'); if(pb) pb.value=(s.price_business_cents/100);
     }).catch(function(){ toast('Kon statistieken niet laden.', false); });
+  }
+  function swBadge(s){ var m={'up-to-date':['Up-to-date','#0c7a3f','#e6f5ec'],'minor-or-patch':['Minor / patch beschikbaar','#8a6100','#fdf4dd'],'major':['Major beschikbaar','#9b2226','#fbe6e6'],'unknown':['Onbekend','#555','#eee']}; var b=m[s]||m.unknown; return '<span style="display:inline-block;padding:2px 10px;border-radius:999px;font-size:.8rem;font-weight:600;color:'+b[1]+';background:'+b[2]+'">'+b[0]+'</span>'; }
+  function loadSoftware(){
+    var box=document.getElementById('softwareBox'); if(!box) return;
+    api('software').then(function(r){return r.json();}).then(function(d){
+      if(!d||d.error){ box.innerHTML='<p class="form__note">Kon software-info niet laden.</p>'; return; }
+      var app=d.app||{};
+      function card(label,big,sub){ return '<div style="background:#0f1b3a;color:#fff;border-radius:12px;padding:14px 16px"><div style="font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;opacity:.6">'+esc(label)+'</div><div style="font-size:1.25rem;font-weight:700;margin-top:3px;word-break:break-word">'+big+'</div>'+(sub?'<div style="opacity:.6;font-size:.78rem;margin-top:2px">'+sub+'</div>':'')+'</div>'; }
+      var cards='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:4px 0 8px">'
+        + card('App-versie','v'+esc(app.version||(window.DUCKSTAD&&window.DUCKSTAD.version)||'—'), esc(app.commit||''))
+        + card('Runtime', esc(d.runtime||'Cloudflare Workers'), 'productie')
+        + card('Build', esc(app.date?String(app.date).slice(0,10):'—'), 'laatste deploy')
+        + '</div>';
+      var tool=(d.tooling||[]).map(function(t){ return '<tr style="border-bottom:1px solid #eef1f6"><td style="padding:8px 10px;font-family:ui-monospace,Menlo,monospace">'+esc(t.name)+'</td><td style="padding:8px 10px;font-family:ui-monospace,Menlo,monospace;color:#5a6472">'+esc(t.current||'—')+'</td><td style="padding:8px 10px;font-family:ui-monospace,Menlo,monospace;color:#5a6472">'+esc(t.latest||'—')+'</td><td style="padding:8px 10px">'+swBadge(t.status)+'</td></tr>'; }).join('');
+      var toolTbl=tool?('<h4 style="margin:14px 0 6px">Deploy-tooling</h4><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><thead><tr style="text-align:left;border-bottom:2px solid #e3e8f0;color:#5a6472;font-size:.76rem;text-transform:uppercase"><th style="padding:6px 10px">Pakket</th><th style="padding:6px 10px">Gepind</th><th style="padding:6px 10px">Laatste</th><th style="padding:6px 10px">Status</th></tr></thead><tbody>'+tool+'</tbody></table></div>'):'';
+      var integ=(d.integrations||[]).map(function(x){ return '<tr style="border-bottom:1px solid #eef1f6"><td style="padding:8px 10px;font-weight:600">'+esc(x.name)+'</td><td style="padding:8px 10px;color:#5a6472">'+esc(x.kind||'')+'</td><td style="padding:8px 10px;color:#5a6472">'+esc(x.note||'')+'</td></tr>'; }).join('');
+      var integTbl=integ?('<h4 style="margin:16px 0 6px">Integraties</h4><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><tbody>'+integ+'</tbody></table></div>'):'';
+      box.innerHTML=cards+toolTbl+integTbl+(d.stack?'<p class="form__note" style="margin-top:14px">'+esc(d.stack)+'</p>':'');
+    }).catch(function(){ box.innerHTML='<p class="form__note">Kon software-info niet laden.</p>'; });
   }
   function loadAnalytics(){
     api('analytics').then(function(r){return r.json();}).then(function(d){

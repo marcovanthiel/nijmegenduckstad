@@ -680,6 +680,51 @@ async function sendPrizeConfirmation(env, prize, subject, message) {
   } catch (e) { console.error("prize_mail_exception", String((e && e.message) || e)); return { ok: false, error: String((e && e.message) || e) }; }
 }
 
+// ── Software & systeem ──────────────────────────────────────────────────────
+// Deze site draait bewust op pure HTML/CSS/JS + een Worker zonder npm-runtime-
+// dependencies. "Software & versies" toont daarom de app-versie, de runtime, de
+// deploy-tool (wrangler, gepind in de workflow vs. de laatste npm-versie) en de
+// externe integraties.
+const WRANGLER_PINNED = "4.103.0"; // houd gelijk met wranglerVersion in deploy.yml
+const cleanVer = (v) => String(v || "").replace(/^[\^~>=<\s]+/, "").trim();
+async function npmLatest(name) {
+  try {
+    const r = await fetch(`https://registry.npmjs.org/${encodeURIComponent(name)}/latest`,
+      { headers: { accept: "application/json" }, cf: { cacheTtl: 3600, cacheEverything: true } });
+    if (!r.ok) return null;
+    const j = await r.json();
+    return (j && j.version) || null;
+  } catch (e) { return null; }
+}
+function classifyVer(cur, latest) {
+  if (!latest) return "unknown";
+  const c = cleanVer(cur);
+  if (!c) return "unknown";
+  if (c === latest) return "up-to-date";
+  const cMaj = parseInt(c.split(".")[0], 10) || 0;
+  const lMaj = parseInt(latest.split(".")[0], 10) || 0;
+  return lMaj > cMaj ? "major" : "minor-or-patch";
+}
+async function apiSoftware(request, env) {
+  let vinfo = null;
+  try { const r = await env.ASSETS.fetch(new Request(new URL("/version.json", request.url))); if (r.ok) vinfo = await r.json(); } catch (e) {}
+  const wranglerLatest = await npmLatest("wrangler");
+  return json({
+    app: vinfo || {},
+    runtime: "Cloudflare Workers (workerd)",
+    tooling: [
+      { name: "wrangler", current: WRANGLER_PINNED, latest: wranglerLatest, status: classifyVer(WRANGLER_PINNED, wranglerLatest) },
+    ],
+    integrations: [
+      { name: "Cloudflare D1", kind: "Database", note: "bestellingen · prijzen · gebruikers" },
+      { name: "Cloudflare R2 / Static Assets", kind: "Hosting", note: "statische site" },
+      { name: "Mollie", kind: "Betalingen (iDEAL)", note: "productie" },
+      { name: "Resend", kind: "E-mail", note: "bevestigingen · rapporten" },
+    ],
+    stack: "Pure HTML/CSS/JS + Cloudflare Worker — geen runtime-dependencies (bewust minimaal).",
+  });
+}
+
 async function adminApi(path, request, env) {
   const sub = path.slice("/api/admin/".length);
 
@@ -696,6 +741,7 @@ async function adminApi(path, request, env) {
     const u = await env.DB.prepare("SELECT name, phone FROM users WHERE email=?1").bind(session.email).first();
     return json({ email: session.email, role: session.role, name: (u && u.name) || "", phone: (u && u.phone) || "" });
   }
+  if (sub === "software") return apiSoftware(request, env);
 
   // Rechten: 'admin' mag alles. 'accountmanager' mag ingebrachte prijzen beheren
   // (toevoegen/bewerken/verwijderen/mailen) en de rest inzien. 'readonly' mag alleen bekijken + exports.
