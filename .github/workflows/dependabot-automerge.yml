@@ -1,7 +1,8 @@
 name: Dependabot auto-merge
 # Mergt Dependabot-PR's automatisch: minor + patch + CI-actions + docker worden
-# na een groene check vanzelf gesquashed. MAJOR-bumps NIET — die blijven als PR
-# staan voor een korte handmatige review (voorkomt stille breuk in productie).
+# vanzelf gesquashed. MAJOR-bumps NIET — die blijven als PR staan voor review.
+# Public repos: --auto wacht op groene checks. Private repos (geen auto-merge op
+# free-plan): fallback naar directe squash-merge.
 on: pull_request
 permissions:
   contents: write
@@ -13,10 +14,10 @@ jobs:
     steps:
       - name: Dependabot metadata
         id: meta
-        uses: dependabot/fetch-metadata@v2
+        uses: dependabot/fetch-metadata@v3
       - name: Auto-merge (geen majors)
         if: ${{ steps.meta.outputs.update-type != 'version-update:semver-major' }}
-        run: gh pr merge --auto --squash "$PR_URL"
+        run: gh pr merge --auto --squash "$PR_URL" || gh pr merge --squash "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
