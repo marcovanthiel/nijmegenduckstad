@@ -20,11 +20,11 @@ jobs:
       contents: read
       deployments: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0   # volledige historie nodig voor de updates-lijst
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: '22'
 
@@ -46,11 +46,11 @@ jobs:
           echo "version.json: $(cat version.json)"
 
       - name: Deploy met wrangler
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           # Pin wrangler: de action-default kan een oudere wrangler bundelen die
           # public/_headers voor Workers-assets niet toepast (geen CSP/immutable
           # op de statische site). Deze versie past _headers wél toe.
-          wranglerVersion: '4.103.0'
+          wranglerVersion: '4.107.0'
