@@ -1,0 +1,22 @@
+name: Dependabot auto-merge
+# Mergt Dependabot-PR's automatisch: minor + patch + CI-actions + docker worden
+# na een groene check vanzelf gesquashed. MAJOR-bumps NIET — die blijven als PR
+# staan voor een korte handmatige review (voorkomt stille breuk in productie).
+on: pull_request
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  auto-merge:
+    if: ${{ github.actor == 'dependabot[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dependabot metadata
+        id: meta
+        uses: dependabot/fetch-metadata@v2
+      - name: Auto-merge (geen majors)
+        if: ${{ steps.meta.outputs.update-type != 'version-update:semver-major' }}
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
