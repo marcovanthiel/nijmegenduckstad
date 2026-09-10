@@ -17,9 +17,9 @@
 <link rel="canonical" href="https://nijmegenduckstad.nl/">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="nl_NL">
-<meta name="theme-color" content="#17458f">
-<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="assets/css/style.css">
+<meta name="theme-color" content="#0b2447">
+<link rel="icon" href="assets/img/favicon.svg?v=2" type="image/svg+xml">
+<link rel="stylesheet" href="assets/css/style.css?v=4">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -37,11 +37,49 @@
 </script>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<g id="duck">
+  <path d="M52 122 C30 112 18 88 26 62 C34 78 48 88 62 94 C54 102 50 112 52 122 Z" fill="#FFD60A"/>
+  <path d="M36 130 C30 98 62 74 104 78 C116 46 156 36 184 56 C210 75 212 108 194 130 C218 138 226 158 212 174 C194 194 94 200 60 180 C40 168 32 150 36 130 Z" fill="#FFD60A"/>
+  <circle cx="170" cy="80" r="46" fill="#FFD60A"/>
+  <path d="M72 122 C66 100 90 88 114 96 C136 104 138 128 120 142 C102 156 78 146 72 122 Z" fill="#FFE45C"/>
+  <path d="M50 172 C88 190 178 188 208 168 C212 176 208 184 196 190 C158 204 90 202 60 184 C54 180 50 176 50 172 Z" fill="#F2B705"/>
+  <path d="M196 82 C226 74 252 80 256 90 C256 98 240 103 220 101 C206 100 196 92 196 86 Z" fill="#F7811B"/>
+  <path d="M198 98 C220 108 244 106 254 97 C250 111 226 117 210 109 C202 105 197 102 198 98 Z" fill="#DE6A0A"/>
+  <circle cx="184" cy="66" r="9" fill="#0B2447"/>
+  <circle cx="187" cy="63" r="3" fill="#fff"/>
+</g>
+<g id="badge">
+  <path id="arcTop" d="M34 150 A116 116 0 0 1 266 150" fill="none"/>
+  <path id="arcBot" d="M42 150 A108 108 0 0 0 258 150" fill="none"/>
+  <circle cx="150" cy="150" r="146" fill="#FFD60A"/>
+  <circle cx="150" cy="150" r="138" fill="none" stroke="#0B2447" stroke-width="2.5" stroke-dasharray="1.5 9" stroke-linecap="round"/>
+  <circle cx="150" cy="150" r="86" fill="#0B2447"/>
+  <clipPath id="badgeclip"><circle cx="150" cy="150" r="86"/></clipPath>
+  <g clip-path="url(#badgeclip)">
+    <path d="M60 186 Q75 178 90 186 T120 186 T150 186 T180 186 T210 186 T240 186 V240 H60 Z" fill="#2E6FC2"/>
+    <path d="M60 202 Q75 194 90 202 T120 202 T150 202 T180 202 T210 202 T240 202 V240 H60 Z" fill="#4FB3D9"/>
+    <g transform="translate(84,74) scale(.52)"><use href="#duck"/></g>
+  </g>
+  <text font-family="'Lilita One','Trebuchet MS',sans-serif" font-size="30" fill="#0B2447" letter-spacing="3" text-anchor="middle"><textPath href="#arcTop" startOffset="50%">17 APRIL 2027</textPath></text>
+  <text font-family="'Lilita One','Trebuchet MS',sans-serif" font-size="19" fill="#0B2447" letter-spacing="2" text-anchor="middle"><textPath href="#arcBot" startOffset="50%">SPIEGELWAAL &#183; NIJMEGEN</textPath></text>
+</g>
+<g id="ducksil" fill="#0B2447">
+  <path d="M52 122 C30 112 18 88 26 62 C34 78 48 88 62 94 C54 102 50 112 52 122 Z"/>
+  <path d="M36 130 C30 98 62 74 104 78 C116 46 156 36 184 56 C210 75 212 108 194 130 C218 138 226 158 212 174 C194 194 94 200 60 180 C40 168 32 150 36 130 Z"/>
+  <circle cx="170" cy="80" r="46"/>
+  <path d="M196 82 C226 74 252 80 256 90 C256 98 240 103 220 101 C206 100 196 92 196 86 Z"/>
+</g>
+<g id="golfrij">
+  <path d="M0 40 Q45 28 90 40 T180 40 T270 40 T360 40 T450 40 T540 40 T630 40 T720 40 T810 40 T900 40 T990 40 T1080 40 T1170 40 T1260 40 T1350 40 T1440 40 V120 H0 Z"/>
+</g>
+</defs></svg>
+
 <a class="skip-link" href="#hoofd">Direct naar de inhoud</a>
 <header class="site-header">
   <nav class="nav" aria-label="Hoofdmenu">
     <a class="nav__logo" href="index.html" aria-label="Nijmegen Duckstad home">
-      <img src="assets/img/logo.svg" alt="Nijmegen Duckstad" width="220" height="50">
+      <img src="assets/img/duck.svg" alt="" width="46" height="36"><b>Nijmegen<br>Duckstad</b>
     </a>
     <button class="nav__toggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
     <ul class="nav__links">
@@ -53,134 +91,222 @@
       <li><a class="" href="goede-doel.html">Goede doel</a></li>
       <li><a class="" href="vrijwilligers.html">Meedoen</a></li>
       <li><a class="" href="contact.html">Contact</a></li>
-      <li class="nav__cta"><a class="btn btn--primary" data-sales-link href="adopteren.html">Adopteer nu 🦆</a></li>
+      <li class="nav__cta"><a class="btn btn--primary" data-sales-link href="adopteren.html">Adopteer nu</a></li>
     </ul>
   </nav>
 </header>
 
 <section id="hoofd" class="hero">
-  <div class="hero__inner">
-    <div class="hero__text">
-      <span class="eyebrow">Rotary Badeendjesrace 2027</span>
-      <h1>Welkom in <span class="hl">Nijmegen Duckstad</span> 🦆</h1>
-      <p>Op <strong data-event-date>zaterdag 17 april 2027</strong> dobberen duizenden badeendjes door de <strong>Spiegelwaal</strong>. Adopteer jouw eendje, juich het naar de finish en maak kans op prachtige prijzen — terwijl je het goede doel steunt.</p>
+  <div class="hero__grid">
+    <div>
+      <span class="eyebrow">Rotary Badeendjesrace &#183; voor het goede doel</span>
+      <h1>5.000 eendjes.<br>&Eacute;&eacute;n finish.<br><span class="hl">Adopteer de jouwe.</span></h1>
+      <p class="lead">Op <strong data-event-date>zaterdag 17 april 2027</strong> racen duizenden badeendjes door de Spiegelwaal. Jouw eendje vaart mee voor <span data-price>€5</span>, maakt kans op prachtige prijzen en de volledige netto-opbrengst gaat naar het goede doel.</p>
       <div class="hero__actions">
-        <a class="btn btn--primary btn--lg" data-sales-link href="adopteren.html">Adopteer een eendje · <span data-price>€5</span></a>
-        <a class="btn btn--ghost btn--lg" href="evenement.html">Bekijk het programma</a>
+        <a class="btn btn--primary" data-sales-link href="adopteren.html">Adopteer een eendje &#183; <span data-price>€5</span></a>
+        <a class="btn btn--ghost" href="#zo-werkt-het">Zo werkt het</a>
       </div>
-      <div class="hero__meta">
-        <div>📅 <b data-event-date>17 april 2027</b><span>Start bedrijvenrace 15:00</span></div>
-        <div>📍 <b data-event-location>Spiegelwaal</b><span>Nijmegen</span></div>
-        <div>🎯 <b><span data-goal-net>€31.701</span></b><span>voor het goede doel</span></div>
-      </div>
+      <span class="datumpil">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFE45C" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+        <span data-event-date>Zaterdag 17 april 2027</span> &#183; bedrijvenrace 15:00 &#183; Spiegelwaal, Nijmegen
+      </span>
     </div>
-    <div class="hero__art">
-      <svg class="bigduck" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-label="Badeendje">
-        <ellipse cx="100" cy="150" rx="70" ry="20" fill="rgba(0,0,0,.18)"/>
-        <ellipse cx="100" cy="120" rx="66" ry="46" fill="#ffd60a"/>
-        <ellipse cx="100" cy="132" rx="50" ry="34" fill="#ffe45c"/>
-        <circle cx="128" cy="74" r="34" fill="#ffd60a"/>
-        <circle cx="138" cy="66" r="7.5" fill="#17458f"/><circle cx="141" cy="63.5" r="2.6" fill="#fff"/>
-        <path d="M158 74 l34 7 l-34 11 z" fill="#f7811b"/>
-        <path d="M150 80 l28 5 l-28 8 z" fill="#e06f0c"/>
-        <path d="M52 120 q-26 4 -34 22 q24 4 42 -8 z" fill="#ffe45c"/>
-      </svg>
-    </div>
+    <div class="badgewrap"><svg class="bigduck" width="258" height="258" viewBox="0 0 300 300" role="img" aria-label="17 april 2027, Spiegelwaal Nijmegen"><use href="#badge"/></svg></div>
   </div>
-  <div class="hero__waves" aria-hidden="true">
-    <svg viewBox="0 0 1440 110" preserveAspectRatio="none" width="100%" height="90"><path fill="#f6f9fc" d="M0,40 C240,100 480,0 720,40 C960,80 1200,10 1440,50 L1440,110 L0,110 Z"/></svg>
+  <div class="waterband" aria-hidden="true">
+    <svg viewBox="0 0 1440 250" preserveAspectRatio="xMidYMax slice">
+      <g transform="translate(0,110)" fill="#17458F"><use href="#golfrij"/></g>
+      <g transform="translate(120,82) scale(.68)"><use href="#duck"/></g>
+      <g transform="translate(420,56) scale(.88)"><use href="#duck"/></g>
+      <g transform="translate(760,92) scale(.58)"><use href="#duck"/></g>
+      <g transform="translate(1040,70) scale(.76)"><use href="#duck"/></g>
+      <g transform="translate(0,150)" fill="#2E6FC2"><use href="#golfrij"/></g>
+      <g transform="translate(0,185)" fill="#4FB3D9"><use href="#golfrij"/></g>
+    </svg>
   </div>
 </section>
 
+<div class="ticker" aria-hidden="true"><div class="ticker__baan"><span>ZATERDAG 17 APRIL 2027</span>&#9679;<span>SPIEGELWAAL NIJMEGEN</span>&#9679;<span>5.000 EENDJES</span>&#9679;<span>&euro;5 PER EENDJE</span>&#9679;<span>100% NETTO NAAR HET GOEDE DOEL</span>&#9679;<span>ZATERDAG 17 APRIL 2027</span>&#9679;<span>SPIEGELWAAL NIJMEGEN</span>&#9679;<span>5.000 EENDJES</span>&#9679;<span>&euro;5 PER EENDJE</span>&#9679;<span>100% NETTO NAAR HET GOEDE DOEL</span>&#9679;</div></div>
+
 <div class="wrap">
-  <div class="counter">
+  <section class="counter" aria-label="Stand van de verkoop">
     <div class="counter__top">
       <div>
-        <div class="counter__num"><span data-ducks-sold>0</span> <small>/ <span data-ducks-total>5.000</span> eendjes</small></div>
-        <div class="counter__label">Al geadopteerd voor het goede doel</div>
+        <div class="counter__num"><span data-ducks-sold>0</span> <small>van <span data-ducks-total>5.000</span> eendjes</small></div>
+        <div class="counter__label">al geadopteerd voor het goede doel</div>
       </div>
       <div style="text-align:right">
-        <div class="counter__num" style="color:var(--gold)"><span data-raised>€0</span></div>
-        <div class="counter__label">opgehaald</div>
+        <div class="counter__num" style="color:var(--blue)"><span data-raised>€0</span></div>
+        <div class="counter__label">opgehaald voor het goede doel</div>
       </div>
     </div>
-    <div class="bar"><div class="bar__fill" data-bar-fill></div></div>
-    <div class="counter__sub"><span>🦆 Elk eendje telt</span><span>Doel: <span data-ducks-total>5.000</span> eendjes</span></div>
-  </div>
+    <div class="bar" aria-hidden="true">
+      <div class="bar__fill" data-bar-fill><img class="bar__duck" src="assets/img/duck.svg" alt="" width="52" height="40"></div>
+      <div class="bar__finish"></div>
+    </div>
+    <div class="counter__sub"><span>Startschot gegeven: elk eendje telt</span><span>Finish: 5.000 eendjes</span></div>
+  </section>
 </div>
+
+<section class="section center" id="zo-werkt-het">
+  <div class="wrap">
+    <span class="eyebrow">Zo werkt het</span>
+    <h2>In vier stappen naar de finish</h2>
+    <p class="lead" style="margin-top:.6rem">Meedoen is simpel, en je steunt er meteen een goed doel mee.</p>
+    <div class="steps" style="margin-top:2.6rem;text-align:left">
+      <div class="step reveal">
+        <svg width="52" height="40" viewBox="0 0 270 210" aria-hidden="true"><use href="#duck"/></svg>
+        <h3>Adopteer</h3><p>Koop online of op een verkoopweekend &eacute;&eacute;n of meer eendjes voor <span data-price>€5</span> per stuk.</p></div>
+      <div class="step reveal">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#0B2447" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4Z" fill="#FFD60A" stroke="none"/><path d="M4 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4Z"/><path d="M14 6v12" stroke-dasharray="2 2.6"/></svg>
+        <h3>Jouw startnummer</h3><p>Elk eendje krijgt een uniek startnummer. Dat nummer is jouw lot in de race.</p></div>
+      <div class="step reveal">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#0B2447" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3v18"/><path d="M5 4h13l-3 4 3 4H5" fill="#FFD60A" stroke="none"/><path d="M5 4h13l-3 4 3 4H5"/></svg>
+        <h3>De race</h3><p>Op 17 april gaan alle eendjes te water in de Spiegelwaal. Wie het eerst finisht, wint.</p></div>
+      <div class="step reveal">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#0B2447" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4h8v6a4 4 0 0 1-8 0Z" fill="#FFD60A" stroke="none"/><path d="M8 4h8v6a4 4 0 0 1-8 0Z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4"/><path d="M12 14v3m-4 4c0-2 2-3 4-3s4 1 4 3Z"/></svg>
+        <h3>Win &amp; steun</h3><p>Maak kans op mooie prijzen. De volledige opbrengst gaat naar het goede doel.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="section center" style="padding-top:0">
+  <div class="wrap">
+    <span class="eyebrow">Te winnen prijzen</span>
+    <h2>D&iacute;t kun je winnen</h2>
+    <p class="lead" style="margin-top:.6rem">De snelste eendjes winnen prachtige prijzen, en er komt nog meer bij.</p>
+    <div class="podium">
+      <div class="pod reveal">
+        <span class="pod__rang">2e prijs</span>
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#0B2447" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11 12 4l8 7"/><path d="M6 10v9h12v-9" fill="#FFD60A" stroke="none"/><path d="M6 10v9h12v-9"/><path d="M10 19v-5h4v5"/></svg>
+        <h3>Weekend Maastricht</h3>
+        <p>Een weekend in een vakantiehuis in de gezelligste stad van Limburg.</p>
+      </div>
+      <div class="pod pod--1 reveal">
+        <span class="pod__rang">1e prijs</span>
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#0B2447" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 1.5a6.5 6.5 0 0 1 6.5 6.5c0 3.6-3.2 6.2-4.7 7.2H10.2C8.7 14.2 5.5 11.6 5.5 8A6.5 6.5 0 0 1 12 1.5Z" fill="#FFD60A" stroke="none"/><path d="M12 1.5a6.5 6.5 0 0 1 6.5 6.5c0 3.6-3.2 6.2-4.7 7.2H10.2C8.7 14.2 5.5 11.6 5.5 8A6.5 6.5 0 0 1 12 1.5Z"/><path d="M9.5 2.6C8.3 4 8 6 8.3 8c.3 2.4 1.2 4.6 2 7.2M14.5 2.6c1.2 1.4 1.5 3.4 1.2 5.4-.3 2.4-1.2 4.6-2 7.2"/><path d="M10.2 15.2 9.7 18h4.6l-.5-2.8"/><rect x="9.2" y="18" width="5.6" height="3.6" rx="1.2" fill="#FFD60A" stroke="none"/><rect x="9.2" y="18" width="5.6" height="3.6" rx="1.2"/></svg>
+        <h3>Ballonvaart voor 2 personen</h3>
+        <p>Stijg samen op en zweef geruisloos over het landschap. Een onvergetelijk avontuur voor twee.</p>
+      </div>
+      <div class="pod reveal">
+        <span class="pod__rang">3e prijs</span>
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#0B2447" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 19 9 8l4 7 3-4 5 8Z" fill="#FFD60A" stroke="none"/><path d="M3 19 9 8l4 7 3-4 5 8Z"/><path d="M8.2 9.5 9 8l.8 1.5"/></svg>
+        <h3>Weekend Saalbach Hinterglemm</h3>
+        <p>Een vakantiehuis midden in de Oostenrijkse Alpen: bergtoppen, frisse lucht en rust.</p>
+      </div>
+    </div>
+    <p class="meerprijzen">Daarnaast: belevenissen, dagjes uit, diners, wellness, tickets en cadeaubonnen van lokale ondernemers. <a href="prijzen.html">Bekijk alle prijzen</a></p>
+  </div>
+</section>
+
+<section class="section center" id="adopteren" style="padding-top:0">
+  <div class="wrap">
+    <span class="eyebrow">Doe mee</span>
+    <h2>Kies jouw eendjes</h2>
+    <p class="lead" style="margin-top:.6rem">Hoe meer eendjes, hoe groter je winkans, en hoe meer er naar het goede doel gaat.</p>
+    <div class="plannen">
+      <div class="plan reveal">
+        <h3>E&eacute;n eendje</h3>
+        <div class="plan__prijs"><span data-price>€5</span></div>
+        <ul>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#178A52" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12.5 10 18 20 6"/></svg>1 uniek startnummer</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#178A52" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12.5 10 18 20 6"/></svg>Kans op alle prijzen</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#178A52" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12.5 10 18 20 6"/></svg>Steun het goede doel</li>
+        </ul>
+        <a class="btn btn--ghost-blue" data-sales-link href="adopteren.html">Adopteer</a>
+      </div>
+      <div class="plan plan--top reveal">
+        <span class="plan__badge">Meest gekozen</span>
+        <h3>Toom van 5</h3>
+        <div class="plan__prijs">&euro;25 <small>5 eendjes</small></div>
+        <ul>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#178A52" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12.5 10 18 20 6"/></svg>5 unieke startnummers</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#178A52" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12.5 10 18 20 6"/></svg>5&times; zoveel winkansen</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#178A52" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12.5 10 18 20 6"/></svg>Perfect om te delen met familie</li>
+        </ul>
+        <a class="btn btn--primary" data-sales-link data-sales-qty="5" href="adopteren.html">Adopteer 5 eendjes</a>
+      </div>
+      <div class="plan reveal">
+        <h3>Bedrijfseendje</h3>
+        <div class="plan__prijs"><span data-business-price>€150</span></div>
+        <ul>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#178A52" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12.5 10 18 20 6"/></svg>Eigen bedrijvenrace om 15:00</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#178A52" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12.5 10 18 20 6"/></svg>Vermelding als sponsor</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#178A52" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12.5 10 18 20 6"/></svg>Mooie zakelijke zichtbaarheid</li>
+        </ul>
+        <a class="btn btn--ghost-blue" href="sponsoren.html">Word sponsor</a>
+      </div>
+    </div>
+    <p style="margin-top:1.6rem;color:var(--muted);font-size:.95rem;max-width:none">Veilig betalen met iDEAL. Je startnummers ontvang je direct per e-mail.<br>Liever persoonlijk? Koop je eendje op een verkoopweekend in het centrum van Nijmegen: 27 en 28 maart, 3 en 4 april en 10 en 11 april 2027. <a href="adopteren.html">Meer over adopteren</a></p>
+  </div>
+</section>
+
+<section class="doel section">
+  <div class="wrap">
+    <div class="doel__grid">
+      <div>
+        <span class="eyebrow">Het goede doel</span>
+        <h2>Samen halen we <span class="hl" data-goal-net>€31.701</span> op</h2>
+        <p style="margin-top:1rem">De Rotary Badeendjesrace combineert een gezellige dag aan het water met een serieus doel: zo veel mogelijk geld ophalen voor een goed doel in de regio Nijmegen. Met de inzet van vrijwilligers blijven de kosten laag.</p>
+        <p style="margin-top:.8rem">Voorgestelde bestemmingen zijn onder meer <strong style="color:#fff">Winckelsteegh</strong> en de <strong style="color:#fff">Beroepenavond</strong>. <a href="goede-doel.html" style="color:#fff;text-decoration:underline">Lees meer over het goede doel</a></p>
+        <div class="partners">Georganiseerd door Rotary Nijmegen Stad en Land, samen met Rotaract Nijmegen en Roeivereniging Phocas.</div>
+      </div>
+      <div class="doelcijfers">
+        <div class="doelcijfer reveal"><b>5.000</b><span>eendjes als doel</span></div>
+        <div class="doelcijfer reveal"><b>&euro;34.900</b><span>verwachte bruto-opbrengst</span></div>
+        <div class="doelcijfer reveal"><b>100%</b><span>netto naar het goede doel</span></div>
+        <div class="doelcijfer reveal"><b>3</b><span>organiserende partners</span></div>
+      </div>
+    </div>
+  </div>
+</section>
 
 <section class="section center">
   <div class="wrap">
-    <span class="eyebrow">Zo werkt het</span>
-    <h2>In 4 stappen naar de finish</h2>
-    <p class="lead">Meedoen is simpel — en je steunt er meteen een goed doel mee.</p>
-    <div class="steps" style="margin-top:42px;text-align:left">
-      <div class="step"><h3>Adopteer</h3><p>Koop online of op een verkoopweekend één of meerdere eendjes voor <span data-price>€5</span> per stuk.</p></div>
-      <div class="step"><h3>Jouw nummer</h3><p>Elk eendje heeft een uniek startnummer. Dat is jouw lot in de race.</p></div>
-      <div class="step"><h3>De race</h3><p>Op 17 april gaan alle eendjes het water in de Spiegelwaal in. Wie het eerst finisht, wint!</p></div>
-      <div class="step"><h3>Win &amp; steun</h3><p>Maak kans op mooie prijzen. De volledige opbrengst gaat naar het goede doel.</p></div>
-    </div>
-    <div style="margin-top:42px">
-      <a class="btn btn--blue btn--lg" data-sales-link href="adopteren.html">Adopteer nu je eendje</a>
+    <span class="eyebrow">Praktisch</span>
+    <h2>Een dag om naar uit te kijken</h2>
+    <div class="praktisch">
+      <div class="prak reveal">
+        <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#0B2447" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3" fill="#FFD60A" stroke="none"/><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/><rect x="12.5" y="13" width="5" height="4" rx="1" fill="#0B2447" stroke="none"/></svg>
+        <h3><span data-event-date>Zaterdag 17 april 2027</span></h3>
+        <p>De bedrijvenrace start om 15:00, daarna gaan de eendjes van de hoofdrace te water. <a href="evenement.html">Bekijk het programma</a></p>
+      </div>
+      <div class="prak reveal">
+        <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#0B2447" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21c4-4.5 7-8 7-11.5A7 7 0 0 0 5 9.5C5 13 8 16.5 12 21Z" fill="#FFD60A" stroke="none"/><path d="M12 21c4-4.5 7-8 7-11.5A7 7 0 0 0 5 9.5C5 13 8 16.5 12 21Z"/><circle cx="12" cy="9.5" r="2.6" fill="#fff"/></svg>
+        <h3>Spiegelwaal, Nijmegen</h3>
+        <p>Een finish zoals bij het roeien, met muziek, een speaker, drone-opnames en een friettent aan de kade.</p>
+      </div>
+      <div class="prak reveal">
+        <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#0B2447" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.2-9-9C1.7 7.6 4 5 7 5c2.2 0 4 1.4 5 3 1-1.6 2.8-3 5-3 3 0 5.3 2.6 4 6-2 4.8-9 9-9 9Z" fill="#FFD60A" stroke="none"/><path d="M12 20s-7-4.2-9-9C1.7 7.6 4 5 7 5c2.2 0 4 1.4 5 3 1-1.6 2.8-3 5-3 3 0 5.3 2.6 4 6-2 4.8-9 9-9 9Z"/></svg>
+        <h3>Helpende handen welkom</h3>
+        <p>Help mee op een verkoopweekend of op de evenementdag zelf. <a href="vrijwilligers.html">Meld je aan als vrijwilliger</a></p>
+      </div>
     </div>
   </div>
 </section>
 
-<section class="band section">
+<section class="slot section center">
   <div class="wrap">
-    <div class="split">
-      <div class="split__text">
-        <span class="eyebrow" style="background:rgba(255,255,255,.18);color:#fff">De aftelling</span>
-        <h2>Nog even tot de grote race</h2>
-        <p>Op <strong data-event-date>zaterdag 17 april 2027</strong> kleurt de Spiegelwaal geel. Zet 'm in je agenda en zorg dat jouw eendje meedobbert.</p>
-        <div class="countdown" data-countdown>
-          <div class="cd"><b data-d>0</b><span>dagen</span></div>
-          <div class="cd"><b data-h>00</b><span>uur</span></div>
-          <div class="cd"><b data-m>00</b><span>min</span></div>
-          <div class="cd"><b data-s>00</b><span>sec</span></div>
-        </div>
-      </div>
-      <div class="split__text">
-        <div class="media" style="background:rgba(255,255,255,.12);border-radius:18px;padding:34px;color:#fff">
-          <h3 style="color:#fff">Wat maakt Duckstad bijzonder?</h3>
-          <ul class="chips" style="margin-top:0">
-            <li>🏁 Finish zoals bij het roeien</li>
-            <li>🚁 Drone-opnames</li>
-            <li>🎶 Muziek &amp; speaker</li>
-            <li>🍟 Friettent &amp; drankjes</li>
-            <li>🏢 Aparte bedrijvenrace</li>
-            <li>🤝 Voor het goede doel</li>
-          </ul>
-        </div>
-      </div>
-    </div>
+    <h2>Vaart jouw eendje mee?</h2>
+    <p style="margin:.8rem auto 0;max-width:36rem">Elk verkocht eendje brengt ons dichter bij <span data-goal-net>€31.701</span> voor het goede doel. Adopteer de jouwe en juich hem op 17 april naar de finish.</p>
+    <div style="margin-top:1.8rem"><a class="btn btn--blue" data-sales-link href="adopteren.html">Adopteer een eendje &#183; <span data-price>€5</span></a></div>
   </div>
-</section>
-
-<section class="section">
-  <div class="wrap center">
-    <span class="eyebrow">Doe mee</span>
-    <h2>Kies hoe jij Duckstad steunt</h2>
-    <div class="grid grid-3" style="margin-top:40px;text-align:left">
-      <div class="card"><div class="card__icon">🦆</div><h3>Adopteer een eendje</h3><p>Vanaf <span data-price>€5</span> doe je mee en maak je kans op prijzen. Hoe meer eendjes, hoe groter je kans.</p><p><a data-sales-link href="adopteren.html">Adopteer nu →</a></p></div>
-      <div class="card"><div class="card__icon">🏢</div><h3>Bedrijfseendje</h3><p>Laat je bedrijf meevaren met een eigen bedrijfseendje (<span data-business-price>€150</span>) in de aparte bedrijvenrace.</p><p><a href="sponsoren.html">Word sponsor →</a></p></div>
-      <div class="card"><div class="card__icon">🙋</div><h3>Vrijwilliger worden</h3><p>Help mee op een verkoopweekend of op de evenementdag. Vele handen maken de race licht.</p><p><a href="vrijwilligers.html">Meld je aan →</a></p></div>
-    </div>
-  </div>
-</section>
-
-<section class="band band--gold section">
-  <div class="wrap center">
-    <h2>Samen halen we <span data-goal-net>€31.701</span> op voor het goede doel</h2>
-    <p style="max-width:640px;margin:0 auto 8px">Elk verkocht eendje brengt ons dichter bij het doel. Doe jij mee?</p>
-    <div style="margin-top:24px"><a class="btn btn--blue btn--lg" data-sales-link href="adopteren.html">Adopteer een eendje</a></div>
+  <div class="slot__eendjes" aria-hidden="true">
+    <svg viewBox="0 0 1440 90" preserveAspectRatio="xMidYMax slice">
+      <g transform="translate(60,14) scale(.34)"><use href="#ducksil"/></g>
+      <g transform="translate(300,26) scale(.28)"><use href="#ducksil"/></g>
+      <g transform="translate(540,10) scale(.36)"><use href="#ducksil"/></g>
+      <g transform="translate(820,24) scale(.30)"><use href="#ducksil"/></g>
+      <g transform="translate(1080,12) scale(.34)"><use href="#ducksil"/></g>
+      <g transform="translate(1310,28) scale(.27)"><use href="#ducksil"/></g>
+    </svg>
   </div>
 </section>
 <footer class="site-footer">
   <div class="wrap">
     <div class="footer-grid">
       <div>
-        <svg class="footer-duck" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="30" cy="34" r="18" fill="#ffd60a"/><ellipse cx="30" cy="40" rx="13" ry="9" fill="#ffe45c"/><circle cx="37" cy="27" r="8" fill="#ffd60a"/><circle cx="39.5" cy="25.5" r="2.1" fill="#17458f"/><path d="M44 27 l9 2 l-9 3 z" fill="#f7811b"/></svg>
+        <img class="footer-duck" src="assets/img/duck.svg" alt="" width="52" height="40">
         <p>De grote Rotary Badeendjesrace in de Spiegelwaal. Duizenden eendjes, één doel: zo veel mogelijk geld ophalen voor het goede doel.</p>
         <div class="social">
           <a data-instagram href="#" aria-label="Instagram" target="_blank" rel="noopener">📸</a>

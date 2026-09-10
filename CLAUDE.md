@@ -230,6 +230,31 @@ De site wordt uitgebreid van static-only naar een Worker-met-code + D1:
 
 ## Recente architectuur-besluiten (changelog)
 
+- **2026-09-10** (Code): **Homepage-redesign "race-poster" + site-brede chrome-restyle.**
+  Goedgekeurd mockup-ontwerp doorgevoerd op `index.html`: donkere race-poster-hero
+  (diep navy #0b2447) met badge-datumlockup (SVG, 17 april 2027), sinusgolf-waterband
+  met eendjes-peloton, gele ticker-band, teller als racebaan (eendje vaart mee op de
+  voortgangsbalk, finishvlag rechts), topprijzen als podium (1e prijs verhoogd),
+  adoptiekaarten met "Toom van 5" als highlight, goede-doel-band met cijfertegels en
+  gele slotband. **Eén flat-SVG-eendjes-vormentaal** (`assets/img/duck.svg`, ook nieuw
+  favicon `?v=2`); sprite-defs (duck/badge/ducksil/golfrij) inline in index.html.
+  **Fonts vervangen**: Fredoka+Inter verwijderd, nu self-hosted **Lilita One** (display,
+  alleen 400 — nooit bold synthetiseren) + **Bricolage Grotesque** (variabel 200-800),
+  latin+latin-ext in `assets/fonts/` (mapping uit het css2-bestand geverifieerd).
+  `style.css` volledig vernieuwd met dezelfde tokennamen (waarden verschoven: --blue-dark
+  = #0b2447, --gold=#f2b705 alleen voor randen; tekst op wit nooit in --gold). Chrome
+  op ÁLLE publieke pagina's gelijkgetrokken (donkere sticky nav met duck.svg-logo +
+  Lilita-woordmerk, donkere footer, page-hero-gradient); bestel-/formulierpagina's alleen
+  tokens/chrome, structuur ongemoeid. A11y: skip-link nu met transform verborgen,
+  reduced-motion-override site-breed, h1 `hyphens:auto` (fix overflow
+  "Toegankelijkheidsverklaring" op 390px), `.band .card p` leesbaar gemaakt (stond op
+  lichtblauw op wit). Scrollbreedte == viewport geverifieerd op 1180 én 390 voor alle
+  16 publieke pagina's. Prominente 🦆-emoji uit h1's/CTA-knoppen (vormentaal is nu SVG).
+  NB: admin.html is NIET aangeraakt maar erft de nieuwe tokens/fonts via style.css —
+  de hulp-schermafbeeldingen kloppen functioneel nog, alleen kleuren/letter wijken af.
+  Countdown-sectie is vervallen (datum zit in hero-badge, datumpil en ticker);
+  `[data-countdown]`-code in main.js blijft ongebruikt staan.
+
 - **2026-09-10** (Code): **Toegankelijkheidsverklaring toegevoegd** (`toegankelijkheid.html`,
   live op `/toegankelijkheid`). Reden: de site heeft een bestelfunctie en valt daarmee onder de
   **European Accessibility Act**; de verklaring benoemt het streven naar **WCAG 2.2 AA** (in lijn
