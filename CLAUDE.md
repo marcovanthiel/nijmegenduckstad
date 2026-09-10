@@ -230,6 +230,15 @@ De site wordt uitgebreid van static-only naar een Worker-met-code + D1:
 
 ## Recente architectuur-besluiten (changelog)
 
+- **2026-09-10** (Code): **Toegankelijkheidsverklaring toegevoegd** (`toegankelijkheid.html`,
+  live op `/toegankelijkheid`). Reden: de site heeft een bestelfunctie en valt daarmee onder de
+  **European Accessibility Act**; de verklaring benoemt het streven naar **WCAG 2.2 AA** (in lijn
+  met EAA en EN 301 549), de maatregelen en de status "naar beste weten geheel of grotendeels
+  conform" (bewust géén volledige-conformiteitsclaim), meldpunt info@nijmegenduckstad.nl.
+  Footer-link "Toegankelijkheidsverklaring" op alle publieke pagina's (naast Privacy; ook op
+  `bestelling.html`; admin bewust niet, conform het privacy-patroon) + entry in `sitemap.xml`.
+  Aliasdomeinen (duckstadnijmegen.nl, nijmegenduckrace.nl) liften mee via dezelfde Worker.
+
 - **2026-07-03** (Code): **Mobiele optimalisatie: fonts self-hosted + responsive prijzenfoto's.**
   Fredoka + Inter staan nu als variabele woff2 in `assets/fonts/` (latin +
   latin-ext, `@font-face` bovenin `style.css`, `font-display:swap`); alle
