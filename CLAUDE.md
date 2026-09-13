@@ -230,6 +230,25 @@ De site wordt uitgebreid van static-only naar een Worker-met-code + D1:
 
 ## Recente architectuur-besluiten (changelog)
 
+- **2026-09-13** (Code): **SEO-fixes o.b.v. audit (Track A + strategisch).**
+  (1) **Unieke meta-descriptions** op de acht contentpagina's (adopteren, evenement,
+  prijzen, goede-doel, faq, contact, sponsoren, vrijwilligers) i.p.v. één gedeelde
+  generieke tekst — meta description én og:description per pagina rond de paginakern.
+  (2) **Sitemap** wijst nu naar de **extensieloze eind-URL's** (die 200 geven en de
+  canonical dragen) i.p.v. de `.html`-URL's; `changefreq` verwijderd, `lastmod`
+  toegevoegd. (3) De **`.html`-naar-extensieloos-redirect is nu een 301** i.p.v.
+  Cloudflares 307 (auto-trailing-slash): afgehandeld in `src/index.js` (Worker draait
+  eerst via `run_worker_first`), inclusief `/index.html` -> `/`. (4) **Alias-domeinen
+  `duckstadnijmegen.nl` en `nijmegenduckrace.nl` (incl. www) 301'en nu** naar
+  `nijmegenduckstad.nl` (in de Worker, pad+query behouden) — betrouwbaarder
+  signaalconsolidatie dan alleen de cross-domein-canonical. (5) **Schema uitgebreid**:
+  Event-JSON-LD ook op `/evenement` (met `endDate`, volledig `PostalAddress` +
+  `geo`, en drie offers 5/25/150 euro), en **Product/Offer-schema** op `/adopteren` en
+  `/prijzen` voor de eendjes-adoptie (Eendje 5, Toom van 5 25, Bedrijfseendje 150 euro),
+  server-side in de initiële HTML. (6) **robots.txt** opgeschoond: eigen redundante
+  `User-agent: *`-groep verwijderd (Cloudflares beheerde blok levert die groep al →
+  geen dubbele groep meer); alleen de `Sitemap:`-regel blijft in het repo-bestand.
+
 - **2026-09-10** (Code): **Homepage-redesign "race-poster" + site-brede chrome-restyle.**
   Goedgekeurd mockup-ontwerp doorgevoerd op `index.html`: donkere race-poster-hero
   (diep navy #0b2447) met badge-datumlockup (SVG, 17 april 2027), sinusgolf-waterband

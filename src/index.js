@@ -22,6 +22,24 @@ export default {
       url.protocol = "https:";
       return Response.redirect(url.href, 301);
     }
+    // Alias-domeinen 301 naar het canonieke domein (consolideert de SEO-signalen
+    // betrouwbaarder dan alleen een canonical; voorkomt indexeren van de aliassen).
+    const ALIAS_HOSTS = new Set([
+      "duckstadnijmegen.nl", "www.duckstadnijmegen.nl",
+      "nijmegenduckrace.nl", "www.nijmegenduckrace.nl",
+    ]);
+    if (ALIAS_HOSTS.has(url.hostname)) {
+      url.hostname = "nijmegenduckstad.nl";
+      return Response.redirect(url.href, 301);
+    }
+    // .html-URL's 301 naar de extensieloze eind-URL (permanent i.p.v. Cloudflares
+    // 307 via html_handling). Sitemap/canonical wijzen naar de extensieloze vorm.
+    if (url.pathname.endsWith(".html")) {
+      let np = url.pathname.slice(0, -5);
+      if (np.endsWith("/index")) np = np.slice(0, -5); // /index.html -> /
+      url.pathname = np;
+      return Response.redirect(url.href, 301);
+    }
     const p = url.pathname;
     let response = null;
     try {

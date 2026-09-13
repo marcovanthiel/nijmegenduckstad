@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://nijmegenduckstad.nl/</loc><changefreq>weekly</changefreq></url>
-  <url><loc>https://nijmegenduckstad.nl/adopteren.html</loc><changefreq>weekly</changefreq></url>
-  <url><loc>https://nijmegenduckstad.nl/evenement.html</loc><changefreq>weekly</changefreq></url>
-  <url><loc>https://nijmegenduckstad.nl/prijzen.html</loc><changefreq>weekly</changefreq></url>
-  <url><loc>https://nijmegenduckstad.nl/sponsoren.html</loc><changefreq>weekly</changefreq></url>
-  <url><loc>https://nijmegenduckstad.nl/goede-doel.html</loc><changefreq>weekly</changefreq></url>
-  <url><loc>https://nijmegenduckstad.nl/vrijwilligers.html</loc><changefreq>weekly</changefreq></url>
-  <url><loc>https://nijmegenduckstad.nl/contact.html</loc><changefreq>weekly</changefreq></url>
-  <url><loc>https://nijmegenduckstad.nl/faq.html</loc><changefreq>weekly</changefreq></url>
-  <url><loc>https://nijmegenduckstad.nl/privacy</loc></url>
-  <url><loc>https://nijmegenduckstad.nl/toegankelijkheid</loc></url>
+  <url><loc>https://nijmegenduckstad.nl/</loc><lastmod>2026-09-13</lastmod></url>
+  <url><loc>https://nijmegenduckstad.nl/adopteren</loc><lastmod>2026-09-13</lastmod></url>
+  <url><loc>https://nijmegenduckstad.nl/evenement</loc><lastmod>2026-09-13</lastmod></url>
+  <url><loc>https://nijmegenduckstad.nl/prijzen</loc><lastmod>2026-09-13</lastmod></url>
+  <url><loc>https://nijmegenduckstad.nl/sponsoren</loc><lastmod>2026-09-13</lastmod></url>
+  <url><loc>https://nijmegenduckstad.nl/goede-doel</loc><lastmod>2026-09-13</lastmod></url>
+  <url><loc>https://nijmegenduckstad.nl/vrijwilligers</loc><lastmod>2026-09-13</lastmod></url>
+  <url><loc>https://nijmegenduckstad.nl/contact</loc><lastmod>2026-09-13</lastmod></url>
+  <url><loc>https://nijmegenduckstad.nl/faq</loc><lastmod>2026-09-13</lastmod></url>
+  <url><loc>https://nijmegenduckstad.nl/privacy</loc><lastmod>2026-09-13</lastmod></url>
+  <url><loc>https://nijmegenduckstad.nl/toegankelijkheid</loc><lastmod>2026-09-13</lastmod></url>
 </urlset>

@@ -1,3 +1,5 @@
-User-agent: *
-Allow: /
+# Cloudflare voegt boven dit bestand een beheerd blok toe met de content-signals
+# en een "User-agent: *  /  Allow: /"-groep. Daarom staat hier bewust GEEN eigen
+# "User-agent: *"-groep meer (die veroorzaakte een dubbele groep). Alleen de
+# sitemap-verwijzing, die staat los van de user-agent-groepen.
 Sitemap: https://nijmegenduckstad.nl/sitemap.xml
