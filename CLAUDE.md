@@ -230,6 +230,18 @@ De site wordt uitgebreid van static-only naar een Worker-met-code + D1:
 
 ## Recente architectuur-besluiten (changelog)
 
+- **2026-09-14** (Code): **Event-schema compleet na Search-Console-melding.**
+  GSC meldde "Missing field 'validFrom' (in 'offers')" op de home. Beide
+  Event-JSON-LD-blokken (`index.html`, `evenement.html`) hebben nu op elke
+  Offer `validFrom` (2026-06-17, start online verkoop), een `performer`
+  (PerformingGroup Rotary Nijmegen Stad en Land; Google beveelt dit aan en
+  meldt het anders als volgende "missing field") en de home ook `endDate`
+  (18:00, gelijk aan /evenement). Em-dash in de Event-naam op de home
+  vervangen door een koppelteken (stijlregel). Na zo'n fix in Search
+  Console "Validate fix" klikken. Regel (skill website-standaard): JSON-LD
+  altijd compleet volgens de Google-aanbevelingen, niet alleen de verplichte
+  velden.
+
 - **2026-09-13** (Code): **SEO-fixes o.b.v. audit (Track A + strategisch).**
   (1) **Unieke meta-descriptions** op de acht contentpagina's (adopteren, evenement,
   prijzen, goede-doel, faq, contact, sponsoren, vrijwilligers) i.p.v. één gedeelde
